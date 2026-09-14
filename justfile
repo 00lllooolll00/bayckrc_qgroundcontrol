@@ -13,6 +13,7 @@ build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
 # Use all cores by default; override with JOBS=N.
 jobs := env_var_or_default("JOBS", `python3 -c "import os; print(os.cpu_count() or 4)" 2>/dev/null || echo 4`)
+export CMAKE_AUTOGEN_PARALLEL_LEVEL := env_var_or_default("CMAKE_AUTOGEN_PARALLEL_LEVEL", jobs)
 
 # Default: show available commands
 default:
@@ -118,6 +119,7 @@ info:
     @echo "Build type:  {{build_type}}"
     @echo "Build dir:   {{build_dir}}"
     @echo "Jobs:        {{jobs}}"
+    @echo "MOC Parallel:$CMAKE_AUTOGEN_PARALLEL_LEVEL"
 
 # Check dependency versions
 check-deps:
