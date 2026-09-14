@@ -766,7 +766,11 @@ bool isInternetAvailable()
         return false;
     }
 
-    return netInfo->reachability() == QNetworkInformation::Reachability::Online;
+    // Backends do not always reach the Online state even when traffic works: NetworkManager
+    // reports the connection as "limited" (e.g. behind a VPN/tun device, or when its own
+    // connectivity probe cannot reach the probe URL), which Qt maps to Site/Local. Only a
+    // hard Disconnected means the network is really unusable, so do not block on the rest.
+    return netInfo->reachability() != QNetworkInformation::Reachability::Disconnected;
 }
 
 bool isNetworkEthernet()
