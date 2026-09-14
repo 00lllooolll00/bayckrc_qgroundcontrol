@@ -5,6 +5,7 @@
 #include <QtCore/QtMinMax>
 #include <QtCore/QUrl>
 
+#include "AmapProvider.h"
 #include "BingMapProvider.h"
 #include "ElevationMapProvider.h"
 #include "EsriMapProvider.h"
@@ -28,6 +29,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
     std::make_shared<BingSatelliteMapProvider>(),
     std::make_shared<BingHybridMapProvider>(),
 
+    std::make_shared<AmapRoadProvider>(),
+    std::make_shared<AmapSatelliteProvider>(),
     std::make_shared<TianDiTuRoadProvider>(),
     std::make_shared<TianDiTuSatelliteProvider>(),
     std::make_shared<StatkartTopoMapProvider>(),
