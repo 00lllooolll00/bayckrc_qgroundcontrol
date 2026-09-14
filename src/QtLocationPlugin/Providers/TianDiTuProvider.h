@@ -15,6 +15,11 @@ protected:
         : MapProvider(mapName, QStringLiteral("https://map.tianditu.gov.cn/"), imageFormat, averageSize, mapType)
         , _mapType(mapTypeCode) {}
 
+public:
+    // TianDiTu refuses server-side keys when the request carries a browser User-Agent
+    // (error 301013 "Key权限类型为:服务器端，请使用服务器端访问！"), so send a plain client UA.
+    QByteArray getUserAgent() const final { return QByteArrayLiteral("QGroundControl"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 

@@ -48,6 +48,12 @@ public:
     const QString& getReferrer() const { return _referrer; }
     virtual QByteArray getToken() const { return QByteArray(); }
 
+    /// Overrides the browser-like User-Agent used for tile requests. Empty (the default)
+    /// keeps the shared browser UA. Providers whose servers reject browser traffic - e.g.
+    /// TianDiTu refuses server-side keys when the request looks like a browser (error 301013) -
+    /// return a non-browser UA here.
+    virtual QByteArray getUserAgent() const { return QByteArray(); }
+
     virtual int long2tileX(double lon, int z) const;
     virtual int lat2tileY(double lat, int z) const;
     virtual double tileX2long(int x, int z) const;

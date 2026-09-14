@@ -114,7 +114,9 @@ QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, i
 
     // Headers
     request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
-    request.setHeader(QNetworkRequest::UserAgentHeader, s_userAgent);
+    const QByteArray providerUserAgent = mapProvider->getUserAgent();
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      providerUserAgent.isEmpty() ? QByteArray(s_userAgent) : providerUserAgent);
     const QByteArray referrer = mapProvider->getReferrer().toUtf8();
     if (!referrer.isEmpty()) {
         request.setRawHeader(QByteArrayLiteral("Referer"), referrer);
