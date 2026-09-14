@@ -1,10 +1,8 @@
 #include "PowerComponentController.h"
+
 #include "Vehicle.h"
 
-PowerComponentController::PowerComponentController(void)
-{
-
-}
+PowerComponentController::PowerComponentController(void) {}
 
 void PowerComponentController::calibrateEsc(void)
 {
@@ -18,7 +16,8 @@ void PowerComponentController::_stopCalibration(void)
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
 }
 
-void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
+void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */,
+                                                         QString text, const QString& description)
 {
     Q_UNUSED(description);
 
@@ -69,7 +68,6 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
         emit batteryConnected();
         return;
     }
-
 
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {

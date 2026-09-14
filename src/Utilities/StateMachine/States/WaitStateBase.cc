@@ -1,10 +1,10 @@
 #include "WaitStateBase.h"
-#include "QGCStateMachine.h"
+
 #include "QGCLoggingCategory.h"
+#include "QGCStateMachine.h"
 
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
-    : QGCState(stateName, parent)
-    , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
+    : QGCState(stateName, parent), _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
 {
     _timeoutTimer.setSingleShot(true);
     connect(&_timeoutTimer, &QTimer::timeout, this, &WaitStateBase::_onTimeout);

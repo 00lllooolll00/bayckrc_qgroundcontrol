@@ -1,24 +1,23 @@
 #include "StandardModes.h"
-#include "Vehicle.h"
+
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(StandardModesLog, "Vehicle.StandardModes")
 
-static void requestMessageResultHandler(void *resultHandlerData, MAV_RESULT result,
+static void requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result,
                                         VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
-                                        const mavlink_message_t &message)
+                                        const mavlink_message_t& message)
 {
     StandardModes* standardModes = static_cast<StandardModes*>(resultHandlerData);
     standardModes->gotMessage(result, failureCode, message);
 }
 
-StandardModes::StandardModes(QObject *parent, Vehicle *vehicle)
-        : QObject(parent), _vehicle(vehicle)
-{
-}
+StandardModes::StandardModes(QObject* parent, Vehicle* vehicle) : QObject(parent), _vehicle(vehicle) {}
 
-void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message)
+void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
+                               const mavlink_message_t& message)
 {
     _requestActive = false;
     if (_wantReset) {
@@ -32,7 +31,7 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
         mavlink_msg_available_modes_decode(&message, &availableModes);
         bool cannotBeSet = availableModes.properties & MAV_MODE_PROPERTY_NOT_USER_SELECTABLE;
         bool advanced = availableModes.properties & MAV_MODE_PROPERTY_ADVANCED;
-        availableModes.mode_name[sizeof(availableModes.mode_name)-1] = '\0';
+        availableModes.mode_name[sizeof(availableModes.mode_name) - 1] = '\0';
         QString name = availableModes.mode_name;
         switch (availableModes.standard_mode) {
             case MAV_STANDARD_MODE_POSITION_HOLD:
@@ -40,7 +39,7 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
                 break;
             case MAV_STANDARD_MODE_ORBIT:
                 name = "Orbit";
-                cannotBeSet = true; // These are exposed in the UI as separate buttons
+                cannotBeSet = true;  // These are exposed in the UI as separate buttons
                 break;
             case MAV_STANDARD_MODE_CRUISE:
                 name = "Cruise";
@@ -62,24 +61,17 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
                 break;
         }
 
-        qCDebug(StandardModesLog) << "Available mode received - name:" << name <<
-            "index:" << availableModes.mode_index <<
-            "standard_mode:" << availableModes.standard_mode <<
-            "advanced:" << advanced <<
-            "cannotBeSet:" << cannotBeSet <<
-            "custom_mode:" << availableModes.custom_mode;
+        qCDebug(StandardModesLog) << "Available mode received - name:" << name << "index:" << availableModes.mode_index
+                                  << "standard_mode:" << availableModes.standard_mode << "advanced:" << advanced
+                                  << "cannotBeSet:" << cannotBeSet << "custom_mode:" << availableModes.custom_mode;
 
         _modeList += FirmwareFlightMode{
-            name,
-            availableModes.standard_mode,
-            availableModes.custom_mode,
-            !cannotBeSet,
-            advanced,
+            name, availableModes.standard_mode, availableModes.custom_mode, !cannotBeSet, advanced,
             true,  // fixed wing - Since we don't know at this point we assume fixed wing support
             true   // multi-rotor - Since we don't know at this point we assume multi-rotor support as well
         };
 
-        if (availableModes.mode_index >= availableModes.number_modes) { // We are done
+        if (availableModes.mode_index >= availableModes.number_modes) {  // We are done
             qCDebug(StandardModesLog) << "Completed, num modes:" << availableModes.number_modes;
             ensureUniqueModeNames();
             _vehicle->firmwarePlugin()->updateAvailableFlightModes(_modeList);
@@ -91,7 +83,8 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
     } else {
         // Environmental/normal outcome (vehicle doesn't support the protocol, comm loss, or a
         // collapsed duplicate re-query), not a programming error, so log at debug level.
-        qCDebug(StandardModesLog) << "Failed to retrieve available modes - REQUEST_MESSAGE:MAV_RESULT" << QGCMAVLink::mavResultToString(result) << "failureCode:" << failureCode;
+        qCDebug(StandardModesLog) << "Failed to retrieve available modes - REQUEST_MESSAGE:MAV_RESULT"
+                                  << QGCMAVLink::mavResultToString(result) << "failureCode:" << failureCode;
         emit requestCompleted();
     }
 }
@@ -120,7 +113,8 @@ void StandardModes::request()
     }
 
     qCDebug(StandardModesLog) << "Requesting available modes";
-    // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
+    // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for
+    // that
     _modeList.clear();
     StandardModes::requestMode(1);
 }
@@ -128,11 +122,8 @@ void StandardModes::request()
 void StandardModes::requestMode(int modeIndex)
 {
     _requestActive = true;
-    _vehicle->requestMessage(
-            requestMessageResultHandler,
-            this,
-            MAV_COMP_ID_AUTOPILOT1,
-            MAVLINK_MSG_ID_AVAILABLE_MODES, modeIndex);
+    _vehicle->requestMessage(requestMessageResultHandler, this, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AVAILABLE_MODES,
+                             modeIndex);
 }
 
 void StandardModes::availableModesMonitorReceived(uint8_t seq)

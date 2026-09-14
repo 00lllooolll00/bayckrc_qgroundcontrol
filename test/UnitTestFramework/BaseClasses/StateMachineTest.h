@@ -45,9 +45,7 @@ class StateMachineTest : public UnitTest
     Q_DISABLE_COPY_MOVE(StateMachineTest)
 
 public:
-    explicit StateMachineTest(QObject* parent = nullptr) : UnitTest(parent)
-    {
-    }
+    explicit StateMachineTest(QObject* parent = nullptr) : UnitTest(parent) {}
 
 protected:
     /// Call from tests that deliberately drive a wait state to timeout/retry.
@@ -69,10 +67,7 @@ protected:
     }
 
     /// Add a QFinalState to the machine and return it.
-    static QFinalState* addFinalState(QStateMachine* machine)
-    {
-        return new QFinalState(machine);
-    }
+    static QFinalState* addFinalState(QStateMachine* machine) { return new QFinalState(machine); }
 
     /// Start the machine and wait for QStateMachine::finished.
     /// @return true if the machine reached a final state within timeout

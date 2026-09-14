@@ -1,25 +1,26 @@
 #include "Joystick.h"
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QSet>
+#include <QtCore/QSettings>
+#include <QtCore/QThread>
+#include <algorithm>
+#include <cmath>
+
 #include "Fact.h"
+#include "FirmwarePlugin.h"
+#include "GimbalController.h"
+#include "JoystickManager.h"
 #include "MavlinkAction.h"
 #include "MavlinkActionManager.h"
 #include "MavlinkActionsSettings.h"
-#include "FirmwarePlugin.h"
-#include "GimbalController.h"
+#include "MultiVehicleManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleSupports.h"
-#include "JoystickManager.h"
-#include "MultiVehicleManager.h"
-
-#include <QtCore/QCoreApplication>
-#include <QtCore/QSet>
-#include <algorithm>
-#include <cmath>
-#include <QtCore/QSettings>
-#include <QtCore/QThread>
 
 QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.Joystick")
 QGC_LOGGING_CATEGORY(JoystickVerboseLog, "Joystick.Joystick:verbose")
@@ -27,16 +28,19 @@ QGC_LOGGING_CATEGORY(JoystickVerboseLog, "Joystick.Joystick:verbose")
 static QDebug operator<<(QDebug debug, Joystick::ButtonEvent_t event)
 {
     switch (event) {
-    case Joystick::ButtonEventDownTransition: return debug << "Down";
-    case Joystick::ButtonEventUpTransition:   return debug << "Up";
-    case Joystick::ButtonEventRepeat:         return debug << "Repeat";
-    case Joystick::ButtonEventNone:           return debug << "None";
+        case Joystick::ButtonEventDownTransition:
+            return debug << "Down";
+        case Joystick::ButtonEventUpTransition:
+            return debug << "Up";
+        case Joystick::ButtonEventRepeat:
+            return debug << "Repeat";
+        case Joystick::ButtonEventNone:
+            return debug << "None";
     }
     return debug << static_cast<int>(event);
 }
 
-namespace
-{
+namespace {
 static constexpr const char* kButtonActionArrayGroup = "JoystickButtonActionSettingsArray";
 static constexpr const char* kButtonActionNameKey = "actionName";
 static constexpr const char* kButtonRepeatKey = "repeat";
@@ -47,59 +51,57 @@ static constexpr const char* kAxisMaxKey = "max";
 static constexpr const char* kAxisCenterKey = "center";
 static constexpr const char* kAxisDeadbandKey = "deadband";
 static constexpr const char* kAxisReversedKey = "reversed";
-}
+}  // namespace
 
 /*===========================================================================*/
 
-AssignedButtonAction::AssignedButtonAction(const QString &actionName_, bool repeat_)
-    : actionName(actionName_)
-    , repeat(repeat_)
+AssignedButtonAction::AssignedButtonAction(const QString& actionName_, bool repeat_)
+    : actionName(actionName_), repeat(repeat_)
 {
     qCDebug(JoystickVerboseLog) << this;
 }
 
-AvailableButtonAction::AvailableButtonAction(const QString &actionName_, std::function<void()> onDown_, std::function<void()> onUp_, std::function<void()> onRepeat_, QObject *parent)
-    : QObject(parent)
-    , _actionName(actionName_)
-    , _onDown(std::move(onDown_))
-    , _onRepeat(std::move(onRepeat_))
-    , _onUp(std::move(onUp_))
+AvailableButtonAction::AvailableButtonAction(const QString& actionName_, std::function<void()> onDown_,
+                                             std::function<void()> onUp_, std::function<void()> onRepeat_,
+                                             QObject* parent)
+    : QObject(parent),
+      _actionName(actionName_),
+      _onDown(std::move(onDown_)),
+      _onRepeat(std::move(onRepeat_)),
+      _onUp(std::move(onUp_))
 {
     qCDebug(JoystickVerboseLog) << this;
 }
 
 /*===========================================================================*/
 
-Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatCount, QObject *parent)
-    : QThread(parent)
-    , _name(name)
-    , _axisCount(axisCount)
-    , _buttonCount(buttonCount)
-    , _hatCount(hatCount)
-    , _hatButtonCount(4 * hatCount)
-    , _totalButtonCount(_buttonCount + _hatButtonCount)
-    , _rgCalibration(_axisCount)
-    , _buttonEventStates(_totalButtonCount)
-    , _assignedButtonActions(_totalButtonCount, nullptr)
-    , _mavlinkActionManager(new MavlinkActionManager(SettingsManager::instance()->mavlinkActionsSettings()->joystickActionsFile(), this))
-    , _availableButtonActions(new QmlObjectListModel(this))
-    , _joystickManager(JoystickManager::instance())
-    , _joystickSettings(name, _axisCount, _totalButtonCount)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, QObject* parent)
+    : QThread(parent),
+      _name(name),
+      _axisCount(axisCount),
+      _buttonCount(buttonCount),
+      _hatCount(hatCount),
+      _hatButtonCount(4 * hatCount),
+      _totalButtonCount(_buttonCount + _hatButtonCount),
+      _rgCalibration(_axisCount),
+      _buttonEventStates(_totalButtonCount),
+      _assignedButtonActions(_totalButtonCount, nullptr),
+      _mavlinkActionManager(
+          new MavlinkActionManager(SettingsManager::instance()->mavlinkActionsSettings()->joystickActionsFile(), this)),
+      _availableButtonActions(new QmlObjectListModel(this)),
+      _joystickManager(JoystickManager::instance()),
+      _joystickSettings(name, _axisCount, _totalButtonCount)
 {
-    qCDebug(JoystickLog)
-        << name
-        << "axisCount:" << axisCount
-        << "buttonCount:" << buttonCount
-        << "hatCount:" << hatCount
-        << this;
+    qCDebug(JoystickLog) << name << "axisCount:" << axisCount << "buttonCount:" << buttonCount
+                         << "hatCount:" << hatCount << this;
 
-    if (QCoreApplication *const app = QCoreApplication::instance()) {
-        QThread *const guiThread = app->thread();
+    if (QCoreApplication* const app = QCoreApplication::instance()) {
+        QThread* const guiThread = app->thread();
         if (_joystickSettings.thread() != guiThread) {
             _joystickSettings.moveToThread(guiThread);
         }
 
-        const auto ensureFactThread = [guiThread](Fact *fact) {
+        const auto ensureFactThread = [guiThread](Fact* fact) {
             if (fact && fact->thread() != guiThread) {
                 fact->moveToThread(guiThread);
             }
@@ -127,30 +129,22 @@ Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatC
     }
 
     // Changes to manual control extension settings require re-calibration
-    connect(_joystickSettings.enableManualControlPitchExtension(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableManualControlRollExtension(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis1(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis2(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis3(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis4(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis5(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
-    connect(_joystickSettings.enableAdditionalAxis6(), &Fact::rawValueChanged, this, [this]() {
-        _joystickSettings.calibrated()->setRawValue(false);
-    });
+    connect(_joystickSettings.enableManualControlPitchExtension(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableManualControlRollExtension(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis1(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis2(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis3(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis4(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis5(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
+    connect(_joystickSettings.enableAdditionalAxis6(), &Fact::rawValueChanged, this,
+            [this]() { _joystickSettings.calibrated()->setRawValue(false); });
 
     _resetFunctionToAxisMap();
     _resetAxisCalibrationData();
@@ -234,10 +228,8 @@ void Joystick::_loadButtonSettings()
             buttonSettings.endGroup();
 
             if (actionName.isEmpty()) {
-                qCWarning(JoystickLog)
-                    << "    "
-                    << "button:" << buttonIndex
-                    << "has empty action name, clearing action from data";
+                qCWarning(JoystickLog) << "    " << "button:" << buttonIndex
+                                       << "has empty action name, clearing action from data";
                 buttonSettings.remove(QString::number(buttonIndex));
                 continue;
             }
@@ -247,11 +239,8 @@ void Joystick::_loadButtonSettings()
                 // protocol and are only known once a vehicle is connected. Keep the assignment
                 // and add it to the available actions list so the UI always shows it;
                 // _executeButtonAction() checks real availability at button press time.
-                qCDebug(JoystickLog)
-                    << "    "
-                    << "button:" << buttonIndex
-                    << "action name not currently available:" << actionName
-                    << ", keeping assignment";
+                qCDebug(JoystickLog) << "    " << "button:" << buttonIndex
+                                     << "action name not currently available:" << actionName << ", keeping assignment";
                 _addAvailableButtonActionIfMissing(actionName);
             }
             if (actionName == _buttonActionNone) {
@@ -259,16 +248,13 @@ void Joystick::_loadButtonSettings()
                 continue;
             }
 
-            AssignedButtonAction *buttonAction = new AssignedButtonAction(actionName, repeat);
+            AssignedButtonAction* buttonAction = new AssignedButtonAction(actionName, repeat);
             _assignedButtonActions[buttonIndex] = buttonAction;
             _assignedButtonActions[buttonIndex]->buttonElapsedTimer.start();
             foundButton = true;
 
-            qCDebug(JoystickLog)
-                << "    "
-                << "button:" <<     buttonIndex
-                << "actionName:" << actionName
-                << "repeat:" <<     repeat;
+            qCDebug(JoystickLog) << "    " << "button:" << buttonIndex << "actionName:" << actionName
+                                 << "repeat:" << repeat;
         }
 
         buttonSettings.endGroup();
@@ -311,10 +297,7 @@ void Joystick::_loadAxisSettings(bool joystickCalibrated, int transmitterMode)
     axisSettings.beginGroup(QString::fromLatin1(kAxisSettingsArrayGroup));
     for (int axis = 0; axis < _axisCount; axis++) {
         if (!axisSettings.childGroups().contains(QString::number(axis))) {
-            qCDebug(JoystickLog)
-                << "    "
-                << "axis:" << axis
-                << "no settings found, skipping";
+            qCDebug(JoystickLog) << "    " << "axis:" << axis << "no settings found, skipping";
             continue;
         }
 
@@ -329,7 +312,8 @@ void Joystick::_loadAxisSettings(bool joystickCalibrated, int transmitterMode)
             continue;
         }
         if (axisFunction == maxAxisFunction) {
-            // Older code would save unassigned axes with maxAxisFunction, we now skip loading those since that is not a valid function assignment
+            // Older code would save unassigned axes with maxAxisFunction, we now skip loading those since that is not a
+            // valid function assignment
             axisSettings.endGroup();
             continue;
         }
@@ -341,15 +325,10 @@ void Joystick::_loadAxisSettings(bool joystickCalibrated, int transmitterMode)
         axisCalibration.deadband = axisSettings.value(deadbandKey, axisCalibration.deadband).toInt();
         axisCalibration.reversed = axisSettings.value(reversedKey, axisCalibration.reversed).toBool();
 
-        qCDebug(JoystickLog)
-            << "    "
-            << "axis:" <<           axis
-            << "min:" <<            axisCalibration.min
-            << "max:" <<            axisCalibration.max
-            << "center:" <<         axisCalibration.center
-            << "reversed:" <<       axisCalibration.reversed
-            << "deadband:" <<       axisCalibration.deadband
-            << "axisFunction:" <<   axisFunctionToString(static_cast<AxisFunction_t>(axisFunction));
+        qCDebug(JoystickLog) << "    " << "axis:" << axis << "min:" << axisCalibration.min
+                             << "max:" << axisCalibration.max << "center:" << axisCalibration.center
+                             << "reversed:" << axisCalibration.reversed << "deadband:" << axisCalibration.deadband
+                             << "axisFunction:" << axisFunctionToString(static_cast<AxisFunction_t>(axisFunction));
 
         axisSettings.endGroup();
     }
@@ -374,65 +353,75 @@ void Joystick::_loadAxisSettings(bool joystickCalibrated, int transmitterMode)
     }
     bool pitchExtensionFunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableManualControlPitchExtension()->rawValue().toBool()) {
-        pitchExtensionFunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(pitchExtensionFunction) == kJoystickAxisNotAssigned;
+        pitchExtensionFunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(pitchExtensionFunction) == kJoystickAxisNotAssigned;
         if (pitchExtensionFunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing pitch extension axis function mapping!";
         }
     }
     bool rollExtensionFunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableManualControlRollExtension()->rawValue().toBool()) {
-        rollExtensionFunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(rollExtensionFunction) == kJoystickAxisNotAssigned;
+        rollExtensionFunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(rollExtensionFunction) == kJoystickAxisNotAssigned;
         if (rollExtensionFunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing roll extension axis function mapping!";
         }
     }
     bool additionalAxis1FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis1()->rawValue().toBool()) {
-        additionalAxis1FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis1Function) == kJoystickAxisNotAssigned;
+        additionalAxis1FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis1Function) == kJoystickAxisNotAssigned;
         if (additionalAxis1FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 1 function mapping!";
         }
     }
     bool additionalAxis2FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis2()->rawValue().toBool()) {
-        additionalAxis2FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis2Function) == kJoystickAxisNotAssigned;
+        additionalAxis2FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis2Function) == kJoystickAxisNotAssigned;
         if (additionalAxis2FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 2 function mapping!";
         }
     }
     bool additionalAxis3FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis3()->rawValue().toBool()) {
-        additionalAxis3FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis3Function) == kJoystickAxisNotAssigned;
+        additionalAxis3FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis3Function) == kJoystickAxisNotAssigned;
         if (additionalAxis3FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 3 function mapping!";
         }
     }
     bool additionalAxis4FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis4()->rawValue().toBool()) {
-        additionalAxis4FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis4Function) == kJoystickAxisNotAssigned;
+        additionalAxis4FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis4Function) == kJoystickAxisNotAssigned;
         if (additionalAxis4FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 4 function mapping!";
         }
     }
     bool additionalAxis5FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis5()->rawValue().toBool()) {
-        additionalAxis5FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis5Function) == kJoystickAxisNotAssigned;
+        additionalAxis5FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis5Function) == kJoystickAxisNotAssigned;
         if (additionalAxis5FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 5 function mapping!";
         }
     }
     bool additionalAxis6FunctionRequiredButNotAssigned = false;
     if (_joystickSettings.enableAdditionalAxis6()->rawValue().toBool()) {
-        additionalAxis6FunctionRequiredButNotAssigned = _getJoystickAxisForAxisFunction(additionalAxis6Function) == kJoystickAxisNotAssigned;
+        additionalAxis6FunctionRequiredButNotAssigned =
+            _getJoystickAxisForAxisFunction(additionalAxis6Function) == kJoystickAxisNotAssigned;
         if (additionalAxis6FunctionRequiredButNotAssigned) {
             qCWarning(JoystickLog) << "Internal Error: Missing additional axis 6 function mapping!";
         }
     }
     if (rollFunctionNotAssigned || pitchFunctionNotAssigned || yawFunctionNotAssigned || throttleFunctionNotAssigned ||
-            pitchExtensionFunctionRequiredButNotAssigned || rollExtensionFunctionRequiredButNotAssigned ||
-            additionalAxis1FunctionRequiredButNotAssigned || additionalAxis2FunctionRequiredButNotAssigned || additionalAxis3FunctionRequiredButNotAssigned ||
-            additionalAxis4FunctionRequiredButNotAssigned || additionalAxis5FunctionRequiredButNotAssigned || additionalAxis6FunctionRequiredButNotAssigned) {
-        qCWarning(JoystickLog) << "Missing control axis function(s), resetting all axis settings, marking joystick as uncalibrated and disabled";
+        pitchExtensionFunctionRequiredButNotAssigned || rollExtensionFunctionRequiredButNotAssigned ||
+        additionalAxis1FunctionRequiredButNotAssigned || additionalAxis2FunctionRequiredButNotAssigned ||
+        additionalAxis3FunctionRequiredButNotAssigned || additionalAxis4FunctionRequiredButNotAssigned ||
+        additionalAxis5FunctionRequiredButNotAssigned || additionalAxis6FunctionRequiredButNotAssigned) {
+        qCWarning(JoystickLog) << "Missing control axis function(s), resetting all axis settings, marking joystick as "
+                                  "uncalibrated and disabled";
         _resetAxisCalibrationData();
         _clearAxisSettings();
         _joystickSettings.calibrated()->setRawValue(false);
@@ -440,7 +429,7 @@ void Joystick::_loadAxisSettings(bool joystickCalibrated, int transmitterMode)
         return;
     }
 
-   // FunctionAxis mappings are always stored in TX mode 2
+    // FunctionAxis mappings are always stored in TX mode 2
     // Remap to stored TX mode in settings for UI display
     _remapFunctionsInFunctionMapToNewTransmittedMode(2, transmitterMode);
 }
@@ -456,25 +445,37 @@ void Joystick::_loadFromSettingsIntoCalibrationData()
     int transmitterMode = _joystickSettings.transmitterMode()->rawValue().toInt();
 
     qCDebug(JoystickLog) << name();
-    qCDebug(JoystickLog) << "    calibrated:" <<                        _joystickSettings.calibrated()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    throttleSmoothing:" <<                 _joystickSettings.throttleSmoothing()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    axisFrequencyHz:" <<                   _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    buttonFrequencyHz:" <<                 _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    throttleModeCenterZero:" <<            _joystickSettings.throttleModeCenterZero()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    negativeThrust:" <<                    _joystickSettings.negativeThrust()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    circleCorrection:" <<                  _joystickSettings.circleCorrection()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    exponentialPct:" <<                    _joystickSettings.exponentialPct()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    useDeadband:" <<                       _joystickSettings.useDeadband()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    transmitterMode:" <<                   transmitterMode;
-    qCDebug(JoystickLog) << "    enableManualControlPitchExtension:" << _joystickSettings.enableManualControlPitchExtension()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableManualControlRollExtension:" <<  _joystickSettings.enableManualControlRollExtension()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    additionalAxesFunction:" <<            (_joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 1 ? "RC_CHANNELS_OVERRIDE" : "MANUAL_CONTROL");
-    qCDebug(JoystickLog) << "    enableAdditionalAxis1:" <<             _joystickSettings.enableAdditionalAxis1()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis2:" <<             _joystickSettings.enableAdditionalAxis2()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis3:" <<             _joystickSettings.enableAdditionalAxis3()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis4:" <<             _joystickSettings.enableAdditionalAxis4()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis5:" <<             _joystickSettings.enableAdditionalAxis5()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis6:" <<             _joystickSettings.enableAdditionalAxis6()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    calibrated:" << _joystickSettings.calibrated()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    throttleSmoothing:" << _joystickSettings.throttleSmoothing()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    axisFrequencyHz:" << _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    buttonFrequencyHz:" << _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    throttleModeCenterZero:"
+                         << _joystickSettings.throttleModeCenterZero()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    negativeThrust:" << _joystickSettings.negativeThrust()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    circleCorrection:" << _joystickSettings.circleCorrection()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    exponentialPct:" << _joystickSettings.exponentialPct()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    useDeadband:" << _joystickSettings.useDeadband()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    transmitterMode:" << transmitterMode;
+    qCDebug(JoystickLog) << "    enableManualControlPitchExtension:"
+                         << _joystickSettings.enableManualControlPitchExtension()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableManualControlRollExtension:"
+                         << _joystickSettings.enableManualControlRollExtension()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    additionalAxesFunction:"
+                         << (_joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 1
+                                 ? "RC_CHANNELS_OVERRIDE"
+                                 : "MANUAL_CONTROL");
+    qCDebug(JoystickLog) << "    enableAdditionalAxis1:"
+                         << _joystickSettings.enableAdditionalAxis1()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis2:"
+                         << _joystickSettings.enableAdditionalAxis2()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis3:"
+                         << _joystickSettings.enableAdditionalAxis3()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis4:"
+                         << _joystickSettings.enableAdditionalAxis4()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis5:"
+                         << _joystickSettings.enableAdditionalAxis5()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis6:"
+                         << _joystickSettings.enableAdditionalAxis6()->rawValue().toBool();
 
     _loadAxisSettings(calibrated, transmitterMode);
     _loadButtonSettings();
@@ -505,7 +506,7 @@ void Joystick::_saveAxisSettings(int transmitterMode)
             // No function assigned to axis, nothing to save
             continue;
         }
-        AxisCalibration_t *const calibration = &_rgCalibration[axis];
+        AxisCalibration_t* const calibration = &_rgCalibration[axis];
         axisSettings.beginGroup(QString::number(axis));
 
         axisSettings.setValue(centerKey, calibration->center);
@@ -515,15 +516,10 @@ void Joystick::_saveAxisSettings(int transmitterMode)
         axisSettings.setValue(reversedKey, calibration->reversed);
         axisSettings.setValue(functionKey, static_cast<int>(function));
 
-        qCDebug(JoystickLog)
-            << "    "
-            << "axis:" <<           axis
-            << "min:" <<            calibration->min
-            << "max:" <<            calibration->max
-            << "center:" <<         calibration->center
-            << "reversed:" <<       calibration->reversed
-            << "deadband:" <<       calibration->deadband
-            << "axisFunction:" <<   axisFunctionToString(function);
+        qCDebug(JoystickLog) << "    " << "axis:" << axis << "min:" << calibration->min << "max:" << calibration->max
+                             << "center:" << calibration->center << "reversed:" << calibration->reversed
+                             << "deadband:" << calibration->deadband
+                             << "axisFunction:" << axisFunctionToString(function);
 
         axisSettings.endGroup();
     }
@@ -548,7 +544,7 @@ void Joystick::_saveButtonSettings()
 
     bool anyButtonsSaved = false;
     for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
-        AssignedButtonAction *buttonAction = _assignedButtonActions[buttonIndex];
+        AssignedButtonAction* buttonAction = _assignedButtonActions[buttonIndex];
 
         if (buttonAction) {
             buttonSettings.beginGroup(QString::number(buttonIndex));
@@ -558,11 +554,8 @@ void Joystick::_saveButtonSettings()
 
             anyButtonsSaved = true;
 
-            qCDebug(JoystickLog)
-                << "    "
-                << "button:" <<     buttonIndex
-                << "actionName:" << buttonAction->actionName
-                << "repeat:" <<     buttonAction->repeat;
+            qCDebug(JoystickLog) << "    " << "button:" << buttonIndex << "actionName:" << buttonAction->actionName
+                                 << "repeat:" << buttonAction->repeat;
         } else {
             // No action assigned, remove any existing settings
             buttonSettings.remove(QString::number(buttonIndex));
@@ -600,25 +593,37 @@ void Joystick::_saveFromCalibrationDataIntoSettings()
     int transmitterMode = _joystickSettings.transmitterMode()->rawValue().toInt();
 
     qCDebug(JoystickLog) << name();
-    qCDebug(JoystickLog) << "    calibrated:" <<                        calibrated;
-    qCDebug(JoystickLog) << "    throttleSmoothing:" <<                 _joystickSettings.throttleSmoothing()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    axisFrequencyHz:" <<                   _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    buttonFrequencyHz:" <<                 _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    throttleModeCenterZero:" <<            _joystickSettings.throttleModeCenterZero()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    negativeThrust:" <<                    _joystickSettings.negativeThrust()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    circleCorrection:" <<                  _joystickSettings.circleCorrection()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    exponentialPct:" <<                    _joystickSettings.exponentialPct()->rawValue().toDouble();
-    qCDebug(JoystickLog) << "    useDeadband:" <<                       _joystickSettings.useDeadband()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableManualControlPitchExtension:" << _joystickSettings.enableManualControlPitchExtension()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableManualControlRollExtension:" <<  _joystickSettings.enableManualControlRollExtension()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    additionalAxesFunction:" <<            (_joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 1 ? "RC_CHANNELS_OVERRIDE" : "MANUAL_CONTROL");
-    qCDebug(JoystickLog) << "    enableAdditionalAxis1:" <<             _joystickSettings.enableAdditionalAxis1()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis2:" <<             _joystickSettings.enableAdditionalAxis2()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis3:" <<             _joystickSettings.enableAdditionalAxis3()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis4:" <<             _joystickSettings.enableAdditionalAxis4()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis5:" <<             _joystickSettings.enableAdditionalAxis5()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    enableAdditionalAxis6:" <<             _joystickSettings.enableAdditionalAxis6()->rawValue().toBool();
-    qCDebug(JoystickLog) << "    transmitterMode:" <<                   transmitterMode;
+    qCDebug(JoystickLog) << "    calibrated:" << calibrated;
+    qCDebug(JoystickLog) << "    throttleSmoothing:" << _joystickSettings.throttleSmoothing()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    axisFrequencyHz:" << _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    buttonFrequencyHz:" << _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    throttleModeCenterZero:"
+                         << _joystickSettings.throttleModeCenterZero()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    negativeThrust:" << _joystickSettings.negativeThrust()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    circleCorrection:" << _joystickSettings.circleCorrection()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    exponentialPct:" << _joystickSettings.exponentialPct()->rawValue().toDouble();
+    qCDebug(JoystickLog) << "    useDeadband:" << _joystickSettings.useDeadband()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableManualControlPitchExtension:"
+                         << _joystickSettings.enableManualControlPitchExtension()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableManualControlRollExtension:"
+                         << _joystickSettings.enableManualControlRollExtension()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    additionalAxesFunction:"
+                         << (_joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 1
+                                 ? "RC_CHANNELS_OVERRIDE"
+                                 : "MANUAL_CONTROL");
+    qCDebug(JoystickLog) << "    enableAdditionalAxis1:"
+                         << _joystickSettings.enableAdditionalAxis1()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis2:"
+                         << _joystickSettings.enableAdditionalAxis2()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis3:"
+                         << _joystickSettings.enableAdditionalAxis3()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis4:"
+                         << _joystickSettings.enableAdditionalAxis4()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis5:"
+                         << _joystickSettings.enableAdditionalAxis5()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    enableAdditionalAxis6:"
+                         << _joystickSettings.enableAdditionalAxis6()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    transmitterMode:" << transmitterMode;
 
     _clearAxisSettings();
     if (calibrated) {
@@ -634,16 +639,15 @@ void Joystick::_remapFunctionsInFunctionMapToNewTransmittedMode(int fromMode, in
     static constexpr const int modeCount = 4;
     static constexpr const int attitudeControlCount = 4;
     static constexpr const AxisFunction_t mapping[modeCount][attitudeControlCount] = {
-        { yawFunction,  pitchFunction,      rollFunction,   throttleFunction },
-        { yawFunction,  throttleFunction,   rollFunction,   pitchFunction },
-        { rollFunction, pitchFunction,      yawFunction,    throttleFunction },
-        { rollFunction, throttleFunction,   yawFunction,    pitchFunction }
-    };
+        {yawFunction, pitchFunction, rollFunction, throttleFunction},
+        {yawFunction, throttleFunction, rollFunction, pitchFunction},
+        {rollFunction, pitchFunction, yawFunction, throttleFunction},
+        {rollFunction, throttleFunction, yawFunction, pitchFunction}};
 
     // First make a direct copy so the extension stick function are set correctly
     AxisFunctionMap_t tempMap = _axisFunctionToJoystickAxisMap;
 
-    for (int i=0; i<attitudeControlCount; i++) {
+    for (int i = 0; i < attitudeControlCount; i++) {
         auto fromAxisFunction = mapping[fromMode - 1][i];
         auto toAxisFunction = mapping[toMode - 1][i];
 
@@ -691,7 +695,8 @@ void Joystick::run()
             const double axisFrequencyHz = _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
             const double buttonFrequencyHz = _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
 
-            const int sleep = qMin(static_cast<int>(1000.0 / axisFrequencyHz), static_cast<int>(1000.0 / buttonFrequencyHz)) / 2;
+            const int sleep =
+                qMin(static_cast<int>(1000.0 / axisFrequencyHz), static_cast<int>(1000.0 / buttonFrequencyHz)) / 2;
             QThread::msleep(sleep);
         }
 
@@ -700,11 +705,12 @@ void Joystick::run()
 
     if ((openFailed || updateFailed) && !_exitPollingThread) {
         qCDebug(JoystickLog) << "Triggering joystick rescan after failure";
-        QMetaObject::invokeMethod(JoystickManager::instance(), "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(JoystickManager::instance(), "_checkForAddedOrRemovedJoysticks",
+                                  Qt::QueuedConnection);
     }
 }
 
-void Joystick::_updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t &buttonEventState)
+void Joystick::_updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t& buttonEventState)
 {
     if (buttonPressed) {
         if (buttonEventState == ButtonEventNone) {
@@ -725,7 +731,7 @@ void Joystick::_updateButtonEventState(int buttonIndex, const bool buttonPressed
     }
 }
 
-void Joystick::_updateButtonEventStates(QVector<ButtonEvent_t> &buttonEventStates)
+void Joystick::_updateButtonEventStates(QVector<ButtonEvent_t>& buttonEventStates)
 {
     if (buttonEventStates.size() < _totalButtonCount) {
         qCWarning(JoystickLog) << "Internal Error: buttonEventStates size incorrect!";
@@ -771,7 +777,7 @@ void Joystick::_handleButtons()
             }
         }
     } else if (_pollingFlags.testFlag(PollingForVehicle)) {
-        Vehicle *const vehicle = _pollingVehicle;
+        Vehicle* const vehicle = _pollingVehicle;
         if (!vehicle) {
             qCWarning(JoystickLog) << "Internal Error: No vehicle for joystick!";
             return;
@@ -805,22 +811,24 @@ void Joystick::_handleButtons()
                         assignedAction->buttonElapsedTimer.start();
                         qCDebug(JoystickLog) << "Repeat - button:action" << buttonIndex << buttonAction;
                         // Post to the GUI thread for safe access to class members.
-                        QMetaObject::invokeMethod(this, [this, buttonAction]() {
-                            _executeButtonAction(buttonAction, ButtonEventRepeat);
-                        }, Qt::QueuedConnection);
+                        QMetaObject::invokeMethod(
+                            this, [this, buttonAction]() { _executeButtonAction(buttonAction, ButtonEventRepeat); },
+                            Qt::QueuedConnection);
                     }
                 } else {
                     if (buttonEventState == ButtonEventDownTransition) {
                         // Check for multi-button action
-                        QList<int> multiActionButtons = { buttonIndex };
+                        QList<int> multiActionButtons = {buttonIndex};
                         bool allActionButtonsPressed = true;
                         for (int multiIndex = 0; multiIndex < _totalButtonCount; multiIndex++) {
                             if (multiIndex == buttonIndex) {
                                 continue;
                             }
-                            if (_assignedButtonActions[multiIndex] && (_assignedButtonActions[multiIndex]->actionName == buttonAction)) {
+                            if (_assignedButtonActions[multiIndex] &&
+                                (_assignedButtonActions[multiIndex]->actionName == buttonAction)) {
                                 // We found a multi-button action
-                                if (_buttonEventStates[multiIndex] == ButtonEventDownTransition || _buttonEventStates[multiIndex] == ButtonEventRepeat) {
+                                if (_buttonEventStates[multiIndex] == ButtonEventDownTransition ||
+                                    _buttonEventStates[multiIndex] == ButtonEventRepeat) {
                                     // So far so good
                                     multiActionButtons.append(multiIndex);
                                 } else {
@@ -836,7 +844,8 @@ void Joystick::_handleButtons()
                         }
 
                         if (multiActionButtons.size() > 1) {
-                            qCDebug(JoystickLog) << "Multi-button action - buttons:action" << multiActionButtons << buttonAction;
+                            qCDebug(JoystickLog)
+                                << "Multi-button action - buttons:action" << multiActionButtons << buttonAction;
                         } else {
                             qCDebug(JoystickLog) << "Action triggered - button:Action" << buttonIndex << buttonAction;
                         }
@@ -845,9 +854,12 @@ void Joystick::_handleButtons()
                         // several such buttons are all in the same event state simultaneously.
                         if (!executedActions.contains(buttonAction)) {
                             // Post to the GUI thread for safe access to class members.
-                            QMetaObject::invokeMethod(this, [this, buttonAction]() {
-                                _executeButtonAction(buttonAction, ButtonEventDownTransition);
-                            }, Qt::QueuedConnection);
+                            QMetaObject::invokeMethod(
+                                this,
+                                [this, buttonAction]() {
+                                    _executeButtonAction(buttonAction, ButtonEventDownTransition);
+                                },
+                                Qt::QueuedConnection);
                             executedActions.insert(buttonAction);
                         }
                         continue;
@@ -857,9 +869,9 @@ void Joystick::_handleButtons()
                 // Same deduplication guard for release events.
                 if (!executedActions.contains(buttonAction)) {
                     // Post to the GUI thread for safe access to class members.
-                    QMetaObject::invokeMethod(this, [this, buttonAction]() {
-                        _executeButtonAction(buttonAction, ButtonEventUpTransition);
-                    }, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(
+                        this, [this, buttonAction]() { _executeButtonAction(buttonAction, ButtonEventUpTransition); },
+                        Qt::QueuedConnection);
                     executedActions.insert(buttonAction);
                 }
                 continue;
@@ -868,7 +880,7 @@ void Joystick::_handleButtons()
     }
 }
 
-float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bool withDeadbands)
+float Joystick::_adjustRange(int value, const AxisCalibration_t& calibration, bool withDeadbands)
 {
     float valueNormalized;
     float axisLength;
@@ -885,11 +897,11 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
     } else if (value > calibration.center) {
         axisBasis = 1.0f;
         valueNormalized = value - calibration.center;
-        axisLength =  calibration.max - calibration.center;
+        axisLength = calibration.max - calibration.center;
     } else {
         axisBasis = -1.0f;
         valueNormalized = calibration.center - value;
-        axisLength =  calibration.center - calibration.min;
+        axisLength = calibration.center - calibration.min;
     }
 
     if (axisLength <= 0.0f) {
@@ -900,7 +912,7 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
     if (withDeadbands) {
         if (valueNormalized > calibration.deadband) {
             axisPercent = (valueNormalized - calibration.deadband) / (axisLength - calibration.deadband);
-        } else if (valueNormalized<-calibration.deadband) {
+        } else if (valueNormalized < -calibration.deadband) {
             axisPercent = (valueNormalized + calibration.deadband) / (axisLength - calibration.deadband);
         } else {
             axisPercent = 0.f;
@@ -917,7 +929,7 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
     return std::max(-1.0f, std::min(correctedValue, 1.0f));
 }
 
-uint16_t Joystick::_adjustRangeToRcOverridePwm(int value, const AxisCalibration_t &calibration, bool withDeadbands)
+uint16_t Joystick::_adjustRangeToRcOverridePwm(int value, const AxisCalibration_t& calibration, bool withDeadbands)
 {
     const float normalizedValue = _adjustRange(value, calibration, withDeadbands);
     const bool oneSidedAxis = (calibration.center == calibration.min) || (calibration.center == calibration.max);
@@ -955,7 +967,7 @@ void Joystick::_handleAxis()
         }
         emit rawChannelValuesChanged(channelValues);
     } else if (_pollingFlags.testFlag(PollingForVehicle)) {
-        Vehicle *const vehicle = _pollingVehicle;
+        Vehicle* const vehicle = _pollingVehicle;
         if (!vehicle) {
             qCWarning(JoystickLog) << "Internal Error: No vehicle for joystick!";
             return;
@@ -973,7 +985,8 @@ void Joystick::_handleAxis()
         bool negativeThrust = _joystickSettings.negativeThrust()->rawValue().toBool();
         bool circleCorrection = _joystickSettings.circleCorrection()->rawValue().toBool();
         bool throttleSmoothing = _joystickSettings.throttleSmoothing()->rawValue().toBool();
-        bool additionalAxesFunctionIsManualControl = _joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 0;
+        bool additionalAxesFunctionIsManualControl =
+            _joystickSettings.additionalAxesFunction()->rawValue().toUInt() == 0;
         double exponentialPercent = _joystickSettings.exponentialPct()->rawValue().toDouble();
 
         if (_getJoystickAxisForAxisFunction(rollFunction) == kJoystickAxisNotAssigned ||
@@ -988,9 +1001,10 @@ void Joystick::_handleAxis()
         axisIndex = _getJoystickAxisForAxisFunction(pitchFunction);
         float pitch = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
         axisIndex = _getJoystickAxisForAxisFunction(yawFunction);
-        float yaw = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex],useDeadband);
+        float yaw = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
         axisIndex = _getJoystickAxisForAxisFunction(throttleFunction);
-        float throttle = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], throttleModeCenterZero ? useDeadband : false);
+        float throttle = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex],
+                                      throttleModeCenterZero ? useDeadband : false);
 
         float pitchExtension = qQNaN();
         if (_joystickSettings.enableManualControlPitchExtension()->rawValue().toBool()) {
@@ -1023,7 +1037,8 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl1 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[0] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[0] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[0] = true;
             }
         }
@@ -1037,7 +1052,8 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl2 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[1] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[1] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[1] = true;
             }
         }
@@ -1051,7 +1067,8 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl3 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[2] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[2] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[2] = true;
             }
         }
@@ -1065,7 +1082,8 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl4 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[3] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[3] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[3] = true;
             }
         }
@@ -1079,7 +1097,8 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl5 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[4] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[4] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[4] = true;
             }
         }
@@ -1093,23 +1112,30 @@ void Joystick::_handleAxis()
             if (additionalAxesFunctionIsManualControl) {
                 auxManualControl6 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
             } else {
-                auxRcOverridePwm[5] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxRcOverridePwm[5] =
+                    _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
                 auxRcOverrideEnabled[5] = true;
             }
         }
 
         if (throttleSmoothing) {
             static float throttleSmoothingValue = 0.f;
-            throttleSmoothingValue += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
-            throttleSmoothingValue = std::max(static_cast<float>(-1.f), std::min(throttleSmoothingValue, static_cast<float>(1.f)));
+            throttleSmoothingValue +=
+                (throttle *
+                 (40 / 1000.f));  // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
+            throttleSmoothingValue =
+                std::max(static_cast<float>(-1.f), std::min(throttleSmoothingValue, static_cast<float>(1.f)));
             throttle = throttleSmoothingValue;
         }
 
         if (circleCorrection) {
-            const float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
-            const float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
+            const float roll_limited =
+                std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
+            const float pitch_limited =
+                std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
             const float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
-            const float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
+            const float throttle_limited =
+                std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
 
             // Map from unit circle to linear range and limit
             roll = std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
@@ -1118,11 +1144,11 @@ void Joystick::_handleAxis()
             throttle = std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
         }
 
-        if ( exponentialPercent > 0.0 ) {
+        if (exponentialPercent > 0.0) {
             const float exponential = -static_cast<float>(exponentialPercent / 100.0);
-            roll =  -exponential * powf(roll, 3) + ((1 + exponential) * roll);
-            pitch = -exponential * powf(pitch,3) + ((1 + exponential) * pitch);
-            yaw =   -exponential * powf(yaw,  3) + ((1 + exponential) * yaw);
+            roll = -exponential * powf(roll, 3) + ((1 + exponential) * roll);
+            pitch = -exponential * powf(pitch, 3) + ((1 + exponential) * pitch);
+            yaw = -exponential * powf(yaw, 3) + ((1 + exponential) * yaw);
         }
 
         // Adjust throttle to 0:1 range
@@ -1135,45 +1161,32 @@ void Joystick::_handleAxis()
         }
 
         if (additionalAxesFunctionIsManualControl) {
-            qCDebug(JoystickVerboseLog)
-                << name()
-                << "roll:" << roll
-                << "pitch:" << -pitch
-                << "yaw:" << yaw
-                << "throttle:" << throttle
-                << "pitchExtension:" << pitchExtension
-                << "rollExtension:" << rollExtension
-                << "additionalAxesFunction: MANUAL_CONTROL"
-                << "aux1:" << auxManualControl1
-                << "aux2:" << auxManualControl2
-                << "aux3:" << auxManualControl3
-                << "aux4:" << auxManualControl4
-                << "aux5:" << auxManualControl5
-                << "aux6:" << auxManualControl6;
+            qCDebug(JoystickVerboseLog) << name() << "roll:" << roll << "pitch:" << -pitch << "yaw:" << yaw
+                                        << "throttle:" << throttle << "pitchExtension:" << pitchExtension
+                                        << "rollExtension:" << rollExtension << "additionalAxesFunction: MANUAL_CONTROL"
+                                        << "aux1:" << auxManualControl1 << "aux2:" << auxManualControl2
+                                        << "aux3:" << auxManualControl3 << "aux4:" << auxManualControl4
+                                        << "aux5:" << auxManualControl5 << "aux6:" << auxManualControl6;
         } else {
             qCDebug(JoystickVerboseLog)
-                << name()
-                << "roll:" << roll
-                << "pitch:" << -pitch
-                << "yaw:" << yaw
-                << "throttle:" << throttle
-                << "pitchExtension:" << pitchExtension
-                << "rollExtension:" << rollExtension
-                << "additionalAxesFunction: RC_CHANNELS_OVERRIDE"
-                << "rcOverridePwm[0]:" << auxRcOverridePwm[0] << "enabled:" << auxRcOverrideEnabled[0]
-                << "rcOverridePwm[1]:" << auxRcOverridePwm[1] << "enabled:" << auxRcOverrideEnabled[1]
-                << "rcOverridePwm[2]:" << auxRcOverridePwm[2] << "enabled:" << auxRcOverrideEnabled[2]
-                << "rcOverridePwm[3]:" << auxRcOverridePwm[3] << "enabled:" << auxRcOverrideEnabled[3]
-                << "rcOverridePwm[4]:" << auxRcOverridePwm[4] << "enabled:" << auxRcOverrideEnabled[4]
-                << "rcOverridePwm[5]:" << auxRcOverridePwm[5] << "enabled:" << auxRcOverrideEnabled[5];
+                << name() << "roll:" << roll << "pitch:" << -pitch << "yaw:" << yaw << "throttle:" << throttle
+                << "pitchExtension:" << pitchExtension << "rollExtension:" << rollExtension
+                << "additionalAxesFunction: RC_CHANNELS_OVERRIDE" << "rcOverridePwm[0]:" << auxRcOverridePwm[0]
+                << "enabled:" << auxRcOverrideEnabled[0] << "rcOverridePwm[1]:" << auxRcOverridePwm[1]
+                << "enabled:" << auxRcOverrideEnabled[1] << "rcOverridePwm[2]:" << auxRcOverridePwm[2]
+                << "enabled:" << auxRcOverrideEnabled[2] << "rcOverridePwm[3]:" << auxRcOverridePwm[3]
+                << "enabled:" << auxRcOverrideEnabled[3] << "rcOverridePwm[4]:" << auxRcOverridePwm[4]
+                << "enabled:" << auxRcOverrideEnabled[4] << "rcOverridePwm[5]:" << auxRcOverridePwm[5]
+                << "enabled:" << auxRcOverrideEnabled[5];
         }
 
-        // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub (and it only handles 16 bits)
-        // Set up button bitmap
+        // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub (and it only handles 16
+        // bits) Set up button bitmap
         quint64 buttonPressedBits = 0;  ///< Buttons pressed for manualControl signal
         for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
             const quint64 buttonBit = static_cast<quint64>(1LL << buttonIndex);
-            if (_buttonEventStates[buttonIndex] == ButtonEventDownTransition || _buttonEventStates[buttonIndex] == ButtonEventRepeat) {
+            if (_buttonEventStates[buttonIndex] == ButtonEventDownTransition ||
+                _buttonEventStates[buttonIndex] == ButtonEventRepeat) {
                 buttonPressedBits |= buttonBit;
             }
         }
@@ -1183,15 +1196,17 @@ void Joystick::_handleAxis()
         const uint16_t lowButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
         const uint16_t highButtons = static_cast<uint16_t>((buttonPressedBits >> 16) & 0xFFFF);
 
-
-        vehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons, pitchExtension, rollExtension, auxManualControl1, auxManualControl2, auxManualControl3, auxManualControl4, auxManualControl5, auxManualControl6);
-        vehicle->sendJoystickAuxRcOverrideThreadSafe(auxRcOverridePwm, auxRcOverrideEnabled, !additionalAxesFunctionIsManualControl);
+        vehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons, pitchExtension,
+                                            rollExtension, auxManualControl1, auxManualControl2, auxManualControl3,
+                                            auxManualControl4, auxManualControl5, auxManualControl6);
+        vehicle->sendJoystickAuxRcOverrideThreadSafe(auxRcOverridePwm, auxRcOverrideEnabled,
+                                                     !additionalAxesFunctionIsManualControl);
     }
 }
 
 void Joystick::_startPollingForActiveVehicle()
 {
-    Vehicle *activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     if (!activeVehicle) {
         qCWarning(JoystickLog) << "Internal Error: No active vehicle to poll for";
         return;
@@ -1199,9 +1214,10 @@ void Joystick::_startPollingForActiveVehicle()
     _startPollingForVehicle(*activeVehicle);
 }
 
-void Joystick::_startPollingForVehicle(Vehicle &vehicle)
+void Joystick::_startPollingForVehicle(Vehicle& vehicle)
 {
-    qCDebug(JoystickLog) << "Starting joystick polling for vehicle. Vehicle id:" << vehicle.id() << "Current flags:" << _pollingFlagsToString(_pollingFlags);
+    qCDebug(JoystickLog) << "Starting joystick polling for vehicle. Vehicle id:" << vehicle.id()
+                         << "Current flags:" << _pollingFlagsToString(_pollingFlags);
 
     if (_pollingFlags.testFlag(PollingForVehicle)) {
         qCWarning(JoystickLog) << "Internal Error: Joystick already polling for vehicle!";
@@ -1213,24 +1229,24 @@ void Joystick::_startPollingForVehicle(Vehicle &vehicle)
 
     _buildAvailableButtonsActionList(_pollingVehicle);
 
-    (void) connect(this, &Joystick::setArmed,           _pollingVehicle, &Vehicle::setArmedShowError);
+    (void) connect(this, &Joystick::setArmed, _pollingVehicle, &Vehicle::setArmedShowError);
     (void) connect(this, &Joystick::setVtolInFwdFlight, _pollingVehicle, &Vehicle::setVtolInFwdFlight);
-    (void) connect(this, &Joystick::setFlightMode,      _pollingVehicle, &Vehicle::setFlightMode);
-    (void) connect(this, &Joystick::emergencyStop,      _pollingVehicle, &Vehicle::emergencyStop);
-    (void) connect(this, &Joystick::gripperAction,      _pollingVehicle, &Vehicle::sendGripperAction);
-    (void) connect(this, &Joystick::landingGearDeploy,  _pollingVehicle, &Vehicle::landingGearDeploy);
+    (void) connect(this, &Joystick::setFlightMode, _pollingVehicle, &Vehicle::setFlightMode);
+    (void) connect(this, &Joystick::emergencyStop, _pollingVehicle, &Vehicle::emergencyStop);
+    (void) connect(this, &Joystick::gripperAction, _pollingVehicle, &Vehicle::sendGripperAction);
+    (void) connect(this, &Joystick::landingGearDeploy, _pollingVehicle, &Vehicle::landingGearDeploy);
     (void) connect(this, &Joystick::landingGearRetract, _pollingVehicle, &Vehicle::landingGearRetract);
-    (void) connect(this, &Joystick::motorInterlock,     _pollingVehicle, &Vehicle::motorInterlock);
+    (void) connect(this, &Joystick::motorInterlock, _pollingVehicle, &Vehicle::motorInterlock);
 
     (void) connect(_pollingVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
 
-    if (GimbalController *const gimbal = _pollingVehicle->gimbalController()) {
-        (void) connect(this, &Joystick::gimbalYawLock,      gimbal, &GimbalController::gimbalYawLock);
-        (void) connect(this, &Joystick::centerGimbal,       gimbal, &GimbalController::centerGimbal);
-        (void) connect(this, &Joystick::gimbalPitchStart,   gimbal, &GimbalController::gimbalPitchStart);
-        (void) connect(this, &Joystick::gimbalYawStart,     gimbal, &GimbalController::gimbalYawStart);
-        (void) connect(this, &Joystick::gimbalPitchStop,    gimbal, &GimbalController::gimbalPitchStop);
-        (void) connect(this, &Joystick::gimbalYawStop,      gimbal, &GimbalController::gimbalYawStop);
+    if (GimbalController* const gimbal = _pollingVehicle->gimbalController()) {
+        (void) connect(this, &Joystick::gimbalYawLock, gimbal, &GimbalController::gimbalYawLock);
+        (void) connect(this, &Joystick::centerGimbal, gimbal, &GimbalController::centerGimbal);
+        (void) connect(this, &Joystick::gimbalPitchStart, gimbal, &GimbalController::gimbalPitchStart);
+        (void) connect(this, &Joystick::gimbalYawStart, gimbal, &GimbalController::gimbalYawStart);
+        (void) connect(this, &Joystick::gimbalPitchStop, gimbal, &GimbalController::gimbalPitchStop);
+        (void) connect(this, &Joystick::gimbalYawStop, gimbal, &GimbalController::gimbalYawStop);
     }
 
     _pollingFlags |= PollingForVehicle;
@@ -1239,7 +1255,8 @@ void Joystick::_startPollingForVehicle(Vehicle &vehicle)
 
 void Joystick::_startPollingForConfiguration()
 {
-    qCDebug(JoystickLog) << "Starting joystick polling for configuration. Current flags:" << _pollingFlagsToString(_pollingFlags);
+    qCDebug(JoystickLog) << "Starting joystick polling for configuration. Current flags:"
+                         << _pollingFlagsToString(_pollingFlags);
 
     if (_pollingFlags.testFlag(PollingForConfiguration)) {
         qCWarning(JoystickLog) << "Internal Error: Joystick already polling for configuration!";
@@ -1252,7 +1269,8 @@ void Joystick::_startPollingForConfiguration()
 
 void Joystick::_stopPollingForConfiguration()
 {
-    qCDebug(JoystickLog) << "Stopping joystick polling for configuration. Current flags:" << _pollingFlagsToString(_pollingFlags);
+    qCDebug(JoystickLog) << "Stopping joystick polling for configuration. Current flags:"
+                         << _pollingFlagsToString(_pollingFlags);
 
     if (!_pollingFlags.testFlag(PollingForConfiguration)) {
         qCWarning(JoystickLog) << "Internal Error: Joystick not polling for configuration!";
@@ -1276,20 +1294,22 @@ void Joystick::_stopPollingForConfiguration()
     qCDebug(JoystickLog) << "Remaining flags:" << _pollingFlagsToString(_pollingFlags);
 
     if (remainingFlags.testFlag(PollingForVehicle) && !isRunning()) {
-        qCWarning(JoystickLog) << "Internal Error: Joystick polling not running! Forcing start of polling thread. Continuing polling for vehicle.";
+        qCWarning(JoystickLog) << "Internal Error: Joystick polling not running! Forcing start of polling thread. "
+                                  "Continuing polling for vehicle.";
         _startPollingThread();
     }
 }
 
 void Joystick::_stopAllPollingForVehicle()
 {
-    qCDebug(JoystickLog) << "Stopping all joystick polling for vehicle. Current flags:" << _pollingFlagsToString(_pollingFlags);
+    qCDebug(JoystickLog) << "Stopping all joystick polling for vehicle. Current flags:"
+                         << _pollingFlagsToString(_pollingFlags);
 
     if (_pollingVehicle) {
         _pollingVehicle->sendJoystickAuxRcOverrideThreadSafe({}, {}, false);
         (void) disconnect(this, nullptr, _pollingVehicle, nullptr);
         (void) disconnect(_pollingVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
-        if (GimbalController *const gimbal = _pollingVehicle->gimbalController()) {
+        if (GimbalController* const gimbal = _pollingVehicle->gimbalController()) {
             (void) disconnect(this, nullptr, gimbal, nullptr);
         }
         if (!isRunning()) {
@@ -1314,7 +1334,8 @@ void Joystick::_stopAllPollingForVehicle()
     qCDebug(JoystickLog) << "Remaining flags:" << _pollingFlagsToString(_pollingFlags);
 
     if (remainingFlags.testFlag(PollingForConfiguration) && !isRunning()) {
-        qCWarning(JoystickLog) << "Joystick polling thread not running but configuration polling flag set. Forcing start.";
+        qCWarning(JoystickLog)
+            << "Joystick polling thread not running but configuration polling flag set. Forcing start.";
         _startPollingThread();
     }
 }
@@ -1361,7 +1382,7 @@ QString Joystick::_pollingFlagsToString(PollingFlags flags) const
     return parts.join(QStringLiteral("|"));
 }
 
-void Joystick::setAxisCalibration(int axis, const AxisCalibration_t &calibration)
+void Joystick::setAxisCalibration(int axis, const AxisCalibration_t& calibration)
 {
     if (!_validAxis(axis)) {
         return;
@@ -1407,7 +1428,8 @@ int Joystick::_getJoystickAxisForAxisFunction(AxisFunction_t axisFunction) const
     return _axisFunctionToJoystickAxisMap.value(axisFunction, kJoystickAxisNotAssigned);
 }
 
-RemoteControlCalibrationController::StickFunction Joystick::mapAxisFunctionToRCCStickFunction(Joystick::AxisFunction_t axisFunction) const
+RemoteControlCalibrationController::StickFunction Joystick::mapAxisFunctionToRCCStickFunction(
+    Joystick::AxisFunction_t axisFunction) const
 {
     switch (axisFunction) {
         case rollFunction:
@@ -1440,7 +1462,8 @@ RemoteControlCalibrationController::StickFunction Joystick::mapAxisFunctionToRCC
     Q_UNREACHABLE();
 }
 
-Joystick::AxisFunction_t Joystick::mapRCCStickFunctionToAxisFunction(RemoteControlCalibrationController::StickFunction stickFunction) const
+Joystick::AxisFunction_t Joystick::mapRCCStickFunctionToAxisFunction(
+    RemoteControlCalibrationController::StickFunction stickFunction) const
 {
     switch (stickFunction) {
         case RemoteControlCalibrationController::stickFunctionRoll:
@@ -1542,7 +1565,8 @@ void Joystick::setButtonAction(int button, const QString& actionName)
             //-- Make sure repeat is off if this action doesn't support repeats
             const int idx = _findAvailableButtonActionIndex(actionName);
             if (idx >= 0) {
-                const AvailableButtonAction *const buttonAction = qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(idx));
+                const AvailableButtonAction* const buttonAction =
+                    qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(idx));
                 if (!buttonAction->canRepeat()) {
                     _assignedButtonActions[button]->repeat = false;
                 }
@@ -1588,9 +1612,9 @@ QStringList Joystick::buttonActions() const
     return list;
 }
 
-void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent)
+void Joystick::_executeButtonAction(const QString& action, const ButtonEvent_t buttonEvent)
 {
-    Vehicle *const vehicle = _pollingVehicle;
+    Vehicle* const vehicle = _pollingVehicle;
     if (!vehicle) {
         qCWarning(JoystickLog) << "Internal Error: No vehicle for joystick!";
         return;
@@ -1605,20 +1629,21 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
 
     const int idx = _findAvailableButtonActionIndex(action);
     if (idx >= 0) {
-        const AvailableButtonAction *const availAction = qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(idx));
+        const AvailableButtonAction* const availAction =
+            qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(idx));
         std::function<void()> handler;
         switch (buttonEvent) {
-        case ButtonEventDownTransition:
-            handler = availAction->onDown();
-            break;
-        case ButtonEventRepeat:
-            handler = availAction->onRepeat();
-            break;
-        case ButtonEventUpTransition:
-            handler = availAction->onUp();
-            break;
-        default:
-            return;
+            case ButtonEventDownTransition:
+                handler = availAction->onDown();
+                break;
+            case ButtonEventRepeat:
+                handler = availAction->onRepeat();
+                break;
+            case ButtonEventUpTransition:
+                handler = availAction->onUp();
+                break;
+            default:
+                return;
         }
         if (handler) {
             qCDebug(JoystickLog) << "Button Action:" << action << buttonEvent;
@@ -1645,7 +1670,7 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
     // MAVLink actions
     emit unknownAction(action);
     for (int i = 0; i < _mavlinkActionManager->actions()->count(); i++) {
-        MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<MavlinkAction*>(i);
+        MavlinkAction* const mavlinkAction = _mavlinkActionManager->actions()->value<MavlinkAction*>(i);
         if (action == mavlinkAction->label()) {
             qCDebug(JoystickLog) << "Button Action: Sending MAVLink action" << action;
             mavlinkAction->sendTo(vehicle);
@@ -1674,10 +1699,11 @@ bool Joystick::_validButton(int button) const
     return false;
 }
 
-int Joystick::_findAvailableButtonActionIndex(const QString &action)
+int Joystick::_findAvailableButtonActionIndex(const QString& action)
 {
     for (int i = 0; i < _availableButtonActions->count(); i++) {
-        const AvailableButtonAction *const buttonAction = qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(i));
+        const AvailableButtonAction* const buttonAction =
+            qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(i));
         if (buttonAction->action() == action) {
             return i;
         }
@@ -1686,7 +1712,7 @@ int Joystick::_findAvailableButtonActionIndex(const QString &action)
     return -1;
 }
 
-void Joystick::_addAvailableButtonActionIfMissing(const QString &action)
+void Joystick::_addAvailableButtonActionIfMissing(const QString& action)
 {
     if (_findAvailableButtonActionIndex(action) != -1) {
         return;
@@ -1699,7 +1725,7 @@ void Joystick::_addAvailableButtonActionIfMissing(const QString &action)
     emit assignableActionsChanged();
 }
 
-void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
+void Joystick::_buildAvailableButtonsActionList(Vehicle* vehicle)
 {
     if (_availableButtonActions->count()) {
         _availableButtonActions->clearAndDeleteContents();
@@ -1707,113 +1733,99 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
     _availableActionTitles.clear();
 
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionNone, nullptr));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionArm,
-        [this]() { emit setArmed(true); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionDisarm,
-        [this]() { emit setArmed(false); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionToggleArm,
-        [this]() { emit setArmed(!_pollingVehicle->armed()); }));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionArm, [this]() { emit setArmed(true); }));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionDisarm, [this]() { emit setArmed(false); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionToggleArm, [this]() { emit setArmed(!_pollingVehicle->armed()); }));
     if (vehicle) {
         const QStringList list = vehicle->flightModes();
-        for (const QString &mode : list) {
+        for (const QString& mode : list) {
             _availableButtonActions->append(new AvailableButtonAction(mode, nullptr));
         }
     }
 
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionVTOLFixedWing,
-        [this]() { emit setVtolInFwdFlight(true); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionVTOLMultiRotor,
-        [this]() { emit setVtolInFwdFlight(false); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousZoomIn,
-        [this]() { emit startContinuousZoom(1); },
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionVTOLFixedWing, [this]() { emit setVtolInFwdFlight(true); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionVTOLMultiRotor, [this]() { emit setVtolInFwdFlight(false); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionContinuousZoomIn, [this]() { emit startContinuousZoom(1); },
         [this]() { emit stopContinuousZoom(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousZoomOut,
-        [this]() { emit startContinuousZoom(-1); },
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionContinuousZoomOut, [this]() { emit startContinuousZoom(-1); },
         [this]() { emit stopContinuousZoom(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepZoomIn,
-        [this]() { emit stepZoom(1); },
-        nullptr,
-        [this]() { emit stepZoom(1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepZoomOut,
-        [this]() { emit stepZoom(-1); },
-        nullptr,
-        [this]() { emit stepZoom(-1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousFocusIn,
-        [this]() { emit startContinuousFocus(1); },
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionStepZoomIn, [this]() { emit stepZoom(1); }, nullptr, [this]() { emit stepZoom(1); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionStepZoomOut, [this]() { emit stepZoom(-1); }, nullptr, [this]() { emit stepZoom(-1); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionContinuousFocusIn, [this]() { emit startContinuousFocus(1); },
         [this]() { emit stopContinuousFocus(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousFocusOut,
-        [this]() { emit startContinuousFocus(-1); },
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionContinuousFocusOut, [this]() { emit startContinuousFocus(-1); },
         [this]() { emit stopContinuousFocus(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepFocusIn,
-        [this]() { emit stepFocus(1); },
-        nullptr,
-        [this]() { emit stepFocus(1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepFocusOut,
-        [this]() { emit stepFocus(-1); },
-        nullptr,
-        [this]() { emit stepFocus(-1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionNextStream,
-        [this]() { emit stepStream(1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionPreviousStream,
-        [this]() { emit stepStream(-1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionNextCamera,
-        [this]() { emit stepCamera(1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionPreviousCamera,
-        [this]() { emit stepCamera(-1); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionTriggerCamera,
-        [this]() { emit triggerCamera(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStartVideoRecord,
-        [this]() { emit startVideoRecord(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStopVideoRecord,
-        [this]() { emit stopVideoRecord(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionToggleVideoRecord,
-        [this]() { emit toggleVideoRecord(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalDown,
-        [this]() { emit gimbalPitchStart(-1); },
-        [this]() { emit gimbalPitchStop(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalUp,
-        [this]() { emit gimbalPitchStart(1); },
-        [this]() { emit gimbalPitchStop(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalLeft,
-        [this]() { emit gimbalYawStart(-1); },
-        [this]() { emit gimbalYawStop(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalRight,
-        [this]() { emit gimbalYawStart(1); },
-        [this]() { emit gimbalYawStop(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalCenter,
-        [this]() { emit centerGimbal(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawLock,
-        [this]() { emit gimbalYawLock(true); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawFollow,
-        [this]() { emit gimbalYawLock(false); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionEmergencyStop,
-        [this]() { emit emergencyStop(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperGrab,
-        [this]() { emit gripperAction(GRIPPER_ACTION_GRAB); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperRelease,
-        [this]() { emit gripperAction(GRIPPER_ACTION_RELEASE); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperHold,
-        [this]() { emit gripperAction(GRIPPER_ACTION_HOLD); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearDeploy,
-        [this]() { emit landingGearDeploy(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearRetract,
-        [this]() { emit landingGearRetract(); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionMotorInterlockEnable,
-        [this]() { emit motorInterlock(true); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionMotorInterlockDisable,
-        [this]() { emit motorInterlock(false); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionStepFocusIn, [this]() { emit stepFocus(1); }, nullptr, [this]() { emit stepFocus(1); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionStepFocusOut, [this]() { emit stepFocus(-1); }, nullptr, [this]() { emit stepFocus(-1); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionNextStream, [this]() { emit stepStream(1); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionPreviousStream, [this]() { emit stepStream(-1); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionNextCamera, [this]() { emit stepCamera(1); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionPreviousCamera, [this]() { emit stepCamera(-1); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionTriggerCamera, [this]() { emit triggerCamera(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionStartVideoRecord, [this]() { emit startVideoRecord(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionStopVideoRecord, [this]() { emit stopVideoRecord(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionToggleVideoRecord, [this]() { emit toggleVideoRecord(); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionGimbalDown, [this]() { emit gimbalPitchStart(-1); }, [this]() { emit gimbalPitchStop(); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionGimbalUp, [this]() { emit gimbalPitchStart(1); }, [this]() { emit gimbalPitchStop(); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionGimbalLeft, [this]() { emit gimbalYawStart(-1); }, [this]() { emit gimbalYawStop(); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionGimbalRight, [this]() { emit gimbalYawStart(1); }, [this]() { emit gimbalYawStop(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionGimbalCenter, [this]() { emit centerGimbal(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionGimbalYawLock, [this]() { emit gimbalYawLock(true); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionGimbalYawFollow, [this]() { emit gimbalYawLock(false); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionEmergencyStop, [this]() { emit emergencyStop(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionGripperGrab, [this]() { emit gripperAction(GRIPPER_ACTION_GRAB); }));
+    _availableButtonActions->append(new AvailableButtonAction(
+        _buttonActionGripperRelease, [this]() { emit gripperAction(GRIPPER_ACTION_RELEASE); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionGripperHold, [this]() { emit gripperAction(GRIPPER_ACTION_HOLD); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionLandingGearDeploy, [this]() { emit landingGearDeploy(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionLandingGearRetract, [this]() { emit landingGearRetract(); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionMotorInterlockEnable, [this]() { emit motorInterlock(true); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionMotorInterlockDisable, [this]() { emit motorInterlock(false); }));
 
     const auto customActions = QGCCorePlugin::instance()->joystickActions();
-    for (const auto &action : customActions) {
+    for (const auto& action : customActions) {
         // onDown is nullptr — dispatch falls through to unknownAction (DownTransition only).
         // A non-null onRepeat makes canRepeat() return true, preserving the UI toggle,
         // but custom plugin repeat dispatch is not supported (unknownAction carries no event type).
-        std::function<void()> repeatFn = action.canRepeat ? std::function<void()>([]{}) : nullptr;
+        std::function<void()> repeatFn = action.canRepeat ? std::function<void()>([] {}) : nullptr;
         _availableButtonActions->append(new AvailableButtonAction(action.name, nullptr, nullptr, repeatFn));
     }
 
     for (int i = 0; i < _mavlinkActionManager->actions()->count(); i++) {
-        const MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<const MavlinkAction*>(i);
+        const MavlinkAction* const mavlinkAction = _mavlinkActionManager->actions()->value<const MavlinkAction*>(i);
         _availableButtonActions->append(new AvailableButtonAction(mavlinkAction->label(), nullptr));
     }
 
@@ -1822,14 +1834,15 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
     // so an assignment stored in settings may reference a mode which only shows up later.
     // Keeping them in the list means the UI combo always displays the real assignment.
     for (int buttonIndex = 0; buttonIndex < _assignedButtonActions.count(); buttonIndex++) {
-        const AssignedButtonAction *const assigned = _assignedButtonActions[buttonIndex];
+        const AssignedButtonAction* const assigned = _assignedButtonActions[buttonIndex];
         if (assigned && (_findAvailableButtonActionIndex(assigned->actionName) == -1)) {
             _availableButtonActions->append(new AvailableButtonAction(assigned->actionName, nullptr));
         }
     }
 
     for (int i = 0; i < _availableButtonActions->count(); i++) {
-        const AvailableButtonAction *const buttonAction = qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(i));
+        const AvailableButtonAction* const buttonAction =
+            qobject_cast<const AvailableButtonAction*>(_availableButtonActions->get(i));
         _availableActionTitles << buttonAction->action();
     }
 
@@ -1839,32 +1852,32 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
 QString Joystick::axisFunctionToString(AxisFunction_t function)
 {
     switch (function) {
-    case rollFunction:
-        return QStringLiteral("Roll");
-    case pitchFunction:
-        return QStringLiteral("Pitch");
-    case yawFunction:
-        return QStringLiteral("Yaw");
-    case throttleFunction:
-        return QStringLiteral("Throttle");
-    case additionalAxis1Function:
-        return QStringLiteral("Additional Axis 1");
-    case additionalAxis2Function:
-        return QStringLiteral("Additional Axis 2");
-    case additionalAxis3Function:
-        return QStringLiteral("Additional Axis 3");
-    case additionalAxis4Function:
-        return QStringLiteral("Additional Axis 4");
-    case additionalAxis5Function:
-        return QStringLiteral("Additional Axis 5");
-    case additionalAxis6Function:
-        return QStringLiteral("Additional Axis 6");
-    case pitchExtensionFunction:
-        return QStringLiteral("Pitch Extension");
-    case rollExtensionFunction:
-        return QStringLiteral("Roll Extension");
-    case maxAxisFunction:
-        return QStringLiteral("Unassigned");
+        case rollFunction:
+            return QStringLiteral("Roll");
+        case pitchFunction:
+            return QStringLiteral("Pitch");
+        case yawFunction:
+            return QStringLiteral("Yaw");
+        case throttleFunction:
+            return QStringLiteral("Throttle");
+        case additionalAxis1Function:
+            return QStringLiteral("Additional Axis 1");
+        case additionalAxis2Function:
+            return QStringLiteral("Additional Axis 2");
+        case additionalAxis3Function:
+            return QStringLiteral("Additional Axis 3");
+        case additionalAxis4Function:
+            return QStringLiteral("Additional Axis 4");
+        case additionalAxis5Function:
+            return QStringLiteral("Additional Axis 5");
+        case additionalAxis6Function:
+            return QStringLiteral("Additional Axis 6");
+        case pitchExtensionFunction:
+            return QStringLiteral("Pitch Extension");
+        case rollExtensionFunction:
+            return QStringLiteral("Roll Extension");
+        case maxAxisFunction:
+            return QStringLiteral("Unassigned");
     }
     Q_UNREACHABLE();
 }
@@ -1907,7 +1920,7 @@ void Joystick::stop()
     }
 }
 
-void Joystick::setLinkedGroupId(const QString &groupId)
+void Joystick::setLinkedGroupId(const QString& groupId)
 {
     if (_linkedGroupId != groupId) {
         _linkedGroupId = groupId;
@@ -1928,7 +1941,7 @@ void Joystick::setLinkedGroupId(const QString &groupId)
     }
 }
 
-void Joystick::setLinkedGroupRole(const QString &role)
+void Joystick::setLinkedGroupRole(const QString& role)
 {
     if (_linkedGroupRole != role) {
         _linkedGroupRole = role;

@@ -1,9 +1,10 @@
 #include "VehicleWindFactGroup.h"
-#include "Vehicle.h"
 
 #include <QtMath>
 
-VehicleWindFactGroup::VehicleWindFactGroup(QObject *parent)
+#include "Vehicle.h"
+
+VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/WindFact.json"), parent)
 {
     _addFact(&_directionFact);
@@ -15,29 +16,29 @@ VehicleWindFactGroup::VehicleWindFactGroup(QObject *parent)
     _verticalSpeedFact.setRawValue(qQNaN());
 }
 
-void VehicleWindFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+void VehicleWindFactGroup::handleMessage(Vehicle* vehicle, const mavlink_message_t& message)
 {
     Q_UNUSED(vehicle);
 
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_WIND_COV:
-        _handleWindCov(message);
-        break;
-    case MAVLINK_MSG_ID_HIGH_LATENCY:
-        _handleHighLatency(message);
-        break;
-    case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        _handleHighLatency2(message);
-        break;
-    case MAVLINK_MSG_ID_WIND:
-        _handleWind(message);
-        break;
-    default:
-        break;
+        case MAVLINK_MSG_ID_WIND_COV:
+            _handleWindCov(message);
+            break;
+        case MAVLINK_MSG_ID_HIGH_LATENCY:
+            _handleHighLatency(message);
+            break;
+        case MAVLINK_MSG_ID_HIGH_LATENCY2:
+            _handleHighLatency2(message);
+            break;
+        case MAVLINK_MSG_ID_WIND:
+            _handleWind(message);
+            break;
+        default:
+            break;
     }
 }
 
-void VehicleWindFactGroup::_handleHighLatency(const mavlink_message_t &message)
+void VehicleWindFactGroup::_handleHighLatency(const mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency{};
     mavlink_msg_high_latency_decode(&message, &highLatency);
@@ -47,7 +48,7 @@ void VehicleWindFactGroup::_handleHighLatency(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleWindFactGroup::_handleHighLatency2(const mavlink_message_t &message)
+void VehicleWindFactGroup::_handleHighLatency2(const mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2{};
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
@@ -58,7 +59,7 @@ void VehicleWindFactGroup::_handleHighLatency2(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleWindFactGroup::_handleWindCov(const mavlink_message_t &message)
+void VehicleWindFactGroup::_handleWindCov(const mavlink_message_t& message)
 {
     mavlink_wind_cov_t wind{};
     mavlink_msg_wind_cov_decode(&message, &wind);
@@ -77,7 +78,7 @@ void VehicleWindFactGroup::_handleWindCov(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleWindFactGroup::_handleWind(const mavlink_message_t &message)
+void VehicleWindFactGroup::_handleWind(const mavlink_message_t& message)
 {
     mavlink_wind_t wind{};
     mavlink_msg_wind_decode(&message, &wind);

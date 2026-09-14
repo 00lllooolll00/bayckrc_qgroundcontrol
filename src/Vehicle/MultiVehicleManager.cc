@@ -1,36 +1,37 @@
 #include "MultiVehicleManager.h"
-#include "MAVLinkProtocol.h"
+
 #include "AppMessages.h"
-#include "ParameterManager.h"
-#include "SettingsManager.h"
-#include "MavlinkSettings.h"
 #include "FirmwareUpgradeSettings.h"
+#include "LinkInterface.h"
+#include "LinkManager.h"
+#include "MAVLinkProtocol.h"
+#include "MavlinkSettings.h"
+#include "ParameterManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include "LinkManager.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "LinkInterface.h"
-#include "QmlObjectListModel.h"
 #ifdef Q_OS_IOS
 #include "MobileScreenMgr.h"
 #elif defined(Q_OS_ANDROID)
 #include "AndroidInterface.h"
 #endif
-#include "QGCLoggingCategory.h"
-
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "Vehicle.MultiVehicleManager")
 
 Q_APPLICATION_STATIC(MultiVehicleManager, _multiVehicleManagerInstance);
 
-MultiVehicleManager::MultiVehicleManager(QObject *parent)
-    : QObject(parent)
-    , _gcsHeartbeatTimer(new QTimer(this))
-    , _vehicles(new QmlObjectListModel(this))
-    , _selectedVehicles(new QmlObjectListModel(this))
+MultiVehicleManager::MultiVehicleManager(QObject* parent)
+    : QObject(parent),
+      _gcsHeartbeatTimer(new QTimer(this)),
+      _vehicles(new QmlObjectListModel(this)),
+      _selectedVehicles(new QmlObjectListModel(this))
 {
     qCDebug(MultiVehicleManagerLog) << this;
 }
@@ -40,7 +41,7 @@ MultiVehicleManager::~MultiVehicleManager()
     qCDebug(MultiVehicleManagerLog) << this;
 }
 
-MultiVehicleManager *MultiVehicleManager::instance()
+MultiVehicleManager* MultiVehicleManager::instance()
 {
     return _multiVehicleManagerInstance();
 }
@@ -53,7 +54,8 @@ void MultiVehicleManager::init()
 
     _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, this);
 
-    (void) connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    (void) connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this,
+                   &MultiVehicleManager::_vehicleHeartbeatInfo);
 
     _gcsHeartbeatTimer->setInterval(kGCSHeartbeatRateMSecs);
     _gcsHeartbeatTimer->setSingleShot(false);
@@ -63,35 +65,33 @@ void MultiVehicleManager::init()
     _initialized = true;
 }
 
-void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
+void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId,
+                                                int vehicleFirmwareType, int vehicleType)
 {
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
         // Don't create vehicles for components other than the autopilot
-        qCDebug(MultiVehicleManagerLog) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
-                                        << link->linkConfiguration()->name()
-                                        << vehicleId
-                                        << componentId
-                                        << vehicleFirmwareType
-                                        << vehicleType;
+        qCDebug(MultiVehicleManagerLog)
+            << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
+            << link->linkConfiguration()->name() << vehicleId << componentId << vehicleFirmwareType << vehicleType;
         return;
     }
 
-    // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
-    // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
-    // we assume ArduCopter for this case.
+    // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant
+    // which works this way. Because of this the vehicle type is not known at first connection. In order to make QGC
+    // work reasonably we assume ArduCopter for this case.
     if ((vehicleType == MAV_TYPE_GENERIC) && (vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA)) {
         vehicleType = MAV_TYPE_QUADROTOR;
     }
 
     switch (vehicleType) {
-    case MAV_TYPE_GCS:
-    case MAV_TYPE_ONBOARD_CONTROLLER:
-    case MAV_TYPE_GIMBAL:
-    case MAV_TYPE_ADSB:
-        // These are not vehicles, so don't create a vehicle for them
-        return;
-    default:
-        break;
+        case MAV_TYPE_GCS:
+        case MAV_TYPE_ONBOARD_CONTROLLER:
+        case MAV_TYPE_GIMBAL:
+        case MAV_TYPE_ADSB:
+            // These are not vehicles, so don't create a vehicle for them
+            return;
+        default:
+            break;
     }
 
     if ((_vehicles->count() > 0) && !QGCCorePlugin::instance()->options()->multiVehicleEnabled()) {
@@ -103,19 +103,21 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     qCDebug(MultiVehicleManagerLog) << "Adding new vehicle link:vehicleId:componentId:vehicleFirmwareType:vehicleType "
-                                    << link->linkConfiguration()->name()
-                                    << vehicleId
-                                    << componentId
-                                    << vehicleFirmwareType
-                                    << vehicleType;
+                                    << link->linkConfiguration()->name() << vehicleId << componentId
+                                    << vehicleFirmwareType << vehicleType;
 
     if (vehicleId == MAVLinkProtocol::instance()->getSystemId()) {
-        QGC::showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(QCoreApplication::applicationName()).arg(vehicleId));
+        QGC::showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2")
+                                .arg(QCoreApplication::applicationName())
+                                .arg(vehicleId));
     }
 
-    Vehicle *const vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, this);
-    (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this, &MultiVehicleManager::_deleteVehiclePhase1);
-    (void) connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
+    Vehicle* const vehicle =
+        new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT) vehicleFirmwareType, (MAV_TYPE) vehicleType, this);
+    (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this,
+                   &MultiVehicleManager::_deleteVehiclePhase1);
+    (void) connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this,
+                   &MultiVehicleManager::_vehicleParametersReadyChanged);
 
     _vehicles->append(vehicle);
 
@@ -135,16 +137,16 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     if (_vehicles->count() == 1) {
         qCDebug(MultiVehicleManagerLog) << "keepScreenOn";
-        #if defined(Q_OS_ANDROID)
-            AndroidInterface::setKeepScreenOn(true);
-        #elif defined(Q_OS_IOS)
-            MobileScreenMgr::setKeepScreenOn(true);
-        #endif
+#if defined(Q_OS_ANDROID)
+        AndroidInterface::setKeepScreenOn(true);
+#elif defined(Q_OS_IOS)
+        MobileScreenMgr::setKeepScreenOn(true);
+#endif
     }
 #endif
 }
 
-void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
+void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
 
@@ -168,14 +170,14 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
     _setParameterReadyVehicleAvailable(false);
     emit vehicleRemoved(vehicle);
 
-#if defined(Q_OS_ANDROID) || defined (Q_OS_IOS)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     if (_vehicles->count() == 0) {
         qCDebug(MultiVehicleManagerLog) << "restoreScreenOn";
-        #if defined(Q_OS_ANDROID)
-            AndroidInterface::setKeepScreenOn(false);
-        #elif defined(Q_OS_IOS)
-            MobileScreenMgr::setKeepScreenOn(false);
-        #endif
+#if defined(Q_OS_ANDROID)
+        AndroidInterface::setKeepScreenOn(false);
+#elif defined(Q_OS_IOS)
+        MobileScreenMgr::setKeepScreenOn(false);
+#endif
     }
 #endif
 
@@ -185,19 +187,17 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
     // until we get back to the main loop. So we set a short timer which will then fire after Qt has finished
     // doing all of its internal nastiness to clean up the Qml. This works for both the normal running case
     // as well as the unit testing case which of course has a different signal flow!
-    QTimer::singleShot(20, this, [this, vehicle]() {
-        _deleteVehiclePhase2(vehicle);
-    });
+    QTimer::singleShot(20, this, [this, vehicle]() { _deleteVehiclePhase2(vehicle); });
 }
 
-void MultiVehicleManager::_deleteVehiclePhase2(Vehicle *vehicle)
+void MultiVehicleManager::_deleteVehiclePhase2(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
 
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
 
-    Vehicle *newActiveVehicle = nullptr;
+    Vehicle* newActiveVehicle = nullptr;
     if (_vehicles->count() > 0) {
         newActiveVehicle = qobject_cast<Vehicle*>(_vehicles->get(0));
     }
@@ -214,7 +214,7 @@ void MultiVehicleManager::_deleteVehiclePhase2(Vehicle *vehicle)
     vehicle->deleteLater();
 }
 
-void MultiVehicleManager::setActiveVehicle(Vehicle *vehicle)
+void MultiVehicleManager::setActiveVehicle(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
 
@@ -229,13 +229,11 @@ void MultiVehicleManager::setActiveVehicle(Vehicle *vehicle)
             _setParameterReadyVehicleAvailable(false);
         }
 
-        QTimer::singleShot(20, this, [this, vehicle]() {
-            _setActiveVehiclePhase2(vehicle);
-        });
+        QTimer::singleShot(20, this, [this, vehicle]() { _setActiveVehiclePhase2(vehicle); });
     }
 }
 
-void MultiVehicleManager::_setActiveVehiclePhase2(Vehicle *vehicle)
+void MultiVehicleManager::_setActiveVehiclePhase2(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
 
@@ -252,7 +250,7 @@ void MultiVehicleManager::_setActiveVehiclePhase2(Vehicle *vehicle)
 
 void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 {
-    ParameterManager *const paramMgr = qobject_cast<ParameterManager*>(sender());
+    ParameterManager* const paramMgr = qobject_cast<ParameterManager*>(sender());
     if (!paramMgr) {
         return;
     }
@@ -269,7 +267,7 @@ void MultiVehicleManager::_sendGCSHeartbeat()
     }
 
     const QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
-    for (const SharedLinkInterfacePtr &link: sharedLinks) {
+    for (const SharedLinkInterfacePtr& link : sharedLinks) {
         if (!link->isConnected()) {
             continue;
         }
@@ -280,17 +278,10 @@ void MultiVehicleManager::_sendGCSHeartbeat()
         }
 
         mavlink_message_t message{};
-        (void) mavlink_msg_heartbeat_pack_chan(
-            MAVLinkProtocol::instance()->getSystemId(),
-            MAVLinkProtocol::instance()->getComponentId(),
-            link->mavlinkChannel(),
-            &message,
-            MAV_TYPE_GCS,
-            MAV_AUTOPILOT_INVALID,
-            MAV_MODE_MANUAL_ARMED,
-            0,
-            MAV_STATE_ACTIVE
-        );
+        (void) mavlink_msg_heartbeat_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                               MAVLinkProtocol::instance()->getComponentId(), link->mavlinkChannel(),
+                                               &message, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0,
+                                               MAV_STATE_ACTIVE);
 
         link->sendMessageThreadSafe(message);
     }
@@ -298,8 +289,8 @@ void MultiVehicleManager::_sendGCSHeartbeat()
 
 void MultiVehicleManager::selectVehicle(int vehicleId)
 {
-    if(!_vehicleSelected(vehicleId)) {
-        Vehicle *const vehicle = getVehicleById(vehicleId);
+    if (!_vehicleSelected(vehicleId)) {
+        Vehicle* const vehicle = getVehicleById(vehicleId);
         _selectedVehicles->append(vehicle);
         return;
     }
@@ -308,7 +299,7 @@ void MultiVehicleManager::selectVehicle(int vehicleId)
 void MultiVehicleManager::deselectVehicle(int vehicleId)
 {
     for (int i = 0; i < _selectedVehicles->count(); i++) {
-        Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
+        Vehicle* const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
         if (vehicle->id() == vehicleId) {
             _selectedVehicles->removeAt(i);
             return;
@@ -324,7 +315,7 @@ void MultiVehicleManager::deselectAllVehicles()
 bool MultiVehicleManager::_vehicleSelected(int vehicleId)
 {
     for (int i = 0; i < _selectedVehicles->count(); i++) {
-        Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
+        Vehicle* const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
         if (vehicle->id() == vehicleId) {
             return true;
         }
@@ -332,10 +323,10 @@ bool MultiVehicleManager::_vehicleSelected(int vehicleId)
     return false;
 }
 
-Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const
+Vehicle* MultiVehicleManager::getVehicleById(int vehicleId) const
 {
     for (int i = 0; i < _vehicles->count(); i++) {
-        Vehicle *const vehicle = qobject_cast<Vehicle*>(_vehicles->get(i));
+        Vehicle* const vehicle = qobject_cast<Vehicle*>(_vehicles->get(i));
         if (vehicle->id() == vehicleId) {
             return vehicle;
         }
@@ -344,7 +335,7 @@ Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const
     return nullptr;
 }
 
-void MultiVehicleManager::_setActiveVehicle(Vehicle *vehicle)
+void MultiVehicleManager::_setActiveVehicle(Vehicle* vehicle)
 {
     if (vehicle != _activeVehicle) {
         _activeVehicle = vehicle;

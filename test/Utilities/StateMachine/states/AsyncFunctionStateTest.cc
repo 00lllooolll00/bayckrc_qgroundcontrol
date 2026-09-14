@@ -1,8 +1,8 @@
 #include "AsyncFunctionStateTest.h"
-#include "StateTestCommon.h"
 
 #include <QtCore/QRegularExpression>
 
+#include "StateTestCommon.h"
 
 void AsyncFunctionStateTest::_testAsyncFunctionState()
 {
@@ -13,17 +13,12 @@ void AsyncFunctionStateTest::_testAsyncFunctionState()
     // Expected: async state has no completion connection and no timeout
     expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
 
-    auto* asyncState = new AsyncFunctionState(
-        QStringLiteral("TestAsync"),
-        &machine,
-        [&setupCalled, &capturedState](AsyncFunctionState* state) {
-            setupCalled = true;
-            capturedState = state;
-            QTimer::singleShot(50, state, [state]() {
-                state->complete();
-            });
-        }
-    );
+    auto* asyncState = new AsyncFunctionState(QStringLiteral("TestAsync"), &machine,
+                                              [&setupCalled, &capturedState](AsyncFunctionState* state) {
+                                                  setupCalled = true;
+                                                  capturedState = state;
+                                                  QTimer::singleShot(50, state, [state]() { state->complete(); });
+                                              });
     QVERIFY(runStateToCompletion(asyncState, &machine));
     verifyExpectedLogMessage();
     QVERIFY(setupCalled);
@@ -38,17 +33,14 @@ void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
     const int timeoutMs = 100;
 
     auto* asyncState = new AsyncFunctionState(
-        QStringLiteral("TestAsyncTimeout"),
-        &machine,
+        QStringLiteral("TestAsyncTimeout"), &machine,
         [](AsyncFunctionState* state) {
             Q_UNUSED(state);
             // Don't call complete() - let it timeout
         },
-        timeoutMs
-    );
-    auto* timeoutState = new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() {
-        timeoutReached = true;
-    });
+        timeoutMs);
+    auto* timeoutState =
+        new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() { timeoutReached = true; });
     auto* finalState = new QFinalState(&machine);
 
     asyncState->addTransition(asyncState, &QGCState::advance, finalState);
@@ -78,18 +70,11 @@ void AsyncFunctionStateTest::_testErrorTransition()
     // Expected: async state has no completion connection and no timeout
     expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
 
-    auto* asyncState = new AsyncFunctionState(
-        QStringLiteral("TestError"),
-        &machine,
-        [](AsyncFunctionState* state) {
-            QTimer::singleShot(50, state, [state]() {
-                state->fail();
-            });
-        }
-    );
-    auto* errorState = new FunctionState(QStringLiteral("ErrorHandler"), &machine, [&errorHandled]() {
-        errorHandled = true;
+    auto* asyncState = new AsyncFunctionState(QStringLiteral("TestError"), &machine, [](AsyncFunctionState* state) {
+        QTimer::singleShot(50, state, [state]() { state->fail(); });
     });
+    auto* errorState =
+        new FunctionState(QStringLiteral("ErrorHandler"), &machine, [&errorHandled]() { errorHandled = true; });
     auto* finalState = new QFinalState(&machine);
 
     asyncState->addTransition(asyncState, &QGCState::advance, finalState);

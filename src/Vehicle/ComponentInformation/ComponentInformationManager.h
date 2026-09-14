@@ -21,21 +21,22 @@ class ComponentInformationManager : public QGCStateMachine
     Q_OBJECT
 
 public:
-    explicit ComponentInformationManager(Vehicle *vehicle, QObject *parent = nullptr);
+    explicit ComponentInformationManager(Vehicle* vehicle, QObject* parent = nullptr);
     ~ComponentInformationManager() override;
 
-    typedef void (*RequestAllCompleteFn)(void *requestAllCompleteFnData);
+    typedef void (*RequestAllCompleteFn)(void* requestAllCompleteFnData);
 
-    void requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
-    CompInfoParam *compInfoParam(uint8_t compId);
-    CompInfoGeneral *compInfoGeneral(uint8_t compId);
+    void requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void* requestAllCompleteFnData);
+    CompInfoParam* compInfoParam(uint8_t compId);
+    CompInfoGeneral* compInfoGeneral(uint8_t compId);
 
-    ComponentInformationCache &fileCache() { return _fileCache; }
-    ComponentInformationTranslation *translation() { return _translation; }
+    ComponentInformationCache& fileCache() { return _fileCache; }
+
+    ComponentInformationTranslation* translation() { return _translation; }
 
     float progress() const;
 
-    static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
+    static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600;  ///< 3 days
 
 signals:
     void progressUpdate(float progress);
@@ -63,22 +64,22 @@ private:
     static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
 
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
-    RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
-    void*                           _requestAllCompleteFnData   = nullptr;
-    QGCCachedFileDownload*          _cachedFileDownload         = nullptr;
-    ComponentInformationCache&      _fileCache;
-    ComponentInformationTranslation* _translation               = nullptr;
+    RequestAllCompleteFn _requestAllCompleteFn = nullptr;
+    void* _requestAllCompleteFnData = nullptr;
+    QGCCachedFileDownload* _cachedFileDownload = nullptr;
+    ComponentInformationCache& _fileCache;
+    ComponentInformationTranslation* _translation = nullptr;
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
     // State pointers
-    AsyncFunctionState*     _stateRequestGeneral    = nullptr;
-    FunctionState*          _stateUpdateUri         = nullptr;
-    SkippableAsyncState*    _stateRequestParam      = nullptr;
-    SkippableAsyncState*    _stateRequestEvents     = nullptr;
-    SkippableAsyncState*    _stateRequestActuators  = nullptr;
-    FunctionState*          _stateComplete          = nullptr;
-    QGCFinalState*          _stateFinal             = nullptr;
+    AsyncFunctionState* _stateRequestGeneral = nullptr;
+    FunctionState* _stateUpdateUri = nullptr;
+    SkippableAsyncState* _stateRequestParam = nullptr;
+    SkippableAsyncState* _stateRequestEvents = nullptr;
+    SkippableAsyncState* _stateRequestActuators = nullptr;
+    FunctionState* _stateComplete = nullptr;
+    QGCFinalState* _stateFinal = nullptr;
 
     // Progress tracking
     int _currentStateIndex = 0;

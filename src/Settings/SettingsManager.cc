@@ -1,41 +1,41 @@
 #include "SettingsManager.h"
-#include "AppMessages.h"
-#include "QGCLoggingCategory.h"
+
+#include <QtCore/QApplicationStatic>
+
 #include "ADSBVehicleManagerSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
+#include "AppMessages.h"
 #include "AppSettings.h"
 #include "AutoConnectSettings.h"
 #include "BatteryIndicatorSettings.h"
-#include "MavlinkActionsSettings.h"
 #include "FirmwareUpgradeSettings.h"
 #include "FlightMapSettings.h"
 #include "FlightModeSettings.h"
 #include "FlyViewSettings.h"
 #include "GimbalControllerSettings.h"
-#include "MapsSettings.h"
-#include "OfflineMapsSettings.h"
-#include "PlanViewSettings.h"
-#include "RemoteIDSettings.h"
-#include "RTKSettings.h"
-#include "UnitsSettings.h"
-#include "NTRIPSettings.h"
-#include "VideoSettings.h"
-#include "MavlinkSettings.h"
 #include "JoystickManagerSettings.h"
+#include "JsonParsing.h"
 #include "LogManagerSettings.h"
 #include "LogViewerSettings.h"
-#include "Viewer3DSettings.h"
-#include "JsonParsing.h"
+#include "MapsSettings.h"
+#include "MavlinkActionsSettings.h"
+#include "MavlinkSettings.h"
+#include "NTRIPSettings.h"
+#include "OfflineMapsSettings.h"
+#include "PlanViewSettings.h"
 #include "QGCCorePlugin.h"
-
-#include <QtCore/QApplicationStatic>
+#include "QGCLoggingCategory.h"
+#include "RTKSettings.h"
+#include "RemoteIDSettings.h"
+#include "UnitsSettings.h"
+#include "VideoSettings.h"
+#include "Viewer3DSettings.h"
 
 QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilities.SettingsManager")
 
 Q_APPLICATION_STATIC(SettingsManager, _settingsManagerInstance);
 
-SettingsManager::SettingsManager(QObject *parent)
-    : QObject(parent)
+SettingsManager::SettingsManager(QObject* parent) : QObject(parent)
 {
     qCDebug(SettingsManagerLog) << this;
 }
@@ -45,14 +45,14 @@ SettingsManager::~SettingsManager()
     qCDebug(SettingsManagerLog) << this;
 }
 
-SettingsManager *SettingsManager::instance()
+SettingsManager* SettingsManager::instance()
 {
     return _settingsManagerInstance();
 }
 
 void SettingsManager::init()
 {
-    _unitsSettings = new UnitsSettings(this); // Must be first since AppSettings references it
+    _unitsSettings = new UnitsSettings(this);  // Must be first since AppSettings references it
 
     _appSettings = new AppSettings(this);
     _loadSettingsFiles();
@@ -81,30 +81,125 @@ void SettingsManager::init()
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 }
 
-ADSBVehicleManagerSettings *SettingsManager::adsbVehicleManagerSettings() const { return _adsbVehicleManagerSettings; }
-APMMavlinkStreamRateSettings *SettingsManager::apmMavlinkStreamRateSettings() const { return _apmMavlinkStreamRateSettings; }
-AppSettings *SettingsManager::appSettings() const { return _appSettings; }
-AutoConnectSettings *SettingsManager::autoConnectSettings() const { return _autoConnectSettings; }
-BatteryIndicatorSettings *SettingsManager::batteryIndicatorSettings() const { return _batteryIndicatorSettings; }
-MavlinkActionsSettings *SettingsManager::mavlinkActionsSettings() const { return _mavlinkActionsSettings; }
-FirmwareUpgradeSettings *SettingsManager::firmwareUpgradeSettings() const { return _firmwareUpgradeSettings; }
-FlightMapSettings *SettingsManager::flightMapSettings() const { return _flightMapSettings; }
-FlightModeSettings *SettingsManager::flightModeSettings() const { return _flightModeSettings; }
-FlyViewSettings *SettingsManager::flyViewSettings() const { return _flyViewSettings; }
-GimbalControllerSettings *SettingsManager::gimbalControllerSettings() const { return _gimbalControllerSettings; }
-MapsSettings *SettingsManager::mapsSettings() const { return _mapsSettings; }
-OfflineMapsSettings *SettingsManager::offlineMapsSettings() const { return _offlineMapsSettings; }
-PlanViewSettings *SettingsManager::planViewSettings() const { return _planViewSettings; }
-RemoteIDSettings *SettingsManager::remoteIDSettings() const { return _remoteIDSettings; }
-RTKSettings *SettingsManager::rtkSettings() const { return _rtkSettings; }
-UnitsSettings *SettingsManager::unitsSettings() const { return _unitsSettings; }
-NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
-VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }
-MavlinkSettings *SettingsManager::mavlinkSettings() const { return _mavlinkSettings; }
-JoystickManagerSettings *SettingsManager::joystickManagerSettings() const { return _joystickManagerSettings; }
-LogManagerSettings *SettingsManager::logManagerSettings() const { return _logManagerSettings; }
-LogViewerSettings *SettingsManager::logViewerSettings() const { return _logViewerSettings; }
-Viewer3DSettings *SettingsManager::viewer3DSettings() const { return _viewer3DSettings; }
+ADSBVehicleManagerSettings* SettingsManager::adsbVehicleManagerSettings() const
+{
+    return _adsbVehicleManagerSettings;
+}
+
+APMMavlinkStreamRateSettings* SettingsManager::apmMavlinkStreamRateSettings() const
+{
+    return _apmMavlinkStreamRateSettings;
+}
+
+AppSettings* SettingsManager::appSettings() const
+{
+    return _appSettings;
+}
+
+AutoConnectSettings* SettingsManager::autoConnectSettings() const
+{
+    return _autoConnectSettings;
+}
+
+BatteryIndicatorSettings* SettingsManager::batteryIndicatorSettings() const
+{
+    return _batteryIndicatorSettings;
+}
+
+MavlinkActionsSettings* SettingsManager::mavlinkActionsSettings() const
+{
+    return _mavlinkActionsSettings;
+}
+
+FirmwareUpgradeSettings* SettingsManager::firmwareUpgradeSettings() const
+{
+    return _firmwareUpgradeSettings;
+}
+
+FlightMapSettings* SettingsManager::flightMapSettings() const
+{
+    return _flightMapSettings;
+}
+
+FlightModeSettings* SettingsManager::flightModeSettings() const
+{
+    return _flightModeSettings;
+}
+
+FlyViewSettings* SettingsManager::flyViewSettings() const
+{
+    return _flyViewSettings;
+}
+
+GimbalControllerSettings* SettingsManager::gimbalControllerSettings() const
+{
+    return _gimbalControllerSettings;
+}
+
+MapsSettings* SettingsManager::mapsSettings() const
+{
+    return _mapsSettings;
+}
+
+OfflineMapsSettings* SettingsManager::offlineMapsSettings() const
+{
+    return _offlineMapsSettings;
+}
+
+PlanViewSettings* SettingsManager::planViewSettings() const
+{
+    return _planViewSettings;
+}
+
+RemoteIDSettings* SettingsManager::remoteIDSettings() const
+{
+    return _remoteIDSettings;
+}
+
+RTKSettings* SettingsManager::rtkSettings() const
+{
+    return _rtkSettings;
+}
+
+UnitsSettings* SettingsManager::unitsSettings() const
+{
+    return _unitsSettings;
+}
+
+NTRIPSettings* SettingsManager::ntripSettings() const
+{
+    return _ntripSettings;
+}
+
+VideoSettings* SettingsManager::videoSettings() const
+{
+    return _videoSettings;
+}
+
+MavlinkSettings* SettingsManager::mavlinkSettings() const
+{
+    return _mavlinkSettings;
+}
+
+JoystickManagerSettings* SettingsManager::joystickManagerSettings() const
+{
+    return _joystickManagerSettings;
+}
+
+LogManagerSettings* SettingsManager::logManagerSettings() const
+{
+    return _logManagerSettings;
+}
+
+LogViewerSettings* SettingsManager::logViewerSettings() const
+{
+    return _logViewerSettings;
+}
+
+Viewer3DSettings* SettingsManager::viewer3DSettings() const
+{
+    return _viewer3DSettings;
+}
 
 void SettingsManager::_loadSettingsFiles()
 {
@@ -133,10 +228,12 @@ void SettingsManager::_loadSettingsFiles()
         return;
     }
 
-    QStringList settingsFiles = settingsDir.entryList(QStringList() << QString("*.%1").arg(_appSettings->settingsFileExtension), QDir::Files);
-    for (const QString &fileName : settingsFiles) {
+    QStringList settingsFiles =
+        settingsDir.entryList(QStringList() << QString("*.%1").arg(_appSettings->settingsFileExtension), QDir::Files);
+    for (const QString& fileName : settingsFiles) {
         QFileInfo fileInfo(settingsDir, fileName);
-        if (!fileInfo.isFile()) continue;
+        if (!fileInfo.isFile())
+            continue;
 
         // Load the settings file
         qCDebug(SettingsManagerLog) << "Loading settings file:" << fileInfo.absoluteFilePath();
@@ -144,7 +241,8 @@ void SettingsManager::_loadSettingsFiles()
         QJsonDocument jsonDoc;
         QString errorString;
         if (!JsonParsing::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString)) {
-            qCWarning(SettingsManagerLog) << "Failed to load settings file:" << fileInfo.absoluteFilePath() << errorString;
+            qCWarning(SettingsManagerLog)
+                << "Failed to load settings file:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
 
@@ -153,7 +251,8 @@ void SettingsManager::_loadSettingsFiles()
         // Validate the settings file
         int version;
         if (!JsonParsing::validateInternalQGCJsonFile(jsonObject, "Settings", 1, 1, version, errorString)) {
-            qCWarning(SettingsManagerLog) << "Settings file failed validation:" << fileInfo.absoluteFilePath() << errorString;
+            qCWarning(SettingsManagerLog)
+                << "Settings file failed validation:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
 
@@ -161,35 +260,39 @@ void SettingsManager::_loadSettingsFiles()
 
         // groups key is an object
         static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
-            { kJsonGroupsObjectKey, QJsonValue::Object, true },
+            {kJsonGroupsObjectKey, QJsonValue::Object, true},
         };
         if (!JsonParsing::validateKeys(jsonObject, keyInfoList, errorString)) {
-            qCWarning(SettingsManagerLog) << "Settings file incorrect format:" << fileInfo.absoluteFilePath() << errorString;
+            qCWarning(SettingsManagerLog)
+                << "Settings file incorrect format:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
 
         auto groupsObject = jsonObject[kJsonGroupsObjectKey].toObject();
-        for (const QString &groupName : groupsObject.keys()) {
+        for (const QString& groupName : groupsObject.keys()) {
             qCDebug(SettingsManagerLog) << "  Loading settings group:" << groupName;
 
-            const QJsonValue &groupValue = groupsObject[groupName];
+            const QJsonValue& groupValue = groupsObject[groupName];
             if (!groupValue.isObject()) {
-                qCWarning(SettingsManagerLog) << "Settings file incorrect format, group is not an object:" << fileInfo.absoluteFilePath()
-                                            << groupName;
+                qCWarning(SettingsManagerLog)
+                    << "Settings file incorrect format, group is not an object:" << fileInfo.absoluteFilePath()
+                    << groupName;
                 continue;
             }
 
             auto groupObject = groupValue.toObject();
-            for (const QString &settingName : groupObject.keys()) {
+            for (const QString& settingName : groupObject.keys()) {
                 qCDebug(SettingsManagerLog) << "  Loading settings:" << groupName << settingName;
 
                 if (!groupObject[settingName].isObject()) {
-                    qCWarning(SettingsManagerLog) << "Settings file incorrect format, setting is not an object:" << fileInfo.absoluteFilePath()
-                                                << groupName << settingName;
+                    qCWarning(SettingsManagerLog)
+                        << "Settings file incorrect format, setting is not an object:" << fileInfo.absoluteFilePath()
+                        << groupName << settingName;
                     continue;
                 }
 
-                // Store the setting overrides. Note that last one wins if there are multiple settings files with the same setting.
+                // Store the setting overrides. Note that last one wins if there are multiple settings files with the
+                // same setting.
                 QJsonObject metaDataObject = groupObject[settingName].toObject();
                 _settingsFileOverrides[groupName][settingName] = metaDataObject;
             }
@@ -197,11 +300,11 @@ void SettingsManager::_loadSettingsFiles()
     }
 }
 
-void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
+void SettingsManager::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& userVisible)
 {
-    userVisible = true; // By default all settings are visible
+    userVisible = true;  // By default all settings are visible
 
-    SettingsManager *settingsManager = SettingsManager::instance();
+    SettingsManager* settingsManager = SettingsManager::instance();
     if (!settingsManager) {
         qCWarning(SettingsManagerLog) << "SettingsManager instance not available";
         return;
@@ -209,7 +312,7 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
 
     if (!QGC::runningUnitTests()) {
         // Apply settings file overrides
-        const auto &groupOverrides = settingsManager->_settingsFileOverrides;
+        const auto& groupOverrides = settingsManager->_settingsFileOverrides;
         if (groupOverrides.contains(settingsGroup) && groupOverrides[settingsGroup].contains(metaData.name())) {
             QJsonObject settingOverrideJsonObject = groupOverrides[settingsGroup][metaData.name()];
 
@@ -225,18 +328,23 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
             factMetaDataJsonObject.remove(kJsonVisibleKey);
             factMetaDataJsonObject.remove(kJsonForceRawValueKey);
 
-            QScopedPointer<FactMetaData> overrideMetaData(FactMetaData::createFromJsonObject(factMetaDataJsonObject, {}, nullptr));
+            QScopedPointer<FactMetaData> overrideMetaData(
+                FactMetaData::createFromJsonObject(factMetaDataJsonObject, {}, nullptr));
 
-            if (settingOverrideJsonObject.contains(kJsonForceRawValueKey) && settingOverrideJsonObject.contains(kJsonVisibleKey)) {
+            if (settingOverrideJsonObject.contains(kJsonForceRawValueKey) &&
+                settingOverrideJsonObject.contains(kJsonVisibleKey)) {
                 // A visible setting reads its value from QSettings which defeats forceRawValue
-                qCWarning(SettingsManagerLog) << "Ignoring settings file override which combines 'forceRawValue' and 'visible' keys:" << settingsGroup << metaData.name();
+                qCWarning(SettingsManagerLog)
+                    << "Ignoring settings file override which combines 'forceRawValue' and 'visible' keys:"
+                    << settingsGroup << metaData.name();
             } else if (overrideMetaData->name() != metaData.name()) {
                 // createFromJsonObject failed validation (it already logged why) and returned default metadata.
                 // Don't apply any part of a bad override.
-                qCWarning(SettingsManagerLog) << "Ignoring settings file override which failed validation:" << settingsGroup << metaData.name();
+                qCWarning(SettingsManagerLog)
+                    << "Ignoring settings file override which failed validation:" << settingsGroup << metaData.name();
             } else {
                 // Apply Fact metadata overrides
-                for (const QString &metaDataName : factMetaDataJsonObject.keys()) {
+                for (const QString& metaDataName : factMetaDataJsonObject.keys()) {
                     if (metaDataName == FactMetaData::_defaultValueJsonKey) {
                         qCDebug(SettingsManagerLog) << "  Setting default to" << overrideMetaData->rawDefaultValue();
                         metaData.setRawDefaultValue(overrideMetaData->rawDefaultValue());
@@ -247,13 +355,16 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
                         qCDebug(SettingsManagerLog) << "  Setting max to" << overrideMetaData->rawMax();
                         metaData.setRawMax(overrideMetaData->rawMax());
                     } else if (metaDataName == FactMetaData::_decimalPlacesJsonKey) {
-                        qCDebug(SettingsManagerLog) << "  Setting decimalPlaces to" << overrideMetaData->decimalPlaces();
+                        qCDebug(SettingsManagerLog)
+                            << "  Setting decimalPlaces to" << overrideMetaData->decimalPlaces();
                         metaData.setDecimalPlaces(overrideMetaData->decimalPlaces());
                     } else if (metaDataName == FactMetaData::_enumValuesJsonKey) {
-                        qCDebug(SettingsManagerLog) << "  Setting enumInfo to" << overrideMetaData->enumValues() << overrideMetaData->enumStrings();
+                        qCDebug(SettingsManagerLog) << "  Setting enumInfo to" << overrideMetaData->enumValues()
+                                                    << overrideMetaData->enumStrings();
                         metaData.setEnumInfo(overrideMetaData->enumStrings(), overrideMetaData->enumValues());
                     } else if (metaDataName == FactMetaData::_enumBitmaskArrayJsonKey) {
-                        qCDebug(SettingsManagerLog) << "  Setting bitmaskInfo to" << overrideMetaData->bitmaskValues() << overrideMetaData->bitmaskStrings();
+                        qCDebug(SettingsManagerLog) << "  Setting bitmaskInfo to" << overrideMetaData->bitmaskValues()
+                                                    << overrideMetaData->bitmaskStrings();
                         metaData.setBitmaskInfo(overrideMetaData->bitmaskStrings(), overrideMetaData->bitmaskValues());
                     } else if (metaDataName == FactMetaData::_longDescriptionJsonKey) {
                         qCDebug(SettingsManagerLog) << "  Setting longDesc to" << overrideMetaData->longDescription();
@@ -266,12 +377,14 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
 
                 // Apply SettingsManager-level overrides last so forceRawValue wins over a default override
                 if (settingOverrideJsonObject.contains(kJsonForceRawValueKey)) {
-                    qCDebug(SettingsManagerLog) << "  Setting forceRawValue to" << settingOverrideJsonObject[kJsonForceRawValueKey];
+                    qCDebug(SettingsManagerLog)
+                        << "  Setting forceRawValue to" << settingOverrideJsonObject[kJsonForceRawValueKey];
                     metaData.setRawDefaultValue(settingOverrideJsonObject[kJsonForceRawValueKey].toVariant());
                     userVisible = false;
                 }
                 if (settingOverrideJsonObject.contains(kJsonVisibleKey)) {
-                    qCDebug(SettingsManagerLog) << "  Setting visibility to" << settingOverrideJsonObject[kJsonVisibleKey].toBool();
+                    qCDebug(SettingsManagerLog)
+                        << "  Setting visibility to" << settingOverrideJsonObject[kJsonVisibleKey].toBool();
                     userVisible = settingOverrideJsonObject[kJsonVisibleKey].toBool();
                 }
             }

@@ -1,17 +1,18 @@
 #include "FlightModesComponent.h"
+
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-struct SwitchListItem {
+struct SwitchListItem
+{
     const char* param;
     const char* name;
 };
 
 FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownFlightModesVehicleComponent, parent)
-    , _name(tr("Flight Modes"))
-{
-}
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownFlightModesVehicleComponent, parent),
+      _name(tr("Flight Modes"))
+{}
 
 QString FlightModesComponent::name(void) const
 {
@@ -40,7 +41,7 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 
 QStringList FlightModesComponent::sectionIds() const
 {
-    return { QStringLiteral("Flight Modes"), QStringLiteral("Switch Settings") };
+    return {QStringLiteral("Flight Modes"), QStringLiteral("Switch Settings")};
 }
 
 QString FlightModesComponent::sectionDisplayName(const QString& sectionId) const

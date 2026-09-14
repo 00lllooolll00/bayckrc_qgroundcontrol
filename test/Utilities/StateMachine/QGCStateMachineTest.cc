@@ -1,20 +1,20 @@
 #include "QGCStateMachineTest.h"
 
-#include "MultiSignalSpy.h"
-#include "QGCStateMachine.h"
-#include "WaitStateBase.h"
-
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+
+#include "MultiSignalSpy.h"
+#include "QGCStateMachine.h"
+#include "WaitStateBase.h"
 
 namespace {
 float _spyFloatArg(const QSignalSpy& spy, int index)
 {
     return spy.at(index).at(0).toFloat();
 }
-}
+}  // namespace
 
 /// Minimal concrete implementation of WaitStateBase for testing
 class MinimalTestWaitState : public WaitStateBase
@@ -22,30 +22,29 @@ class MinimalTestWaitState : public WaitStateBase
     Q_OBJECT
 public:
     MinimalTestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
+        : WaitStateBase(name, parent, timeoutMsecs)
+    {}
+
 protected:
     void connectWaitSignal() override {}
+
     void disconnectWaitSignal() override {}
 };
 
 class ErroringAbstractState : public QGCAbstractState
 {
 public:
-    ErroringAbstractState(const QString& name, QState* parent)
-        : QGCAbstractState(name, parent) {}
+    ErroringAbstractState(const QString& name, QState* parent) : QGCAbstractState(name, parent) {}
 
     void triggerError() { emit error(); }
 };
-
 
 void QGCStateMachineTest::_testQGCStateMachineFactories()
 {
     QGCStateMachine machine(QStringLiteral("FactoryTest"), nullptr);
     bool functionCalled = false;
 
-    auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() {
-        functionCalled = true;
-    });
+    auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() { functionCalled = true; });
     auto* delayState = machine.addDelayState(50);
     auto* finalState = machine.addFinalState(QStringLiteral("Final"));
 
@@ -63,9 +62,8 @@ void QGCStateMachineTest::_testGlobalErrorState()
     QGCStateMachine machine(QStringLiteral("GlobalErrorTest"), nullptr);
     bool errorHandled = false;
 
-    auto* errorState = new FunctionState(QStringLiteral("GlobalError"), &machine, [&errorHandled]() {
-        errorHandled = true;
-    });
+    auto* errorState =
+        new FunctionState(QStringLiteral("GlobalError"), &machine, [&errorHandled]() { errorHandled = true; });
     machine.setGlobalErrorState(errorState);
 
     // The async state has no completion connection and no timeout — expected critical
@@ -126,14 +124,12 @@ void QGCStateMachineTest::_testLocalErrorState()
     bool globalErrorHandled = false;
     bool localErrorHandled = false;
 
-    auto* globalErrorState = new FunctionState(QStringLiteral("GlobalError"), &machine, [&globalErrorHandled]() {
-        globalErrorHandled = true;
-    });
+    auto* globalErrorState = new FunctionState(QStringLiteral("GlobalError"), &machine,
+                                               [&globalErrorHandled]() { globalErrorHandled = true; });
     machine.setGlobalErrorState(globalErrorState);
 
-    auto* localErrorState = new FunctionState(QStringLiteral("LocalError"), &machine, [&localErrorHandled]() {
-        localErrorHandled = true;
-    });
+    auto* localErrorState =
+        new FunctionState(QStringLiteral("LocalError"), &machine, [&localErrorHandled]() { localErrorHandled = true; });
 
     // The async state has no completion connection and no timeout — expected critical
     expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
@@ -226,16 +222,15 @@ void QGCStateMachineTest::_testRetryTransitionBuilder()
     QGCStateMachine machine(QStringLiteral("RetryBuilderTest"), nullptr);
     int retryCount = 0;
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition",
-                     QtWarningMsg,
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
                      QRegularExpression("timeout after 2 retries, advancing"));
 
     auto* state1 = new MinimalTestWaitState(QStringLiteral("State1"), &machine, 50);
     auto* finalState = machine.addFinalState();
 
     // Use the builder to add a retry transition
-    auto* retry = machine.addRetryTransition(state1, &WaitStateBase::timeout, finalState,
-                                              [&retryCount]() { retryCount++; }, 2);
+    auto* retry =
+        machine.addRetryTransition(state1, &WaitStateBase::timeout, finalState, [&retryCount]() { retryCount++; }, 2);
 
     machine.setInitialState(state1);
 
@@ -259,8 +254,7 @@ void QGCStateMachineTest::_testConditionalTransitionBuilder()
     auto* finalState = machine.addFinalState();
 
     // Add conditional transition with guard
-    machine.addConditionalTransition(state1, &FunctionState::advance, state2,
-                                      [&guardResult]() { return guardResult; });
+    machine.addConditionalTransition(state1, &FunctionState::advance, state2, [&guardResult]() { return guardResult; });
     // Add fallback unguarded transition
     state1->addTransition(state1, &FunctionState::advance, state3);
     state2->addTransition(state2, &QState::entered, finalState);
@@ -288,10 +282,7 @@ void QGCStateMachineTest::_testErrorRecoveryFactory()
             actionCalls++;
             return false;
         },
-        1,
-        1,
-        ErrorRecoveryBuilder::EmitAdvance
-    );
+        1, 1, ErrorRecoveryBuilder::EmitAdvance);
     auto* finalState = machine.addFinalState();
 
     recoveryState->addTransition(recoveryState, &QGCState::advance, finalState);
@@ -315,7 +306,8 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
         machine.setGlobalErrorState(errorState);
 
         // Expected: async state critical (no completion connection) + error handler warning
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
+        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                         QRegularExpression("has no completion connection"));
         expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("error handled in"));
 
         auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
@@ -338,7 +330,8 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
         machine.setGlobalErrorState(errorState);
 
         // Expected: async state critical (no completion connection) + error handler warning
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
+        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                         QRegularExpression("has no completion connection"));
         expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("stopping due to error in"));
 
         auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
@@ -456,7 +449,7 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
 
     machine.setSubProgress(0.5f);
-    machine.setSubProgress(0.4f); // lower value should not emit
+    machine.setSubProgress(0.4f);  // lower value should not emit
     machine.setSubProgress(1.0f);
 
     machine.postEvent(QStringLiteral("finish"));
@@ -586,11 +579,8 @@ void QGCStateMachineTest::_testTimedActionStateWithCallbacks()
 
     // Create a timed state with entry and exit callbacks
     auto* timedState = machine.createTimedActionState(
-        QStringLiteral("WaitWithCallbacks"),
-        50,
-        [&entryActionCalled]() { entryActionCalled = true; },
-        [&exitActionCalled]() { exitActionCalled = true; }
-    );
+        QStringLiteral("WaitWithCallbacks"), 50, [&entryActionCalled]() { entryActionCalled = true; },
+        [&exitActionCalled]() { exitActionCalled = true; });
     auto* finalState = machine.addFinalState();
 
     timedState->addTransition(timedState, &QState::finished, finalState);
@@ -616,7 +606,7 @@ void QGCStateMachineTest::_testSelfLoopTransition()
 
     // Add self-loop transition that increments counter
     machine.addSelfLoopTransition(loopState, &signalSource, &QObject::objectNameChanged,
-                                   [&actionCount]() { actionCount++; });
+                                  [&actionCount]() { actionCount++; });
 
     // Also add exit transition after 3 loops (use machine event)
     machine.addEventTransition(loopState, QStringLiteral("done"), finalState);
@@ -662,7 +652,7 @@ void QGCStateMachineTest::_testInternalTransition()
 
     // Add internal transition (should NOT re-trigger entry)
     machine.addInternalTransition(state, &signalSource, &QObject::objectNameChanged,
-                                   [&actionCount]() { actionCount++; });
+                                  [&actionCount]() { actionCount++; });
 
     // Exit transition
     machine.addEventTransition(state, QStringLiteral("done"), finalState);
@@ -679,8 +669,8 @@ void QGCStateMachineTest::_testInternalTransition()
     signalSource.setObjectName(QStringLiteral("test"));
     QCoreApplication::processEvents();
 
-    QCOMPARE(actionCount, 1);   // Action was called
-    QCOMPARE(entryCount, 1);    // Entry was NOT called again (internal transition)
+    QCOMPARE(actionCount, 1);  // Action was called
+    QCOMPARE(entryCount, 1);   // Entry was NOT called again (internal transition)
 
     // Exit
     machine.postEvent(QStringLiteral("done"));

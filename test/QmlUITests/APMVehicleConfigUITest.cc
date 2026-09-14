@@ -1,13 +1,12 @@
 #include "APMVehicleConfigUITest.h"
 
+#include <QtCore/QPointer>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
 #include "MockLink.h"
 #include "Vehicle.h"
-
-#include <QtCore/QPointer>
 
 UT_REGISTER_TEST(APMVehicleConfigUITest, TestLabel::Integration)
 
@@ -23,28 +22,28 @@ void APMVehicleConfigUITest::init()
 // Shared implementation
 // ---------------------------------------------------------------------------
 
-void APMVehicleConfigUITest::_runNavigateVehicleConfig(
-    const std::function<MockLink *()> &factory, const QString &vehicleName)
+void APMVehicleConfigUITest::_runNavigateVehicleConfig(const std::function<MockLink*()>& factory,
+                                                       const QString& vehicleName)
 {
-    runWithMockLink(factory, [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
-    // -------------------------------------------------------------------------
-    // Navigate to the Configure view
-    // -------------------------------------------------------------------------
-    navigateToConfigureView();
-    if (QTest::currentTestFailed()) return;
+    runWithMockLink(factory, [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+        // -------------------------------------------------------------------------
+        // Navigate to the Configure view
+        // -------------------------------------------------------------------------
+        navigateToConfigureView();
+        if (QTest::currentTestFailed())
+            return;
 
-    // -------------------------------------------------------------------------
-    // Click Summary
-    // -------------------------------------------------------------------------
-    QVERIFY2(clickButton(QStringLiteral("vehicleConfig_summary")),
-             qPrintable(QStringLiteral("%1: Failed to click Summary button").arg(vehicleName)));
-    QTest::qWait(_viewDelay);
+        // -------------------------------------------------------------------------
+        // Click Summary
+        // -------------------------------------------------------------------------
+        QVERIFY2(clickButton(QStringLiteral("vehicleConfig_summary")),
+                 qPrintable(QStringLiteral("%1: Failed to click Summary button").arg(vehicleName)));
+        QTest::qWait(_viewDelay);
 
-    // -------------------------------------------------------------------------
-    // Click through each vehicle component, in English and Chinese
-    // -------------------------------------------------------------------------
-    clickThroughAllComponentsAllLocales(vehicle, vehicleName);
-
+        // -------------------------------------------------------------------------
+        // Click through each vehicle component, in English and Chinese
+        // -------------------------------------------------------------------------
+        clickThroughAllComponentsAllLocales(vehicle, vehicleName);
     });
 }
 
@@ -54,16 +53,12 @@ void APMVehicleConfigUITest::_runNavigateVehicleConfig(
 
 void APMVehicleConfigUITest::_testArduCopter()
 {
-    _runNavigateVehicleConfig(
-        [] { return MockLink::startAPMArduCopterMockLink(); },
-        QStringLiteral("ArduCopter"));
+    _runNavigateVehicleConfig([] { return MockLink::startAPMArduCopterMockLink(); }, QStringLiteral("ArduCopter"));
 }
 
 void APMVehicleConfigUITest::_testArduPlane()
 {
-    _runNavigateVehicleConfig(
-        [] { return MockLink::startAPMArduPlaneMockLink(); },
-        QStringLiteral("ArduPlane"));
+    _runNavigateVehicleConfig([] { return MockLink::startAPMArduPlaneMockLink(); }, QStringLiteral("ArduPlane"));
 }
 
 void APMVehicleConfigUITest::_testArduSub()
@@ -75,7 +70,5 @@ void APMVehicleConfigUITest::_testArduSub()
 
 void APMVehicleConfigUITest::_testArduRover()
 {
-    _runNavigateVehicleConfig(
-        [] { return MockLink::startAPMArduRoverMockLink(); },
-        QStringLiteral("ArduRover"));
+    _runNavigateVehicleConfig([] { return MockLink::startAPMArduRoverMockLink(); }, QStringLiteral("ArduRover"));
 }

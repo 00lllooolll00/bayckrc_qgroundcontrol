@@ -1,8 +1,8 @@
 #include "RetryTransition.h"
-#include "QGCState.h"
-#include "WaitStateBase.h"
 
 #include "QGCLoggingCategory.h"
+#include "QGCState.h"
+#include "WaitStateBase.h"
 
 QGC_LOGGING_CATEGORY(RetryTransitionLog, "Utilities.StateMachine.RetryTransition")
 

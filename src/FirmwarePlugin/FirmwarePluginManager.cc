@@ -1,16 +1,16 @@
 #include "FirmwarePluginManager.h"
+
+#include <QtCore/QGlobalStatic>
+
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginFactory.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QGlobalStatic>
 
 QGC_LOGGING_CATEGORY(FirmwarePluginManagerLog, "FirmwarePlugin.FirmwarePluginManager");
 
 Q_GLOBAL_STATIC(FirmwarePluginManager, _firmwarePluginManagerInstance);
 
-FirmwarePluginManager::FirmwarePluginManager(QObject *parent)
-    : QObject(parent)
+FirmwarePluginManager::FirmwarePluginManager(QObject* parent) : QObject(parent)
 {
     // qCDebug(FirmwarePluginManagerLog) << Q_FUNC_INFO << this;
 }
@@ -20,7 +20,7 @@ FirmwarePluginManager::~FirmwarePluginManager()
     // qCDebug(FirmwarePluginManagerLog) << Q_FUNC_INFO << this;
 }
 
-FirmwarePluginManager *FirmwarePluginManager::instance()
+FirmwarePluginManager* FirmwarePluginManager::instance()
 {
     return _firmwarePluginManagerInstance();
 }
@@ -29,7 +29,7 @@ QList<QGCMAVLink::FirmwareClass_t> FirmwarePluginManager::supportedFirmwareClass
 {
     if (_supportedFirmwareClasses.isEmpty()) {
         const QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
-        for (const FirmwarePluginFactory *factory: factoryList) {
+        for (const FirmwarePluginFactory* factory : factoryList) {
             _supportedFirmwareClasses.append(factory->supportedFirmwareClasses());
         }
         _supportedFirmwareClasses.append(QGCMAVLink::FirmwareClassGeneric);
@@ -54,10 +54,11 @@ bool FirmwarePluginManager::singleVehicleSupport()
     return (firmwareClasses.count() == 1) && (supportedVehicleClasses(firmwareClasses[0]).count() == 1);
 }
 
-QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses(QGCMAVLink::FirmwareClass_t firmwareClass)
+QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses(
+    QGCMAVLink::FirmwareClass_t firmwareClass)
 {
     QList<QGCMAVLink::VehicleClass_t> vehicleClasses;
-    const FirmwarePluginFactory *const factory = _findPluginFactory(firmwareClass);
+    const FirmwarePluginFactory* const factory = _findPluginFactory(firmwareClass);
 
     if (factory) {
         vehicleClasses = factory->supportedVehicleClasses();
@@ -72,10 +73,10 @@ QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses
     return vehicleClasses;
 }
 
-FirmwarePlugin *FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
+FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
 {
-    FirmwarePluginFactory *const factory = _findPluginFactory(firmwareType);
-    FirmwarePlugin *plugin = nullptr;
+    FirmwarePluginFactory* const factory = _findPluginFactory(firmwareType);
+    FirmwarePlugin* plugin = nullptr;
 
     if (factory) {
         plugin = factory->firmwarePluginForAutopilot(firmwareType, vehicleType);
@@ -91,11 +92,11 @@ FirmwarePlugin *FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
     return plugin;
 }
 
-FirmwarePluginFactory *FirmwarePluginManager::_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass)
+FirmwarePluginFactory* FirmwarePluginManager::_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass)
 {
     const QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
 
-    for (FirmwarePluginFactory *factory: factoryList) {
+    for (FirmwarePluginFactory* factory : factoryList) {
         if (factory->supportedFirmwareClasses().contains(firmwareClass)) {
             return factory;
         }

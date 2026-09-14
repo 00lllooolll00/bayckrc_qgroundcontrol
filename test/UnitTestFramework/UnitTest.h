@@ -84,9 +84,9 @@ QStringList availableLabelNames();
 /// expensive full-app startup. In the default (full-app) run it behaves like any other
 /// non-standalone test, so this macro is always safe to use.
 /// Usage: UT_REGISTER_TEST_LIGHTWEIGHT(MyPureLogicTest, TestLabel::Unit, TestLabel::Utilities)
-#define UT_REGISTER_TEST_LIGHTWEIGHT(className, ...) \
-    static UnitTestWrapper<className> s_##className##_registration( \
-        UnitTestWrapper<className>::Lightweight, #className, false, {__VA_ARGS__});
+#define UT_REGISTER_TEST_LIGHTWEIGHT(className, ...)                                                        \
+    static UnitTestWrapper<className> s_##className##_registration(UnitTestWrapper<className>::Lightweight, \
+                                                                   #className, false, {__VA_ARGS__});
 
 // ============================================================================
 // Test Assertion Macros
@@ -97,14 +97,15 @@ QStringList availableLabelNames();
 /// Wait for a signal with timeout, with better error message
 /// @param spy QSignalSpy to wait on
 /// @param timeoutMs Timeout in milliseconds
-#define QVERIFY_SIGNAL_WAIT(spy, timeoutMs) \
-    QVERIFY2(UnitTest::waitForSignal((spy), (timeoutMs), QStringLiteral(#spy)), \
-             qPrintable(QString("Timeout waiting for signal after %1ms: %2").arg(timeoutMs).arg(QStringLiteral(#spy))))
+#define QVERIFY_SIGNAL_WAIT(spy, timeoutMs)                                \
+    QVERIFY2(                                                              \
+        UnitTest::waitForSignal((spy), (timeoutMs), QStringLiteral(#spy)), \
+        qPrintable(QString("Timeout waiting for signal after %1ms: %2").arg(timeoutMs).arg(QStringLiteral(#spy))))
 
 /// Verify that no signal is emitted within timeout, with better error message
 /// @param spy QSignalSpy to monitor
 /// @param timeoutMs Timeout in milliseconds
-#define QVERIFY_NO_SIGNAL_WAIT(spy, timeoutMs) \
+#define QVERIFY_NO_SIGNAL_WAIT(spy, timeoutMs)                                    \
     QVERIFY2(UnitTest::waitForNoSignal((spy), (timeoutMs), QStringLiteral(#spy)), \
              qPrintable(QString("Unexpected signal within %1ms: %2").arg(timeoutMs).arg(QStringLiteral(#spy))))
 
@@ -112,11 +113,11 @@ QStringList availableLabelNames();
 /// @param spy QSignalSpy to check
 /// @param expectedCount Minimum signal count expected
 /// @param timeoutMs Timeout in milliseconds
-#define QVERIFY_SIGNAL_COUNT_WAIT(spy, expectedCount, timeoutMs) \
+#define QVERIFY_SIGNAL_COUNT_WAIT(spy, expectedCount, timeoutMs)                                      \
     QVERIFY2(UnitTest::waitForSignalCount((spy), (expectedCount), (timeoutMs), QStringLiteral(#spy)), \
-             qPrintable(QString("Timeout waiting for signal count %1 after %2ms: %3") \
-                            .arg(expectedCount) \
-                            .arg(timeoutMs) \
+             qPrintable(QString("Timeout waiting for signal count %1 after %2ms: %3")                 \
+                            .arg(expectedCount)                                                       \
+                            .arg(timeoutMs)                                                           \
                             .arg(QStringLiteral(#spy))))
 
 /// Wait for a condition with timeout.
@@ -181,9 +182,21 @@ inline std::chrono::milliseconds longDuration()
 
 /// @name Legacy int-millisecond accessors (prefer the chrono versions above)
 /// @{
-inline int shortMs() { return static_cast<int>(shortDuration().count()); }
-inline int mediumMs() { return static_cast<int>(mediumDuration().count()); }
-inline int longMs() { return static_cast<int>(longDuration().count()); }
+inline int shortMs()
+{
+    return static_cast<int>(shortDuration().count());
+}
+
+inline int mediumMs()
+{
+    return static_cast<int>(mediumDuration().count());
+}
+
+inline int longMs()
+{
+    return static_cast<int>(longDuration().count());
+}
+
 /// @}
 
 /// Iteration count for stress tests.
@@ -348,17 +361,16 @@ public:
         return waitForSignalCount(spy, expectedCount, std::chrono::milliseconds(timeoutMs), signalName);
     }
 
-    static bool waitForCondition(const std::function<bool()>& condition, int timeoutMs,
-                                 QStringView conditionName = {})
+    static bool waitForCondition(const std::function<bool()>& condition, int timeoutMs, QStringView conditionName = {})
     {
         return waitForCondition(condition, std::chrono::milliseconds(timeoutMs), conditionName);
     }
 
-    static bool waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
-                               QStringView objectName = {})
+    static bool waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs, QStringView objectName = {})
     {
         return waitForDeleted(objectPtr, std::chrono::milliseconds(timeoutMs), objectName);
     }
+
     /// @}
 
     /// Process queued events/deferred deletes to stabilize teardown between tests.
@@ -368,54 +380,30 @@ public:
 
     /// Find a vehicle setup component (e.g. "Frame", "Sensors", "Radio") by display name.
     /// Returns nullptr if not found.
-    static VehicleComponent *findVehicleComponent(Vehicle *vehicle, const QString &name);
+    static VehicleComponent* findVehicleComponent(Vehicle* vehicle, const QString& name);
 
     // ========================================================================
     // Test Properties
     // ========================================================================
 
-    bool standalone() const
-    {
-        return _standalone;
-    }
+    bool standalone() const { return _standalone; }
 
-    void setStandalone(bool standalone)
-    {
-        _standalone = standalone;
-    }
+    void setStandalone(bool standalone) { _standalone = standalone; }
 
     /// True if this test opted in to the lightweight (bare QCoreApplication) harness.
     /// Pure-logic tests set this via UT_REGISTER_TEST_LIGHTWEIGHT; it has no effect on
     /// the default full-QGCApplication run, where lightweight tests run like any other.
-    bool lightweight() const
-    {
-        return _lightweight;
-    }
+    bool lightweight() const { return _lightweight; }
 
-    void setLightweight(bool lightweight)
-    {
-        _lightweight = lightweight;
-    }
+    void setLightweight(bool lightweight) { _lightweight = lightweight; }
 
-    TestLabels labels() const
-    {
-        return _labels;
-    }
+    TestLabels labels() const { return _labels; }
 
-    void setLabels(TestLabels labels)
-    {
-        _labels = labels;
-    }
+    void setLabels(TestLabels labels) { _labels = labels; }
 
-    bool hasLabel(TestLabel label) const
-    {
-        return _labels.testFlag(label);
-    }
+    bool hasLabel(TestLabel label) const { return _labels.testFlag(label); }
 
-    bool hasAnyLabel(TestLabels labels) const
-    {
-        return (_labels & labels) != TestLabels();
-    }
+    bool hasAnyLabel(TestLabels labels) const { return (_labels & labels) != TestLabels(); }
 
     /// Adds a unit test to the list. Should only be called by UnitTestWrapper.
     static void _addTest(UnitTest* test);
@@ -476,7 +464,7 @@ protected:
     /// - Multiple pending expectations are allowed (FIFO verification order).
     /// - If verifyExpectedLogMessage() is never called, cleanup() fails.
     /// - After verifyExpectedLogMessage(), that expectation is consumed.
-    void expectLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern);
+    void expectLogMessage(const char* category, QtMsgType type, const QRegularExpression& pattern);
 
     /// Verify and consume the next pending expectLogMessage() expectation.
     /// Fails the test if no matching message was captured after expectLogMessage().
@@ -485,7 +473,7 @@ protected:
     /// Declare that a showAppMessage() call matching @a messagePattern is required.
     /// Call verifyExpectedLogMessage() after the code that should emit it.
     /// Convenience wrapper over expectLogMessage for the QGCAppMessageLog category.
-    void expectAppMessage(const QRegularExpression &messagePattern);
+    void expectAppMessage(const QRegularExpression& messagePattern);
 
     /// Permanently suppress all log messages matching @a pattern at level @a type
     /// in the given @a category for the duration of the test.
@@ -500,7 +488,7 @@ protected:
     /// Prefer expectLogMessage(...) + verifyExpectedLogMessage() at specific
     /// points in the test whenever the log is part of the behavior under test.
     /// That pairing provides a stronger assertion and avoids masking regressions.
-    void ignoreLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern);
+    void ignoreLogMessage(const char* category, QtMsgType type, const QRegularExpression& pattern);
 
 private:
     void _resetTestState();
@@ -533,23 +521,22 @@ class UnitTestWrapper
 {
 public:
     /// Tag type selecting the lightweight (bare QCoreApplication) registration overload.
-    struct LightweightTag {};
+    struct LightweightTag
+    {
+    };
+
     static constexpr LightweightTag Lightweight{};
 
     UnitTestWrapper(const QString& name, bool standalone, std::initializer_list<TestLabel> labels = {})
         : UnitTestWrapper(name, standalone, /*lightweight=*/false, labels)
-    {
-    }
+    {}
 
-    UnitTestWrapper(LightweightTag, const QString& name, bool standalone,
-                    std::initializer_list<TestLabel> labels = {})
+    UnitTestWrapper(LightweightTag, const QString& name, bool standalone, std::initializer_list<TestLabel> labels = {})
         : UnitTestWrapper(name, standalone, /*lightweight=*/true, labels)
-    {
-    }
+    {}
 
 private:
-    UnitTestWrapper(const QString& name, bool standalone, bool lightweight,
-                    std::initializer_list<TestLabel> labels)
+    UnitTestWrapper(const QString& name, bool standalone, bool lightweight, std::initializer_list<TestLabel> labels)
     {
         _unitTest = std::make_unique<T>();
         _unitTest->setObjectName(name);

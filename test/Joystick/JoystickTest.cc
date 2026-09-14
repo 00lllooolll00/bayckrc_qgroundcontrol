@@ -1,13 +1,13 @@
 #include "JoystickTest.h"
 
+#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QSettings>
+
 #include "Joystick.h"
 #include "JoystickSDL.h"
 #include "MockJoystick.h"
 #include "SDLJoystick.h"
-
-#include <QtCore/QPointer>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QSettings>
 
 void JoystickTest::initTestCase()
 {
@@ -47,7 +47,7 @@ void JoystickTest::_pumpEvents()
 }
 
 // Seeds a stored button action assignment as if it was saved by a previous session
-void JoystickTest::_seedButtonActionSetting(const QString &joystickName, int buttonIndex, const QString &actionName)
+void JoystickTest::_seedButtonActionSetting(const QString& joystickName, int buttonIndex, const QString& actionName)
 {
     QSettings settings;
     settings.beginGroup(QStringLiteral("JoystickSettingsV2/%1").arg(joystickName));
@@ -106,7 +106,7 @@ void JoystickTest::_joystickIdentityTest()
     QCOMPARE(js->productId(), static_cast<quint16>(0));
     // Virtual joysticks may not have a GUID in SDL3 (empty string is acceptable)
     // Just verify the function doesn't crash
-    (void)js->guid();
+    (void) js->guid();
     // Virtual joystick should report as virtual
     QVERIFY(js->isVirtual());
     // Name should match
@@ -552,7 +552,8 @@ void JoystickTest::_instanceIdReuseNameMismatchTest()
 
 void JoystickTest::_staleCacheDeletedAfterRediscoverTest()
 {
-    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("Stale Cache Controller"), 4, 8, 1));
+    _mockJoystick =
+        std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("Stale Cache Controller"), 4, 8, 1));
     QVERIFY(_mockJoystick->isValid());
     _pumpEvents();
     _discoveredJoysticks = JoystickSDL::discover();
@@ -783,7 +784,8 @@ void JoystickTest::_gamepadBindingQueryTest()
 
 void JoystickTest::_adjustRangeToRcOverridePwmTest()
 {
-    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("RC Override PWM Test"), 6, 16, 1));
+    _mockJoystick =
+        std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("RC Override PWM Test"), 6, 16, 1));
     QVERIFY(_mockJoystick->isValid());
     _pumpEvents();
     _discoveredJoysticks = JoystickSDL::discover();
@@ -798,33 +800,36 @@ void JoystickTest::_adjustRangeToRcOverridePwmTest()
     cal.center = 0;
     cal.deadband = 0;
     cal.reversed = false;
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(0,                  cal, false), static_cast<uint16_t>(1500));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax,  cal, false), static_cast<uint16_t>(2000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin,  cal, false), static_cast<uint16_t>(1000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(0, cal, false), static_cast<uint16_t>(1500));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax, cal, false), static_cast<uint16_t>(2000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin, cal, false), static_cast<uint16_t>(1000));
 
     // Reversed normal axis: directions flip, center stays at 1500
     cal.reversed = true;
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(0,                  cal, false), static_cast<uint16_t>(1500));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax,  cal, false), static_cast<uint16_t>(1000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin,  cal, false), static_cast<uint16_t>(2000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(0, cal, false), static_cast<uint16_t>(1500));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax, cal, false), static_cast<uint16_t>(1000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin, cal, false), static_cast<uint16_t>(2000));
 
     // One-sided axis (e.g. trigger): center == min → output range 1000–2000; noise below center clamps to 1000
     cal.min = 0;
     cal.max = Joystick::AxisMax;
     cal.center = 0;
     cal.reversed = false;
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(0,                  cal, false), static_cast<uint16_t>(1000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax,  cal, false), static_cast<uint16_t>(2000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(-100,               cal, false), static_cast<uint16_t>(1000));  // below-center noise → clamped
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(0, cal, false), static_cast<uint16_t>(1000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax, cal, false), static_cast<uint16_t>(2000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(-100, cal, false),
+             static_cast<uint16_t>(1000));  // below-center noise → clamped
 
-    // One-sided axis (inverted trigger): center == max, reversed → output range 1000–2000; noise above center clamps to 1000
+    // One-sided axis (inverted trigger): center == max, reversed → output range 1000–2000; noise above center clamps to
+    // 1000
     cal.min = Joystick::AxisMin;
     cal.max = 0;
     cal.center = 0;
     cal.reversed = true;
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(0,                  cal, false), static_cast<uint16_t>(1000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin,  cal, false), static_cast<uint16_t>(2000));
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(100,                cal, false), static_cast<uint16_t>(1000));  // above-center noise → clamped
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(0, cal, false), static_cast<uint16_t>(1000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin, cal, false), static_cast<uint16_t>(2000));
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(100, cal, false),
+             static_cast<uint16_t>(1000));  // above-center noise → clamped
 
     // Two-sided axis with deadband: value inside deadband maps to neutral (1500)
     cal.min = Joystick::AxisMin;
@@ -832,10 +837,12 @@ void JoystickTest::_adjustRangeToRcOverridePwmTest()
     cal.center = 0;
     cal.deadband = 10000;
     cal.reversed = false;
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(0,                  cal, true),  static_cast<uint16_t>(1500));  // center
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(5000,               cal, true),  static_cast<uint16_t>(1500));  // within deadband
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax,  cal, true),  static_cast<uint16_t>(2000));  // full positive
-    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin,  cal, true),  static_cast<uint16_t>(1000));  // full negative
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(0, cal, true), static_cast<uint16_t>(1500));     // center
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(5000, cal, true), static_cast<uint16_t>(1500));  // within deadband
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMax, cal, true),
+             static_cast<uint16_t>(2000));                                                    // full positive
+    QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin, cal, true),
+             static_cast<uint16_t>(1000));                                                    // full negative
 
     js->_close();
 }

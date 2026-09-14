@@ -17,37 +17,38 @@ class MockLinkFTP : public QObject
     Q_OBJECT
 
 public:
-    MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink *mockLink);
+    MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink);
     ~MockLinkFTP();
 
     /// Sets the list of files returned by the List command. Prepend names with F or D
     /// to indicate (F)ile or (D)irectory.
-    void setFileList(const QStringList &fileList) { _fileList = fileList; }
+    void setFileList(const QStringList& fileList) { _fileList = fileList; }
 
     /// Describes a simulated onboard log file served from the @MAV_LOG virtual directory.
-    struct LogFile {
-        QString name;       ///< File name, e.g. "log_1.ulg"
-        int size = 0;       ///< File size in bytes
-        uint32_t mtime = 0; ///< Modification time (seconds since UNIX epoch UTC)
+    struct LogFile
+    {
+        QString name;        ///< File name, e.g. "log_1.ulg"
+        int size = 0;        ///< File size in bytes
+        uint32_t mtime = 0;  ///< Modification time (seconds since UNIX epoch UTC)
     };
 
     /// Sets the log files listed in and downloadable from the @MAV_LOG virtual directory.
     /// Removes any temp files cached for the previous log set.
-    void setLogFiles(const QList<LogFile> &logFiles);
+    void setLogFiles(const QList<LogFile>& logFiles);
 
     /// Returns the log files served from the @MAV_LOG virtual directory.
     QList<LogFile> logFiles() const { return _logFiles; }
 
     /// Returns the deterministic contents served for the named @MAV_LOG log file.
     /// Empty if the name is unknown.
-    QByteArray logFileContents(const QString &name) const;
+    QByteArray logFileContents(const QString& name) const;
 
     /// Delays each burst read by delayMs to simulate a slow link. Runs on the
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
 
     /// Called to handle an FTP message
-    void mavlinkMessageReceived(const mavlink_message_t &message);
+    void mavlinkMessageReceived(const mavlink_message_t& message);
 
     void enableRandomDrops(bool enable) { _randomDropsEnabled = enable; }
 
@@ -61,12 +62,14 @@ public:
     void clearUploadedFiles() { _uploadedFiles.clear(); }
 
     /// By calling setErrorMode with one of these modes you can cause the server to simulate an error.
-    enum ErrorMode_t {
-        errModeNone,                        ///< No error, respond correctly
-        errModeNoResponse,                  ///< No response to any request, client should eventually time out with no Ack
-        errModeNakResponse,                 ///< Nak all requests
-        errModeNoSecondResponse,            ///< No response to subsequent request to initial command
-        errModeNoSecondResponseAllowRetry,  ///< No response to subsequent request to initial command, error will be cleared after this so retry will succeed
+    enum ErrorMode_t
+    {
+        errModeNone,              ///< No error, respond correctly
+        errModeNoResponse,        ///< No response to any request, client should eventually time out with no Ack
+        errModeNakResponse,       ///< Nak all requests
+        errModeNoSecondResponse,  ///< No response to subsequent request to initial command
+        errModeNoSecondResponseAllowRetry,  ///< No response to subsequent request to initial command, error will be
+                                            ///< cleared after this so retry will succeed
         errModeNakSecondResponse,           ///< Nak subsequent request to initial command
         errModeBadSequence                  ///< Return response with bad sequence number
     };
@@ -82,17 +85,13 @@ public:
     /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
     /// code may not need to be modified.
     static constexpr const ErrorMode_t rgFailureModes[] = {
-        errModeNoResponse,
-        errModeNakResponse,
-        errModeNoSecondResponse,
-        errModeNakSecondResponse,
-        errModeBadSequence,
+        errModeNoResponse, errModeNakResponse, errModeNoSecondResponse, errModeNakSecondResponse, errModeBadSequence,
     };
 
     /// The number of ErrorModes in the rgFailureModes array.
     static constexpr const size_t cFailureModes = std::size(MockLinkFTP::rgFailureModes);
 
-    static constexpr const char *sizeFilenamePrefix = "mocklink-size-";
+    static constexpr const char* sizeFilenamePrefix = "mocklink-size-";
 
     /// Base modification time (seconds since UNIX epoch UTC) reported by the kCmdListDirectoryWithTime
     /// mock listing. Entry N reports kMockModificationTime + N.
@@ -107,58 +106,75 @@ signals:
 
 private:
     /// Sends an Ack
-    void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber,
+                  MavlinkFTP::OpCode_t reqOpCode);
+    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber,
+                  MavlinkFTP::OpCode_t reqOpCode);
+    void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber,
+                       MavlinkFTP::OpCode_t reqOpCode);
     /// Emits a Request through the messageReceived signal.
-    void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request* request,
+                       uint16_t seqNumber);
     /// Handles List command requests. Only supports root folder paths.
     /// File list returned is set using the setFileList method.
-    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime);
-    void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                      uint16_t seqNumber, bool withTime);
+    void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                      uint16_t seqNumber);
+    void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                            uint16_t seqNumber);
+    void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                            uint16_t seqNumber);
+    void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                      uint16_t seqNumber);
+    void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                           uint16_t seqNumber);
+    void _removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                            uint16_t seqNumber);
+    void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                           uint16_t seqNumber);
     void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
-    void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                       uint16_t seqNumber);
     void _finalizeActiveUpload();
     /// Generates the next sequence number given an incoming sequence number. Handles generating
     /// bad sequence numbers when errModeBadSequence is set.
     uint16_t _nextSeqNumber(uint16_t seqNumber) const;
     static QString _createTestTempFile(int size);
     QString _generateParamPck(bool withDefaults);
-    QString _logFileTempPath(const QString &name);
-    static QByteArray _generateLogFileContents(const QString &name, int size);
+    QString _logFileTempPath(const QString& name);
+    static QByteArray _generateLogFileContents(const QString& name, int size);
 
     /// if request is a string, this ensures it's null-terminated
-    static void ensureNullTemination(MavlinkFTP::Request *request);
+    static void ensureNullTemination(MavlinkFTP::Request* request);
 
-    const uint8_t _systemIdServer;              ///< System ID for server
-    const uint8_t _componentIdServer;           ///< Component ID for server
-    MockLink *_mockLink;                        ///< MockLink to communicate through
+    const uint8_t _systemIdServer;     ///< System ID for server
+    const uint8_t _componentIdServer;  ///< Component ID for server
+    MockLink* _mockLink;               ///< MockLink to communicate through
 
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
-    int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
-    ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
-    bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    int _burstReadDelayMs = 0;                    ///< Per-burst delay to simulate a slow link
+    ErrorMode_t _errMode = errModeNone;           ///< Currently set error mode, as specified by setErrorMode
+    bool _listDirectoryWithTimeSupported = true;  ///< Whether the server implements kCmdListDirectoryWithTime
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;
-    struct UploadSession {
+
+    struct UploadSession
+    {
         bool active = false;
         QString remotePath;
         QByteArray buffer;
 
-        void reset() {
+        void reset()
+        {
             active = false;
             remotePath.clear();
             buffer.clear();
         }
     };
+
     UploadSession _uploadSession;
     QHash<QString, QByteArray> _uploadedFiles;
     QStringList _fileList;                      ///< List of files returned by List command
@@ -166,5 +182,5 @@ private:
     QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads
     uint16_t _lastReplySequence = 0;
 
-    static constexpr uint8_t _sessionId = 1;    ///< We only support a single fixed session
+    static constexpr uint8_t _sessionId = 1;  ///< We only support a single fixed session
 };

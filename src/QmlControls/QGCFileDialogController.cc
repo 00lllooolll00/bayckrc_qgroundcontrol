@@ -1,12 +1,14 @@
 #include "QGCFileDialogController.h"
-#include "QGCLoggingCategory.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
 
 #include <QtCore/QDir>
 
+#include "AppSettings.h"
+#include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+
 #ifdef Q_OS_ANDROID
 #include <QtCore/QPointer>
+
 #include "AndroidInterface.h"
 #endif
 
@@ -29,7 +31,7 @@ QString QGCFileDialogController::takeTestNextFile()
     return file;
 }
 
-void QGCFileDialogController::setTestNextFileForAccept(const QString &file)
+void QGCFileDialogController::setTestNextFileForAccept(const QString& file)
 {
     s_testHookArmed = true;
     s_testNextFile = file;
@@ -52,8 +54,7 @@ QString QGCFileDialogController::takeTestNextFile()
 }
 #endif
 
-QGCFileDialogController::QGCFileDialogController(QObject *parent)
-    : QObject(parent)
+QGCFileDialogController::QGCFileDialogController(QObject* parent) : QObject(parent)
 {
     qCDebug(QGCFileDialogControllerLog) << this;
 }
@@ -63,15 +64,15 @@ QGCFileDialogController::~QGCFileDialogController()
     qCDebug(QGCFileDialogControllerLog) << this;
 }
 
-QStringList QGCFileDialogController::getFiles(const QString &directoryPath, const QStringList &nameFilters)
+QStringList QGCFileDialogController::getFiles(const QString& directoryPath, const QStringList& nameFilters)
 {
     qCDebug(QGCFileDialogControllerLog) << "getFiles" << directoryPath << nameFilters;
 
     QDir fileDir(directoryPath);
-    const QFileInfoList fileInfoList = fileDir.entryInfoList(nameFilters,  QDir::Files, QDir::Name);
+    const QFileInfoList fileInfoList = fileDir.entryInfoList(nameFilters, QDir::Files, QDir::Name);
 
     QStringList files;
-    for (const QFileInfo &fileInfo: fileInfoList) {
+    for (const QFileInfo& fileInfo : fileInfoList) {
         qCDebug(QGCFileDialogControllerLog) << "getFiles found" << fileInfo.fileName();
         files << fileInfo.fileName();
     }
@@ -79,12 +80,13 @@ QStringList QGCFileDialogController::getFiles(const QString &directoryPath, cons
     return files;
 }
 
-bool QGCFileDialogController::fileExists(const QString &filename)
+bool QGCFileDialogController::fileExists(const QString& filename)
 {
     return QFile(filename).exists();
 }
 
-QString QGCFileDialogController::fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& nameFilters)
+QString QGCFileDialogController::fullyQualifiedFilename(const QString& directoryPath, const QString& filename,
+                                                        const QStringList& nameFilters)
 {
     QString firstFileExtention;
 
@@ -93,7 +95,7 @@ QString QGCFileDialogController::fullyQualifiedFilename(const QString& directory
     bool extensionFound = true;
     if (nameFilters.count()) {
         extensionFound = false;
-        for (const QString& nameFilter: nameFilters) {
+        for (const QString& nameFilter : nameFilters) {
             if (nameFilter.startsWith("*.")) {
                 const QString fileExtension = nameFilter.right(nameFilter.length() - 2);
                 if (fileExtension != "*") {
@@ -120,18 +122,19 @@ QString QGCFileDialogController::fullyQualifiedFilename(const QString& directory
     return (directoryPath + QStringLiteral("/") + filenameWithExtension);
 }
 
-void QGCFileDialogController::deleteFile(const QString &filename)
+void QGCFileDialogController::deleteFile(const QString& filename)
 {
     QFile::remove(filename);
 }
 
-QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString &fullFolderPath)
+QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString& fullFolderPath)
 {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     const QString defaultSavePath = SettingsManager::instance()->appSettings()->savePath()->rawValueString();
     if (fullFolderPath.startsWith(defaultSavePath)) {
         const int lastDirSepIndex = fullFolderPath.lastIndexOf(QStringLiteral("/"));
-        return (QCoreApplication::applicationName() + QStringLiteral("/") + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex));
+        return (QCoreApplication::applicationName() + QStringLiteral("/") +
+                fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex));
     }
 #else
     qCWarning(QGCFileDialogControllerLog) << Q_FUNC_INFO << "should only be used in mobile builds";
@@ -163,7 +166,7 @@ QString QGCFileDialogController::urlToLocalFile(QUrl url)
     return result;
 }
 
-QUrl QGCFileDialogController::localFileToUrl(const QString &localFile)
+QUrl QGCFileDialogController::localFileToUrl(const QString& localFile)
 {
     // Empty in, empty out - QUrl::fromLocalFile("") would return the degenerate "file:" url
     return localFile.isEmpty() ? QUrl() : QUrl::fromLocalFile(localFile);
@@ -190,9 +193,7 @@ void QGCFileDialogController::importFromNativePicker()
     AndroidInterface::openFileImportDialog(missionPath, [self](const QString& filePath) {
         if (self) {
             QMetaObject::invokeMethod(
-                self,
-                [filePath, self]() { self->_handleImportResult(filePath); },
-                Qt::QueuedConnection);
+                self, [filePath, self]() { self->_handleImportResult(filePath); }, Qt::QueuedConnection);
         }
     });
 #else
@@ -214,4 +215,4 @@ void QGCFileDialogController::_handleImportResult(const QString& filePath)
     emit fileImported(filePath);
 }
 
-#endif // Q_OS_ANDROID
+#endif  // Q_OS_ANDROID

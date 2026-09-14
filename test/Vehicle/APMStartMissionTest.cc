@@ -53,7 +53,8 @@ void APMStartMissionTest::_setArmedOnGround()
 void APMStartMissionTest::_verifyNoMissionStartSent()
 {
     // Flush the command queue with a tracked no-op so any MISSION_START would already be counted
-    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED, false /* showError */);
+    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,
+                              false /* showError */);
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED) == 1,
                       TestTimeout::mediumMs());
     QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_MISSION_START), 0);
@@ -74,8 +75,8 @@ void APMStartMissionTest::_flyingCopterSwitchesToAuto()
     ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
     mockLink()->setArmed(true);
-    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */,
-                              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
+    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f, 0.0f,
+                              0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
     QVERIFY_TRUE_WAIT(vehicle()->flying(), TestTimeout::mediumMs());
 
     vehicle()->startMission();

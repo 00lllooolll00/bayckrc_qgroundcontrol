@@ -1,10 +1,17 @@
 #include "OnboardLogController.h"
+
+#include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
+#include <QtCore/QTimeZone>
+#include <QtCore/QTimer>
+#include <algorithm>
+
 #include "AppSettings.h"
 #include "FTPManager.h"
-#include "OnboardLogEntry.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
+#include "OnboardLogEntry.h"
 #include "ParameterManager.h"
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
@@ -13,30 +20,22 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
-#include <algorithm>
-
-#include <QtCore/QApplicationStatic>
-#include <QtCore/QDir>
-#include <QtCore/QTimeZone>
-#include <QtCore/QTimer>
-
 QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogController")
 
 // MAVLink FTP defines "@MAV_LOG" as the virtual log directory.
 // Older firmware that doesn't implement the alias requires the physical path
 // instead — which is firmware-specific.
-static constexpr const char *kMavlinkLogRoot = "@MAV_LOG";
-static constexpr const char *kPx4LogRootFallback = "/fs/microsd/log";
-static constexpr const char *kApmLogRootFallback = "/APM/LOGS";
+static constexpr const char* kMavlinkLogRoot = "@MAV_LOG";
+static constexpr const char* kPx4LogRootFallback = "/fs/microsd/log";
+static constexpr const char* kApmLogRootFallback = "/APM/LOGS";
 
-OnboardLogController::OnboardLogController(QObject *parent)
-    : QObject(parent)
-    , _timer(new QTimer(this))
-    , _logEntriesModel(new QmlObjectListModel(this))
+OnboardLogController::OnboardLogController(QObject* parent)
+    : QObject(parent), _timer(new QTimer(this)), _logEntriesModel(new QmlObjectListModel(this))
 {
     qCDebug(OnboardLogControllerLog) << this;
 
-    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &OnboardLogController::_setActiveVehicle);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this,
+                   &OnboardLogController::_setActiveVehicle);
     (void) connect(_timer, &QTimer::timeout, this, &OnboardLogController::_processDownload);
 
     _timer->setSingleShot(false);
@@ -49,7 +48,7 @@ OnboardLogController::~OnboardLogController()
     qCDebug(OnboardLogControllerLog) << this;
 }
 
-void OnboardLogController::download(const QString &path)
+void OnboardLogController::download(const QString& path)
 {
     const QString dir = path.isEmpty() ? SettingsManager::instance()->appSettings()->logSavePath() : path;
     if (_transport == Transport::Ftp) {
@@ -59,7 +58,7 @@ void OnboardLogController::download(const QString &path)
     }
 }
 
-void OnboardLogController::_downloadToDirectory(const QString &dir)
+void OnboardLogController::_downloadToDirectory(const QString& dir)
 {
     _receivedAllEntries();
 
@@ -74,7 +73,7 @@ void OnboardLogController::_downloadToDirectory(const QString &dir)
         _downloadPath += QDir::separator();
     }
 
-    QGCOnboardLogEntry *const log = _getNextSelected();
+    QGCOnboardLogEntry* const log = _getNextSelected();
     if (log) {
         log->setStatus(tr("Waiting"));
     }
@@ -98,7 +97,7 @@ void OnboardLogController::_findMissingEntries()
     int start = -1;
     int end = -1;
     for (int i = 0; i < num_logs; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const QGCOnboardLogEntry* const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -121,7 +120,7 @@ void OnboardLogController::_findMissingEntries()
 
     if (_retries++ > 2) {
         for (int i = 0; i < num_logs; i++) {
-            QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+            QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
             if (entry && !entry->received()) {
                 entry->setStatus(tr("Error"));
             }
@@ -142,7 +141,7 @@ void OnboardLogController::_findMissingEntries()
     _requestLogList(static_cast<uint32_t>(start), static_cast<uint32_t>(end));
 }
 
-void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
+void OnboardLogController::_setActiveVehicle(Vehicle* vehicle)
 {
     if (vehicle == _vehicle) {
         return;
@@ -163,13 +162,13 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
 
         _logEntriesModel->clearAndDeleteContents();
         (void) disconnect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
-        (void) disconnect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
+        (void) disconnect(_vehicle, &Vehicle::logData, this, &OnboardLogController::_logData);
 
-        FTPManager *const ftp = _vehicle->ftpManager();
+        FTPManager* const ftp = _vehicle->ftpManager();
         (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
-        (void) disconnect(ftp, &FTPManager::downloadComplete,      this, &OnboardLogController::_ftpDownloadComplete);
-        (void) disconnect(ftp, &FTPManager::commandProgress,       this, &OnboardLogController::_ftpDownloadProgress);
-        (void) disconnect(ftp, &FTPManager::deleteComplete,        this, &OnboardLogController::_ftpDeleteComplete);
+        (void) disconnect(ftp, &FTPManager::downloadComplete, this, &OnboardLogController::_ftpDownloadComplete);
+        (void) disconnect(ftp, &FTPManager::commandProgress, this, &OnboardLogController::_ftpDownloadProgress);
+        (void) disconnect(ftp, &FTPManager::deleteComplete, this, &OnboardLogController::_ftpDeleteComplete);
 
         _ftpListState = FtpListState::Idle;
         _ftpDirsToList.clear();
@@ -187,17 +186,18 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
 
     if (_vehicle) {
         (void) connect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
-        (void) connect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
+        (void) connect(_vehicle, &Vehicle::logData, this, &OnboardLogController::_logData);
 
-        FTPManager *const ftp = _vehicle->ftpManager();
+        FTPManager* const ftp = _vehicle->ftpManager();
         (void) connect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
-        (void) connect(ftp, &FTPManager::downloadComplete,      this, &OnboardLogController::_ftpDownloadComplete);
-        (void) connect(ftp, &FTPManager::commandProgress,       this, &OnboardLogController::_ftpDownloadProgress);
-        (void) connect(ftp, &FTPManager::deleteComplete,        this, &OnboardLogController::_ftpDeleteComplete);
+        (void) connect(ftp, &FTPManager::downloadComplete, this, &OnboardLogController::_ftpDownloadComplete);
+        (void) connect(ftp, &FTPManager::commandProgress, this, &OnboardLogController::_ftpDownloadProgress);
+        (void) connect(ftp, &FTPManager::deleteComplete, this, &OnboardLogController::_ftpDeleteComplete);
     }
 }
 
-void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num)
+void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs,
+                                     uint16_t last_log_num)
 {
     Q_UNUSED(last_log_num);
 
@@ -212,7 +212,7 @@ void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
         }
 
         for (int i = 0; i < num_logs; i++) {
-            QGCOnboardLogEntry *const entry = new QGCOnboardLogEntry(i);
+            QGCOnboardLogEntry* const entry = new QGCOnboardLogEntry(i);
             (void) connect(entry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
             _logEntriesModel->append(entry);
         }
@@ -222,7 +222,7 @@ void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
         if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
             id -= _apmOffset;
             if (id < _logEntriesModel->count()) {
-                QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(id);
+                QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(id);
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
@@ -254,7 +254,7 @@ bool OnboardLogController::_entriesComplete() const
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const QGCOnboardLogEntry* const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -267,7 +267,7 @@ bool OnboardLogController::_entriesComplete() const
     return true;
 }
 
-void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data)
+void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data)
 {
     if (!_downloadingLogs || !_downloadData || (_transport != Transport::Messages)) {
         return;
@@ -289,7 +289,8 @@ void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
         const uint32_t chunk = ofs / OnboardLogDownloadData::kChunkSize;
         // qCDebug(OnboardLogControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
         if (chunk != _downloadData->current_chunk) {
-            qCWarning(OnboardLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
+            qCWarning(OnboardLogControllerLog)
+                << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
             return;
         }
 
@@ -321,8 +322,7 @@ void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
                 _receivedAllData();
             } else if (_chunkComplete()) {
                 _downloadData->advanceChunk();
-                _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
+                _requestLogData(_downloadData->ID, _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
                                 _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
             } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
                 // Likely to be grabbing fragments and got to the end of a gap
@@ -369,14 +369,15 @@ void OnboardLogController::_findMissingData()
         }
     }
 
-    const uint32_t pos = (_downloadData->current_chunk * OnboardLogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+    const uint32_t pos = (_downloadData->current_chunk * OnboardLogDownloadData::kChunkSize) +
+                         (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
     const uint32_t len = (end - start) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
     _requestLogData(_downloadData->ID, pos, len, _retries);
 }
 
 void OnboardLogController::_updateDataRate()
 {
-    constexpr uint kSizeUpdateThreshold = 102400; // 0.1 MB
+    constexpr uint kSizeUpdateThreshold = 102400;  // 0.1 MB
     const bool timeThresholdMet = _downloadData->elapsed.elapsed() >= kGUIRateMs;
     const bool sizeThresholdMet = (_downloadData->written - _downloadData->last_status_written) >= kSizeUpdateThreshold;
 
@@ -391,13 +392,13 @@ void OnboardLogController::_updateDataRate()
         _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
         _downloadData->rate_bytes = 0;
 
-        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
-                                                   QGC::bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)")
+                     .arg(QGC::bigSizeToString(_downloadData->written), QGC::bigSizeToString(_downloadData->rate_avg));
         _downloadData->elapsed.start();
     } else {
         // Update size only, keep previous rate
-        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
-                                                   QGC::bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)")
+                     .arg(QGC::bigSizeToString(_downloadData->written), QGC::bigSizeToString(_downloadData->rate_avg));
     }
 
     _downloadData->entry->setStatus(status);
@@ -440,7 +441,7 @@ bool OnboardLogController::_prepareLogDownload()
 {
     _downloadData.reset();
 
-    QGCOnboardLogEntry *const entry = _getNextSelected();
+    QGCOnboardLogEntry* const entry = _getNextSelected();
     if (!entry) {
         return false;
     }
@@ -448,15 +449,19 @@ bool OnboardLogController::_prepareLogDownload()
     entry->setSelected(false);
     emit selectionChanged();
 
-    const QString ftime = (entry->time().date().year() >= 2010) ? entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss")) : QStringLiteral("UnknownDate");
+    const QString ftime = (entry->time().date().year() >= 2010)
+                              ? entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss"))
+                              : QStringLiteral("UnknownDate");
 
     _downloadData = std::make_unique<OnboardLogDownloadData>(entry);
     _downloadData->filename = QStringLiteral("log_") + QString::number(entry->id()) + "_" + ftime;
 
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
         const QString loggerParam = QStringLiteral("SYS_LOGGER");
-        ParameterManager *const parameterManager = _vehicle->parameterManager();
-        Fact *const loggerFact = parameterManager->parameterExists(ParameterManager::defaultComponentId, loggerParam) ? parameterManager->getParameter(ParameterManager::defaultComponentId, loggerParam) : nullptr;
+        ParameterManager* const parameterManager = _vehicle->parameterManager();
+        Fact* const loggerFact = parameterManager->parameterExists(ParameterManager::defaultComponentId, loggerParam)
+                                     ? parameterManager->getParameter(ParameterManager::defaultComponentId, loggerParam)
+                                     : nullptr;
         if (loggerFact && (loggerFact->rawValue().toInt() == 0)) {
             _downloadData->filename += ".px4log";
         } else {
@@ -475,14 +480,14 @@ bool OnboardLogController::_prepareLogDownload()
             numDups += 1;
             const QString filename = filename_spl[0] + '_' + QString::number(numDups) + '.' + filename_spl[1];
             _downloadData->file.setFileName(_downloadPath + filename);
-        } while ( _downloadData->file.exists());
+        } while (_downloadData->file.exists());
     }
 
     bool result = false;
     if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" << _downloadData->filename;
     } else if (!_downloadData->file.resize(entry->size())) {
-        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" << _downloadData->filename;
     } else {
         _downloadData->current_chunk = 0;
         _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);
@@ -514,30 +519,33 @@ void OnboardLogController::refresh()
     _logEntriesModel->clearAndDeleteContents();
     emit selectionChanged();
 
-    if (_vehicle && !_ftpDisabled && _vehicle->capabilitiesKnown() && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
+    if (_vehicle && !_ftpDisabled && _vehicle->capabilitiesKnown() &&
+        (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
         qCDebug(OnboardLogControllerLog) << "refresh: using ftp transport";
         _setTransport(Transport::Ftp);
         _ftpStartListing();
     } else {
         qCDebug(OnboardLogControllerLog) << "refresh: using message transport - ftpDisabled:" << _ftpDisabled
-            << "capabilitiesKnown:" << (_vehicle && _vehicle->capabilitiesKnown())
-            << "ftpCapable:" << bool(_vehicle && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP));
+                                         << "capabilitiesKnown:" << (_vehicle && _vehicle->capabilitiesKnown())
+                                         << "ftpCapable:"
+                                         << bool(_vehicle &&
+                                                 (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP));
         _setTransport(Transport::Messages);
         _requestLogList(0, 0xffff);
     }
 }
 
-QGCOnboardLogEntry *OnboardLogController::_getNextSelected() const
+QGCOnboardLogEntry* OnboardLogController::_getNextSelected() const
 {
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
 
         if (entry->selected()) {
-           return entry;
+            return entry;
         }
     }
 
@@ -596,7 +604,7 @@ void OnboardLogController::selectAll(bool select)
 {
     const int count = _logEntriesModel->count();
     for (int i = 0; i < count; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (!entry || !entry->received()) {
             continue;
         }
@@ -605,7 +613,8 @@ void OnboardLogController::selectAll(bool select)
             // Suppress the per-entry connection to avoid O(n²) allLogsSelected()
             // re-evaluations. The entry still notifies its own QML bindings.
             // A single selectionChanged() is emitted after the loop.
-            (void) disconnect(entry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
+            (void) disconnect(entry, &QGCOnboardLogEntry::selectedChanged, this,
+                              &OnboardLogController::selectionChanged);
             entry->setSelected(select);
             (void) connect(entry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
         }
@@ -618,7 +627,7 @@ int OnboardLogController::selectedCount() const
     int selected = 0;
     const int count = _logEntriesModel->count();
     for (int i = 0; i < count; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const QGCOnboardLogEntry* const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (entry && entry->received() && entry->selected()) {
             selected++;
         }
@@ -633,7 +642,7 @@ bool OnboardLogController::allLogsSelected() const
     int selected = 0;
     const int count = _logEntriesModel->count();
     for (int i = 0; i < count; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const QGCOnboardLogEntry* const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (entry && entry->received()) {
             selectable++;
             if (entry->selected()) {
@@ -665,7 +674,7 @@ void OnboardLogController::_resetSelection(bool canceled)
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -684,9 +693,9 @@ void OnboardLogController::_resetSelection(bool canceled)
 void OnboardLogController::_sortEntriesByTimestamp()
 {
     QObjectList sortedEntries = *_logEntriesModel->objectList();
-    std::stable_sort(sortedEntries.begin(), sortedEntries.end(), [this](const QObject *lhsObj, const QObject *rhsObj) {
-        const QGCOnboardLogEntry *const lhs = qobject_cast<const QGCOnboardLogEntry*>(lhsObj);
-        const QGCOnboardLogEntry *const rhs = qobject_cast<const QGCOnboardLogEntry*>(rhsObj);
+    std::stable_sort(sortedEntries.begin(), sortedEntries.end(), [this](const QObject* lhsObj, const QObject* rhsObj) {
+        const QGCOnboardLogEntry* const lhs = qobject_cast<const QGCOnboardLogEntry*>(lhsObj);
+        const QGCOnboardLogEntry* const rhs = qobject_cast<const QGCOnboardLogEntry*>(rhsObj);
         if (lhs == rhs) {
             return false;
         }
@@ -733,14 +742,9 @@ void OnboardLogController::eraseAll()
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_log_erase_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
+    (void) mavlink_msg_log_erase_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                           MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(), &msg,
+                                           _vehicle->id(), _vehicle->defaultComponentId());
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
         qCWarning(OnboardLogControllerLog) << "Failed to send";
@@ -765,7 +769,7 @@ void OnboardLogController::eraseSelected()
     _ftpDeleteQueue.clear();
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (entry && entry->selected() && !entry->ftpPath().isEmpty()) {
             _ftpDeleteQueue.enqueue(entry);
         }
@@ -791,7 +795,7 @@ void OnboardLogController::_ftpDeleteNext()
         return;
     }
 
-    QGCOnboardLogEntry *const entry = _ftpDeleteQueue.dequeue();
+    QGCOnboardLogEntry* const entry = _ftpDeleteQueue.dequeue();
     entry->setSelected(false);
     entry->setStatus(tr("Erasing"));
 
@@ -804,7 +808,7 @@ void OnboardLogController::_ftpDeleteNext()
     }
 }
 
-void OnboardLogController::_ftpDeleteComplete(const QString &file, const QString &errorMsg)
+void OnboardLogController::_ftpDeleteComplete(const QString& file, const QString& errorMsg)
 {
     if (!_ftpDeleting) {
         return;
@@ -831,16 +835,9 @@ void OnboardLogController::_requestLogList(uint32_t start, uint32_t end)
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_list_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        start,
-        end
-    );
+    (void) mavlink_msg_log_request_list_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                  MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(), &msg,
+                                                  _vehicle->id(), _vehicle->defaultComponentId(), start, end);
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
         qCWarning(OnboardLogControllerLog) << "Failed to send";
@@ -866,20 +863,13 @@ void OnboardLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_
     }
 
     id += _apmOffset;
-    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
+    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count
+                                     << "retryCount" << retryCount << ")";
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_data_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        id,
-        offset,
-        count
-    );
+    (void) mavlink_msg_log_request_data_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                  MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(), &msg,
+                                                  _vehicle->id(), _vehicle->defaultComponentId(), id, offset, count);
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
         qCWarning(OnboardLogControllerLog) << "Failed to send";
@@ -900,14 +890,9 @@ void OnboardLogController::_requestLogEnd()
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_end_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
+    (void) mavlink_msg_log_request_end_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                 MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(), &msg,
+                                                 _vehicle->id(), _vehicle->defaultComponentId());
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
         qCWarning(OnboardLogControllerLog) << "Failed to send";
@@ -970,7 +955,7 @@ void OnboardLogController::_ftpListRoot()
     }
 }
 
-void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const QString &errorMsg)
+void OnboardLogController::_ftpListDirComplete(const QStringList& dirList, const QString& errorMsg)
 {
     if (_ftpListState == FtpListState::Idle) {
         return;
@@ -978,7 +963,7 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
 
     if (!errorMsg.isEmpty()) {
         if ((_ftpListState == FtpListState::ListingRoot) && !_ftpTriedFallbackRoot && _vehicle) {
-            const char *fallback = nullptr;
+            const char* fallback = nullptr;
             if (_vehicle->px4Firmware()) {
                 fallback = kPx4LogRootFallback;
             } else if (_vehicle->apmFirmware()) {
@@ -987,7 +972,7 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
 
             if (fallback) {
                 qCDebug(OnboardLogControllerLog) << "ftp: root listing of" << _ftpLogRoot << "failed (" << errorMsg
-                    << "), falling back to" << fallback;
+                                                 << "), falling back to" << fallback;
                 _ftpTriedFallbackRoot = true;
                 _ftpLogRoot = QString::fromLatin1(fallback);
                 _ftpListRoot();
@@ -1002,15 +987,17 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
 
     // Raw entries expose whether the server included the optional mtime field (date/time diagnosis)
     qCDebug(OnboardLogControllerLog) << "ftp: raw entries for"
-        << ((_ftpListState == FtpListState::ListingRoot) ? _ftpLogRoot : (_ftpDirsToList.isEmpty() ? QString() : _ftpDirsToList.first()))
-        << dirList;
+                                     << ((_ftpListState == FtpListState::ListingRoot)
+                                             ? _ftpLogRoot
+                                             : (_ftpDirsToList.isEmpty() ? QString() : _ftpDirsToList.first()))
+                                     << dirList;
 
     if (_ftpListState == FtpListState::ListingRoot) {
         // The root listing may contain log files directly (flat layout, e.g. @MAV_LOG)
         // and/or date subdirectories to descend into (PX4 fallback /fs/microsd/log).
         const uint flatLogs = _ftpProcessFileEntries(dirList, QString());
 
-        for (const QString &entry : dirList) {
+        for (const QString& entry : dirList) {
             if (entry.startsWith(QLatin1Char('D'))) {
                 const QString dirName = entry.mid(1);
                 if (!dirName.isEmpty()) {
@@ -1020,8 +1007,8 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
         }
 
         _ftpDirsToList.sort();
-        qCDebug(OnboardLogControllerLog) << "ftp: root listing of" << _ftpLogRoot
-            << "found" << flatLogs << "flat logs and" << _ftpDirsToList.size() << "subdirectories";
+        qCDebug(OnboardLogControllerLog) << "ftp: root listing of" << _ftpLogRoot << "found" << flatLogs
+                                         << "flat logs and" << _ftpDirsToList.size() << "subdirectories";
 
         _ftpListState = FtpListState::ListingSubdir;
         _ftpListNextSubdir();
@@ -1040,12 +1027,12 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
     _ftpListNextSubdir();
 }
 
-uint OnboardLogController::_ftpProcessFileEntries(const QStringList &dirList, const QString &subdir)
+uint OnboardLogController::_ftpProcessFileEntries(const QStringList& dirList, const QString& subdir)
 {
     const QDate dirDate = subdir.isEmpty() ? QDate() : QDate::fromString(subdir, QStringLiteral("yyyy-MM-dd"));
     uint logsFound = 0;
 
-    for (const QString &entry : dirList) {
+    for (const QString& entry : dirList) {
         if (!entry.startsWith(QLatin1Char('F'))) {
             continue;
         }
@@ -1094,10 +1081,10 @@ uint OnboardLogController::_ftpProcessFileEntries(const QStringList &dirList, co
         }
 
         const QString ftpPath = subdir.isEmpty()
-            ? (_ftpLogRoot + QStringLiteral("/") + fileName)
-            : (_ftpLogRoot + QStringLiteral("/") + subdir + QStringLiteral("/") + fileName);
+                                    ? (_ftpLogRoot + QStringLiteral("/") + fileName)
+                                    : (_ftpLogRoot + QStringLiteral("/") + subdir + QStringLiteral("/") + fileName);
 
-        QGCOnboardLogEntry *const logEntry = new QGCOnboardLogEntry(_ftpLogIdCounter++, dateTime, fileSize, true);
+        QGCOnboardLogEntry* const logEntry = new QGCOnboardLogEntry(_ftpLogIdCounter++, dateTime, fileSize, true);
         logEntry->setFtpPath(ftpPath);
         logEntry->setStatus(tr("Available"));
         (void) connect(logEntry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
@@ -1158,7 +1145,7 @@ void OnboardLogController::_ftpFallbackToMessages()
     _requestLogList(0, 0xffff);
 }
 
-void OnboardLogController::_ftpDownloadToDirectory(const QString &dir)
+void OnboardLogController::_ftpDownloadToDirectory(const QString& dir)
 {
     _downloadPath = dir;
     if (_downloadPath.isEmpty()) {
@@ -1173,7 +1160,7 @@ void OnboardLogController::_ftpDownloadToDirectory(const QString &dir)
     _ftpDownloadHadError = false;
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        QGCOnboardLogEntry* const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (entry && entry->selected() && !entry->ftpPath().isEmpty()) {
             entry->setStatus(tr("Waiting"));
             _ftpDownloadQueue.enqueue(entry);
@@ -1185,13 +1172,14 @@ void OnboardLogController::_ftpDownloadToDirectory(const QString &dir)
         return;
     }
 
-    qCDebug(OnboardLogControllerLog) << "ftp: queued" << _ftpDownloadQueue.size() << "logs for download to" << _downloadPath;
+    qCDebug(OnboardLogControllerLog) << "ftp: queued" << _ftpDownloadQueue.size() << "logs for download to"
+                                     << _downloadPath;
     _setDownloading(true);
 
     _ftpDownloadEntry(_ftpDownloadQueue.dequeue());
 }
 
-void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
+void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry* entry)
 {
     if (!entry || !_vehicle) {
         return;
@@ -1225,7 +1213,8 @@ void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
 
     qCDebug(OnboardLogControllerLog) << "ftp: downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
 
-    if (!_vehicle->ftpManager()->download(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, localFilename, true)) {
+    if (!_vehicle->ftpManager()->download(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, localFilename,
+                                          true)) {
         qCWarning(OnboardLogControllerLog) << "ftp: failed to start download for" << entry->ftpPath();
         entry->setStatus(tr("Error"));
         _ftpCurrentDownloadEntry = nullptr;
@@ -1242,14 +1231,15 @@ void OnboardLogController::_ftpDownloadQueueNext()
     }
 
     if (_ftpDownloadHadError) {
-        qCDebug(OnboardLogControllerLog) << "ftp: download errors occurred, using message based transport for subsequent refreshes";
+        qCDebug(OnboardLogControllerLog)
+            << "ftp: download errors occurred, using message based transport for subsequent refreshes";
         _ftpDisabled = true;
     }
 
     _setDownloading(false);
 }
 
-void OnboardLogController::_ftpDownloadComplete(const QString &file, const QString &errorMsg)
+void OnboardLogController::_ftpDownloadComplete(const QString& file, const QString& errorMsg)
 {
     if (!_ftpCurrentDownloadEntry) {
         return;
@@ -1278,7 +1268,8 @@ void OnboardLogController::_ftpDownloadProgress(float value)
         return;
     }
 
-    const size_t totalBytes = static_cast<size_t>(static_cast<qreal>(_ftpCurrentDownloadEntry->size()) * static_cast<qreal>(value));
+    const size_t totalBytes =
+        static_cast<size_t>(static_cast<qreal>(_ftpCurrentDownloadEntry->size()) * static_cast<qreal>(value));
     if (totalBytes < _ftpDownloadBytesAtLastUpdate) {
         // Guard against non-monotonic progress which would underflow the unsigned delta
         _ftpDownloadBytesAtLastUpdate = totalBytes;
@@ -1292,9 +1283,8 @@ void OnboardLogController::_ftpDownloadProgress(float value)
     _ftpDownloadBytesAtLastUpdate = totalBytes;
     _ftpDownloadElapsed.start();
 
-    const QString status = QStringLiteral("%1 (%2/s)").arg(
-        QGC::bigSizeToString(totalBytes),
-        QGC::bigSizeToString(_ftpDownloadRateAvg));
+    const QString status =
+        QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(totalBytes), QGC::bigSizeToString(_ftpDownloadRateAvg));
 
     _ftpCurrentDownloadEntry->setStatus(status);
 }
@@ -1307,7 +1297,7 @@ void OnboardLogController::setCompressLogs(bool compress)
     }
 }
 
-bool OnboardLogController::compressLogFile(const QString &logPath)
+bool OnboardLogController::compressLogFile(const QString& logPath)
 {
     Q_UNUSED(logPath)
     qCWarning(OnboardLogControllerLog) << "Log compression not yet implemented (decompression-only API)";

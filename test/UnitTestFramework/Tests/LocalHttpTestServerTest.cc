@@ -1,10 +1,10 @@
 #include "LocalHttpTestServerTest.h"
 
-#include "Fixtures/LocalHttpTestServer.h"
-
 #include <QtCore/QUrl>
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
+
+#include "Fixtures/LocalHttpTestServer.h"
 
 void LocalHttpTestServerTest::_testFragmentedRequestHeader()
 {

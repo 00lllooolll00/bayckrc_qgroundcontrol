@@ -1,43 +1,45 @@
 #include "MockLinkCamera.h"
-#include "MAVLinkLib.h"
-#include "MockLink.h"
-#include "MissionManager/MissionCommandTree.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QtMath>
-
 #include <algorithm>
+
+#include "MAVLinkLib.h"
+#include "MissionManager/MissionCommandTree.h"
+#include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkCameraLog, "Comms.MockLink.MockLinkCamera")
 
-MockLinkCamera::MockLinkCamera(MockLink *mockLink,
-                               bool captureVideo,
-                               bool captureImage,
-                               bool hasModes,
-                               bool hasVideoStream,
-                               bool canCaptureImageInVideoMode,
-                               bool canCaptureVideoInImageMode,
-                               bool hasBasicZoom,
-                               bool hasTrackingPoint,
-                               bool hasTrackingRectangle)
+MockLinkCamera::MockLinkCamera(MockLink* mockLink, bool captureVideo, bool captureImage, bool hasModes,
+                               bool hasVideoStream, bool canCaptureImageInVideoMode, bool canCaptureVideoInImageMode,
+                               bool hasBasicZoom, bool hasTrackingPoint, bool hasTrackingRectangle)
     : _mockLink(mockLink)
 {
     // Build capability flags from configuration
     uint32_t configuredFlags = 0;
-    if (captureVideo)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_VIDEO;
-    if (captureImage)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
-    if (hasModes)                       configuredFlags |= CAMERA_CAP_FLAGS_HAS_MODES;
-    if (hasVideoStream)                 configuredFlags |= CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
-    if (canCaptureImageInVideoMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE;
-    if (canCaptureVideoInImageMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE;
-    if (hasBasicZoom)                   configuredFlags |= CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM;
-    if (hasTrackingPoint)               configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
-    if (hasTrackingRectangle)           configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
+    if (captureVideo)
+        configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_VIDEO;
+    if (captureImage)
+        configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
+    if (hasModes)
+        configuredFlags |= CAMERA_CAP_FLAGS_HAS_MODES;
+    if (hasVideoStream)
+        configuredFlags |= CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
+    if (canCaptureImageInVideoMode)
+        configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE;
+    if (canCaptureVideoInImageMode)
+        configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE;
+    if (hasBasicZoom)
+        configuredFlags |= CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM;
+    if (hasTrackingPoint)
+        configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
+    if (hasTrackingRectangle)
+        configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
 
     // Camera 1: full-featured with configurable flags
-    _cameras[0].compId   = MAV_COMP_ID_CAMERA;
+    _cameras[0].compId = MAV_COMP_ID_CAMERA;
     _cameras[0].capFlags = configuredFlags;
     _cameras[0].cameraMode = CAMERA_MODE_IMAGE;
     if ((configuredFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) && (configuredFlags & CAMERA_CAP_FLAGS_HAS_MODES)) {
@@ -45,12 +47,12 @@ MockLinkCamera::MockLinkCamera(MockLink *mockLink,
     }
 
     // Camera 2: photo-only (always CAPTURE_IMAGE only)
-    _cameras[1].compId   = MAV_COMP_ID_CAMERA2;
+    _cameras[1].compId = MAV_COMP_ID_CAMERA2;
     _cameras[1].capFlags = CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
     _cameras[1].cameraMode = CAMERA_MODE_IMAGE;
 }
 
-MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
+MockLinkCamera::CameraState* MockLinkCamera::_findCamera(uint8_t compId)
 {
     for (uint8_t i = 0; i < kNumCameras; i++) {
         if (_cameras[i].compId == compId) {
@@ -60,14 +62,19 @@ MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
     return nullptr;
 }
 
-const char *MockLinkCamera::_imageCaptureStatusToString(uint8_t status)
+const char* MockLinkCamera::_imageCaptureStatusToString(uint8_t status)
 {
     switch (status) {
-    case ImageCaptureIdle:            return "Idle";
-    case ImageCaptureInProgress:      return "InProgress";
-    case ImageCaptureInterval:        return "Interval";
-    case ImageCaptureIntervalCapture: return "IntervalCapture";
-    default:                          return "Unknown";
+        case ImageCaptureIdle:
+            return "Idle";
+        case ImageCaptureInProgress:
+            return "InProgress";
+        case ImageCaptureInterval:
+            return "Interval";
+        case ImageCaptureIntervalCapture:
+            return "IntervalCapture";
+        default:
+            return "Unknown";
     }
 }
 
@@ -75,16 +82,9 @@ void MockLinkCamera::sendCameraHeartbeats()
 {
     for (uint8_t i = 0; i < kNumCameras; i++) {
         mavlink_message_t msg{};
-        (void) mavlink_msg_heartbeat_pack_chan(
-            _mockLink->vehicleId(),
-            _cameras[i].compId,
-            _mockLink->outgoingMavlinkChannel(),
-            &msg,
-            MAV_TYPE_CAMERA,
-            MAV_AUTOPILOT_INVALID,
-            0,
-            0,
-            MAV_STATE_ACTIVE);
+        (void) mavlink_msg_heartbeat_pack_chan(_mockLink->vehicleId(), _cameras[i].compId,
+                                               _mockLink->outgoingMavlinkChannel(), &msg, MAV_TYPE_CAMERA,
+                                               MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
         _mockLink->respondWithMavlinkMessage(msg);
     }
 }
@@ -97,7 +97,7 @@ void MockLinkCamera::run10HzTasks()
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
 
     for (uint8_t i = 0; i < kNumCameras; i++) {
-        CameraState *cam = &_cameras[i];
+        CameraState* cam = &_cameras[i];
 
         // Check for single-shot capture completion (after 500ms)
         if (cam->singleShotStartMs > 0 && (now - cam->singleShotStartMs) >= 500) {
@@ -105,7 +105,8 @@ void MockLinkCamera::run10HzTasks()
             cam->image_status = ImageCaptureIdle;
             cam->singleShotStartMs = 0;
 
-            qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "single-shot complete, total:" << cam->imagesCaptured;
+            qCDebug(MockLinkCameraLog) << "Camera" << cam->compId
+                                       << "single-shot complete, total:" << cam->imagesCaptured;
             _sendCameraImageCaptured(cam->compId);
         }
 
@@ -116,7 +117,8 @@ void MockLinkCamera::run10HzTasks()
                 cam->intervalLastCaptureMs = now;
                 cam->imagesCaptured++;
                 cam->image_status = ImageCaptureIntervalCapture;
-                qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "interval capture, total:" << cam->imagesCaptured;
+                qCDebug(MockLinkCameraLog)
+                    << "Camera" << cam->compId << "interval capture, total:" << cam->imagesCaptured;
                 _sendCameraImageCaptured(cam->compId);
 
                 if (cam->intervalRemaining > 0 && --cam->intervalRemaining == 0) {
@@ -146,8 +148,8 @@ void MockLinkCamera::run10HzTasks()
                     const float halfH = (cam->trackRecBottomY - cam->trackRecTopY) / 2.0f;
                     const float cx = std::clamp(cam->trackAnchorX + driftX, halfW, 1.0f - halfW);
                     const float cy = std::clamp(cam->trackAnchorY + driftY, halfH, 1.0f - halfH);
-                    cam->trackRecTopX    = cx - halfW;
-                    cam->trackRecTopY    = cy - halfH;
+                    cam->trackRecTopX = cx - halfW;
+                    cam->trackRecTopY = cy - halfH;
                     cam->trackRecBottomX = cx + halfW;
                     cam->trackRecBottomY = cy + halfH;
                 }
@@ -159,7 +161,7 @@ void MockLinkCamera::run10HzTasks()
     }
 }
 
-bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
+bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t& msg)
 {
     if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) {
         return false;
@@ -182,298 +184,293 @@ bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
     return _handleCameraCommand(request, targetCompId);
 }
 
-bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
+bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t& request, uint8_t targetCompId)
 {
     // Thread-safe access: Main thread modifying camera state that worker thread reads every 100ms.
     // Serialize all camera state modifications to avoid worker seeing inconsistent state
     // (e.g., trying to complete capture while main thread is starting a new one).
     QMutexLocker locker(&_camerasMutex);
-    CameraState *cam = _findCamera(targetCompId);
+    CameraState* cam = _findCamera(targetCompId);
     if (!cam) {
         return false;
     }
 
     switch (request.command) {
-    case MAV_CMD_REQUEST_CAMERA_INFORMATION:
-        _sendCameraInformation(targetCompId);
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        return true;
-
-    case MAV_CMD_REQUEST_CAMERA_SETTINGS:
-        _sendCameraSettings(targetCompId);
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        return true;
-
-    case MAV_CMD_REQUEST_STORAGE_INFORMATION:
-        _sendStorageInformation(targetCompId);
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        return true;
-
-    case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-        _sendCameraCaptureStatus(targetCompId);
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        return true;
-
-    case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
-            const uint8_t streamId = static_cast<uint8_t>(request.param1);
-            if (streamId == 0) {
-                // Request all streams
-                for (uint8_t s = 1; s <= kNumStreams; s++) {
-                    _sendVideoStreamInformation(targetCompId, s);
-                }
-            } else {
-                _sendVideoStreamInformation(targetCompId, streamId);
-            }
+        case MAV_CMD_REQUEST_CAMERA_INFORMATION:
+            _sendCameraInformation(targetCompId);
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
+            return true;
 
-    case MAV_CMD_REQUEST_VIDEO_STREAM_STATUS:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
-            const uint8_t streamId = static_cast<uint8_t>(request.param1);
-            if (streamId == 0) {
-                for (uint8_t s = 1; s <= kNumStreams; s++) {
-                    _sendVideoStreamStatus(targetCompId, s);
-                }
-            } else {
-                _sendVideoStreamStatus(targetCompId, streamId);
-            }
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
-
-    case MAV_CMD_SET_CAMERA_MODE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) {
-            const uint8_t requestedMode = static_cast<uint8_t>(request.param2);
-
-            if ((requestedMode != CAMERA_MODE_IMAGE) && (requestedMode != CAMERA_MODE_VIDEO)) {
-                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-                return true;
-            }
-
-            const bool supportsImageMode =
-                (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) ||
-                (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
-            const bool supportsVideoMode =
-                (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) ||
-                (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
-
-            if ((requestedMode == CAMERA_MODE_IMAGE && !supportsImageMode) ||
-                (requestedMode == CAMERA_MODE_VIDEO && !supportsVideoMode)) {
-                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-                return true;
-            }
-
-            cam->cameraMode = requestedMode;
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "mode set to" << cam->cameraMode;
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-            // Send updated settings after mode change
+        case MAV_CMD_REQUEST_CAMERA_SETTINGS:
             _sendCameraSettings(targetCompId);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
-
-    case MAV_CMD_IMAGE_START_CAPTURE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
-            if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) &&
-                (cam->cameraMode == CAMERA_MODE_VIDEO) &&
-                !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE)) {
-                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-                return true;
-            }
-
-            const float interval = request.param2;
-            const int count = static_cast<int>(request.param3);
-
-            if (interval > 0) {
-                // First interval image is captured on the next 10Hz tick
-                cam->image_status = ImageCaptureInterval;
-                cam->image_interval = interval;
-                cam->intervalRemaining = count;
-                cam->intervalLastCaptureMs = 0;
-                cam->singleShotStartMs = 0;
-            } else {
-                // Single shot - start capture, count will increment after 0.5s
-                cam->image_status = ImageCaptureInProgress;
-                cam->image_interval = 0.0f;
-                cam->singleShotStartMs = QDateTime::currentMSecsSinceEpoch();
-            }
-
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
-                                    << "interval:" << interval << "count:" << count;
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
+            return true;
 
-    case MAV_CMD_IMAGE_STOP_CAPTURE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
+        case MAV_CMD_REQUEST_STORAGE_INFORMATION:
+            _sendStorageInformation(targetCompId);
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            return true;
+
+        case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+            _sendCameraCaptureStatus(targetCompId);
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            return true;
+
+        case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
+                const uint8_t streamId = static_cast<uint8_t>(request.param1);
+                if (streamId == 0) {
+                    // Request all streams
+                    for (uint8_t s = 1; s <= kNumStreams; s++) {
+                        _sendVideoStreamInformation(targetCompId, s);
+                    }
+                } else {
+                    _sendVideoStreamInformation(targetCompId, streamId);
+                }
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_REQUEST_VIDEO_STREAM_STATUS:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
+                const uint8_t streamId = static_cast<uint8_t>(request.param1);
+                if (streamId == 0) {
+                    for (uint8_t s = 1; s <= kNumStreams; s++) {
+                        _sendVideoStreamStatus(targetCompId, s);
+                    }
+                } else {
+                    _sendVideoStreamStatus(targetCompId, streamId);
+                }
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_SET_CAMERA_MODE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) {
+                const uint8_t requestedMode = static_cast<uint8_t>(request.param2);
+
+                if ((requestedMode != CAMERA_MODE_IMAGE) && (requestedMode != CAMERA_MODE_VIDEO)) {
+                    _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                    return true;
+                }
+
+                const bool supportsImageMode = (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) ||
+                                               (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
+                const bool supportsVideoMode = (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) ||
+                                               (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
+
+                if ((requestedMode == CAMERA_MODE_IMAGE && !supportsImageMode) ||
+                    (requestedMode == CAMERA_MODE_VIDEO && !supportsVideoMode)) {
+                    _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                    return true;
+                }
+
+                cam->cameraMode = requestedMode;
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "mode set to" << cam->cameraMode;
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+                // Send updated settings after mode change
+                _sendCameraSettings(targetCompId);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_IMAGE_START_CAPTURE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
+                if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) && (cam->cameraMode == CAMERA_MODE_VIDEO) &&
+                    !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE)) {
+                    _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                    return true;
+                }
+
+                const float interval = request.param2;
+                const int count = static_cast<int>(request.param3);
+
+                if (interval > 0) {
+                    // First interval image is captured on the next 10Hz tick
+                    cam->image_status = ImageCaptureInterval;
+                    cam->image_interval = interval;
+                    cam->intervalRemaining = count;
+                    cam->intervalLastCaptureMs = 0;
+                    cam->singleShotStartMs = 0;
+                } else {
+                    // Single shot - start capture, count will increment after 0.5s
+                    cam->image_status = ImageCaptureInProgress;
+                    cam->image_interval = 0.0f;
+                    cam->singleShotStartMs = QDateTime::currentMSecsSinceEpoch();
+                }
+
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
+                                           << "interval:" << interval << "count:" << count;
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_IMAGE_STOP_CAPTURE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
+                cam->image_status = ImageCaptureIdle;
+                cam->image_interval = 0.0f;
+                cam->intervalRemaining = 0;
+                cam->singleShotStartMs = 0;
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_VIDEO_START_CAPTURE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
+                if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) && (cam->cameraMode == CAMERA_MODE_IMAGE) &&
+                    !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE)) {
+                    _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                    return true;
+                }
+
+                cam->recording = true;
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording started";
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_VIDEO_STOP_CAPTURE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
+                cam->recording = false;
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording stopped";
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
+
+        case MAV_CMD_STORAGE_FORMAT:
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "storage formatted";
+            cam->imagesCaptured = 0;
             cam->image_status = ImageCaptureIdle;
             cam->image_interval = 0.0f;
             cam->intervalRemaining = 0;
             cam->singleShotStartMs = 0;
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
+            _sendStorageInformation(targetCompId);
+            return true;
 
-    case MAV_CMD_VIDEO_START_CAPTURE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
-            if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) &&
-                (cam->cameraMode == CAMERA_MODE_IMAGE) &&
-                !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE)) {
+        case MAV_CMD_SET_CAMERA_ZOOM:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
+                // param2 is an absolute level for ZOOM_TYPE_RANGE and a direction for
+                // ZOOM_TYPE_STEP. Continuous zoom is not modeled.
+                switch (static_cast<int>(request.param1)) {
+                    case ZOOM_TYPE_RANGE:
+                        cam->zoomLevel = request.param2;
+                        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+                        break;
+                    case ZOOM_TYPE_STEP:
+                        cam->zoomLevel = std::clamp(cam->zoomLevel + (request.param2 * kZoomStepPercent),
+                                                    kZoomMinPercent, kZoomMaxPercent);
+                        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom stepped to" << cam->zoomLevel;
+                        break;
+                    default:
+                        break;
+                }
+                // Spec-minimal: CAMERA_SETTINGS is not broadcast after a zoom change.
+                // The GCS must re-request it (MAVLink camera protocol v2).
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
                 _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-                return true;
             }
+            return true;
 
-            cam->recording = true;
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording started";
+        case MAV_CMD_SET_CAMERA_FOCUS:
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            return true;
+
+        case MAV_CMD_RESET_CAMERA_SETTINGS:
+            cam->cameraMode = CAMERA_MODE_IMAGE;
+            cam->zoomLevel = 1.0f;
+            cam->focusLevel = 0.0f;
+            cam->image_status = ImageCaptureIdle;
+            cam->image_interval = 0.0f;
+            cam->intervalRemaining = 0;
+            cam->singleShotStartMs = 0;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "settings reset";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
+            _sendCameraSettings(targetCompId);
+            return true;
 
-    case MAV_CMD_VIDEO_STOP_CAPTURE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
-            cam->recording = false;
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording stopped";
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
+        case MAV_CMD_CAMERA_TRACK_POINT:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT) {
+                cam->trackingMode = CAMERA_TRACKING_MODE_POINT;
+                cam->trackPointX = request.param1;
+                cam->trackPointY = request.param2;
+                cam->trackRadius = request.param3;
+                cam->trackAnchorX = request.param1;
+                cam->trackAnchorY = request.param2;
+                cam->trackingStartMs = QDateTime::currentMSecsSinceEpoch();
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking point" << cam->trackPointX
+                                           << cam->trackPointY << "radius" << cam->trackRadius;
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
 
-    case MAV_CMD_STORAGE_FORMAT:
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "storage formatted";
-        cam->imagesCaptured = 0;
-        cam->image_status = ImageCaptureIdle;
-        cam->image_interval = 0.0f;
-        cam->intervalRemaining = 0;
-        cam->singleShotStartMs = 0;
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendStorageInformation(targetCompId);
-        return true;
+        case MAV_CMD_CAMERA_TRACK_RECTANGLE:
+            if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
+                cam->trackingMode = CAMERA_TRACKING_MODE_RECTANGLE;
+                cam->trackRecTopX = request.param1;
+                cam->trackRecTopY = request.param2;
+                cam->trackRecBottomX = request.param3;
+                cam->trackRecBottomY = request.param4;
+                cam->trackAnchorX = (request.param1 + request.param3) / 2.0f;
+                cam->trackAnchorY = (request.param2 + request.param4) / 2.0f;
+                cam->trackingStartMs = QDateTime::currentMSecsSinceEpoch();
+                qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking rectangle" << cam->trackRecTopX
+                                           << cam->trackRecTopY << "->" << cam->trackRecBottomX << cam->trackRecBottomY;
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            } else {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            }
+            return true;
 
-    case MAV_CMD_SET_CAMERA_ZOOM:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
-             // param2 is an absolute level for ZOOM_TYPE_RANGE and a direction for
-             // ZOOM_TYPE_STEP. Continuous zoom is not modeled.
-             switch (static_cast<int>(request.param1)) {
-             case ZOOM_TYPE_RANGE:
-                 cam->zoomLevel = request.param2;
-                 qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
-                 break;
-             case ZOOM_TYPE_STEP:
-                 cam->zoomLevel = std::clamp(cam->zoomLevel + (request.param2 * kZoomStepPercent), kZoomMinPercent, kZoomMaxPercent);
-                 qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom stepped to" << cam->zoomLevel;
-                 break;
-             default:
-                 break;
-             }
-             // Spec-minimal: CAMERA_SETTINGS is not broadcast after a zoom change.
-             // The GCS must re-request it (MAVLink camera protocol v2).
-             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
-
-    case MAV_CMD_SET_CAMERA_FOCUS:
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        return true;
-
-    case MAV_CMD_RESET_CAMERA_SETTINGS:
-        cam->cameraMode = CAMERA_MODE_IMAGE;
-        cam->zoomLevel = 1.0f;
-        cam->focusLevel = 0.0f;
-        cam->image_status = ImageCaptureIdle;
-        cam->image_interval = 0.0f;
-        cam->intervalRemaining = 0;
-        cam->singleShotStartMs = 0;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "settings reset";
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraSettings(targetCompId);
-        return true;
-
-    case MAV_CMD_CAMERA_TRACK_POINT:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT) {
-            cam->trackingMode    = CAMERA_TRACKING_MODE_POINT;
-            cam->trackPointX     = request.param1;
-            cam->trackPointY     = request.param2;
-            cam->trackRadius     = request.param3;
-            cam->trackAnchorX    = request.param1;
-            cam->trackAnchorY    = request.param2;
-            cam->trackingStartMs = QDateTime::currentMSecsSinceEpoch();
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking point"
-                                       << cam->trackPointX << cam->trackPointY << "radius" << cam->trackRadius;
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
-
-    case MAV_CMD_CAMERA_TRACK_RECTANGLE:
-        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
-            cam->trackingMode      = CAMERA_TRACKING_MODE_RECTANGLE;
-            cam->trackRecTopX      = request.param1;
-            cam->trackRecTopY      = request.param2;
-            cam->trackRecBottomX   = request.param3;
-            cam->trackRecBottomY   = request.param4;
-            cam->trackAnchorX      = (request.param1 + request.param3) / 2.0f;
-            cam->trackAnchorY      = (request.param2 + request.param4) / 2.0f;
-            cam->trackingStartMs   = QDateTime::currentMSecsSinceEpoch();
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking rectangle"
-                                       << cam->trackRecTopX << cam->trackRecTopY
-                                       << "->" << cam->trackRecBottomX << cam->trackRecBottomY;
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        } else {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-        }
-        return true;
-
-    case MAV_CMD_CAMERA_STOP_TRACKING:
-        cam->trackingMode = CAMERA_TRACKING_MODE_NONE;
-        cam->trackingStatusIntervalUs = -1;
-        cam->trackingStatusLastSentMs = 0;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking stopped";
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        return true;
-
-    case MAV_CMD_SET_MESSAGE_INTERVAL:
-    {
-        const int msgId = static_cast<int>(request.param1);
-        if (msgId == MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS) {
-            cam->trackingStatusIntervalUs = static_cast<qint64>(request.param2);
+        case MAV_CMD_CAMERA_STOP_TRACKING:
+            cam->trackingMode = CAMERA_TRACKING_MODE_NONE;
+            cam->trackingStatusIntervalUs = -1;
             cam->trackingStatusLastSentMs = 0;
-            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId
-                                       << "tracking status interval" << cam->trackingStatusIntervalUs << "us";
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking stopped";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
             return true;
-        }
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_UNSUPPORTED);
-        return true;
-    }
 
-    default:
-        break;
+        case MAV_CMD_SET_MESSAGE_INTERVAL: {
+            const int msgId = static_cast<int>(request.param1);
+            if (msgId == MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS) {
+                cam->trackingStatusIntervalUs = static_cast<qint64>(request.param2);
+                cam->trackingStatusLastSentMs = 0;
+                qCDebug(MockLinkCameraLog)
+                    << "Camera" << targetCompId << "tracking status interval" << cam->trackingStatusIntervalUs << "us";
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+                return true;
+            }
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_UNSUPPORTED);
+            return true;
+        }
+
+        default:
+            break;
     }
 
     return false;
 }
 
-bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId)
+bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t& request, uint8_t targetCompId)
 {
-    const CameraState *cam = _findCamera(targetCompId);
+    const CameraState* cam = _findCamera(targetCompId);
     if (!cam) {
         return false;
     }
@@ -481,74 +478,72 @@ bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request
     const int msgId = static_cast<int>(request.param1);
 
     switch (msgId) {
-    case MAVLINK_MSG_ID_CAMERA_INFORMATION:
-        _sendCameraInformation(targetCompId);
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
+        case MAVLINK_MSG_ID_CAMERA_INFORMATION:
+            _sendCameraInformation(targetCompId);
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
+            return true;
 
-    case MAVLINK_MSG_ID_CAMERA_SETTINGS:
-        _sendCameraSettings(targetCompId);
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
+        case MAVLINK_MSG_ID_CAMERA_SETTINGS:
+            _sendCameraSettings(targetCompId);
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
+            return true;
 
-    case MAVLINK_MSG_ID_STORAGE_INFORMATION:
-        _sendStorageInformation(targetCompId);
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
+        case MAVLINK_MSG_ID_STORAGE_INFORMATION:
+            _sendStorageInformation(targetCompId);
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
+            return true;
 
-    case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
-        _sendCameraCaptureStatus(targetCompId);
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
+        case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
+            _sendCameraCaptureStatus(targetCompId);
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
+            return true;
 
-    case MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION:
-    {
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
-            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+        case MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION: {
+            if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
+                _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+                return true;
+            }
+            const uint8_t streamId = static_cast<uint8_t>(request.param2);
+            if (streamId == 0) {
+                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                    _sendVideoStreamInformation(targetCompId, s);
+                }
+            } else {
+                _sendVideoStreamInformation(targetCompId, streamId);
+            }
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
             return true;
         }
-        const uint8_t streamId = static_cast<uint8_t>(request.param2);
-        if (streamId == 0) {
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
-                _sendVideoStreamInformation(targetCompId, s);
-            }
-        } else {
-            _sendVideoStreamInformation(targetCompId, streamId);
-        }
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
-    }
 
-    case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
-    {
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
-            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+        case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS: {
+            if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
+                _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+                return true;
+            }
+            const uint8_t streamId = static_cast<uint8_t>(request.param2);
+            if (streamId == 0) {
+                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                    _sendVideoStreamStatus(targetCompId, s);
+                }
+            } else {
+                _sendVideoStreamStatus(targetCompId, streamId);
+            }
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
             return true;
         }
-        const uint8_t streamId = static_cast<uint8_t>(request.param2);
-        if (streamId == 0) {
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
-                _sendVideoStreamStatus(targetCompId, s);
-            }
-        } else {
-            _sendVideoStreamStatus(targetCompId, streamId);
-        }
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED, msgId);
-        return true;
-    }
 
-    default:
-        // All commands addressed to a component must be acked, even unsupported ones.
-        // Without this the requester's command queue keeps the request pending, blocking
-        // further REQUEST_MESSAGE commands to this component.
-        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
-        return true;
+        default:
+            // All commands addressed to a component must be acked, even unsupported ones.
+            // Without this the requester's command queue keeps the request pending, blocking
+            // further REQUEST_MESSAGE commands to this component.
+            _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+            return true;
     }
 }
 
 void MockLinkCamera::_sendCameraInformation(uint8_t compId)
 {
-    const CameraState *cam = _findCamera(compId);
+    const CameraState* cam = _findCamera(compId);
     if (!cam) {
         return;
     }
@@ -562,26 +557,22 @@ void MockLinkCamera::_sendCameraInformation(uint8_t compId)
     modelBA.resize(MAVLINK_MSG_CAMERA_INFORMATION_FIELD_MODEL_NAME_LEN);
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_camera_information_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        0,                                              // time_boot_ms
-        vendorName,
-        reinterpret_cast<const uint8_t *>(modelBA.constData()),
-        0,                                              // firmware_version
-        0,                                              // focal_length
-        0,                                              // sensor_size_h
-        0,                                              // sensor_size_v
-        1920,                                           // resolution_h
-        1080,                                           // resolution_v
-        0,                                              // lens_id
-        cam->capFlags,                                  // flags
-        0,                                              // cam_definition_version
-        cameraDefinitionUri,                            // cam_definition_uri
-        0,                                              // gimbal_device_id
-        0);                                             // flags (reserved)
+    (void) mavlink_msg_camera_information_pack_chan(_mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(),
+                                                    &msg,
+                                                    0,                    // time_boot_ms
+                                                    vendorName, reinterpret_cast<const uint8_t*>(modelBA.constData()),
+                                                    0,                    // firmware_version
+                                                    0,                    // focal_length
+                                                    0,                    // sensor_size_h
+                                                    0,                    // sensor_size_v
+                                                    1920,                 // resolution_h
+                                                    1080,                 // resolution_v
+                                                    0,                    // lens_id
+                                                    cam->capFlags,        // flags
+                                                    0,                    // cam_definition_version
+                                                    cameraDefinitionUri,  // cam_definition_uri
+                                                    0,                    // gimbal_device_id
+                                                    0);                   // flags (reserved)
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent CAMERA_INFORMATION for compId:" << compId << "model:" << model;
@@ -589,28 +580,23 @@ void MockLinkCamera::_sendCameraInformation(uint8_t compId)
 
 void MockLinkCamera::_sendCameraSettings(uint8_t compId)
 {
-    const CameraState *cam = _findCamera(compId);
+    const CameraState* cam = _findCamera(compId);
     if (!cam) {
         return;
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_camera_settings_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        0,                  // time_boot_ms
-        cam->cameraMode,    // mode_id
-        cam->zoomLevel,     // zoomLevel
-        cam->focusLevel,    // focusLevel
-        0);                 // camera_device_id
+    (void) mavlink_msg_camera_settings_pack_chan(_mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(),
+                                                 &msg,
+                                                 0,                // time_boot_ms
+                                                 cam->cameraMode,  // mode_id
+                                                 cam->zoomLevel,   // zoomLevel
+                                                 cam->focusLevel,  // focusLevel
+                                                 0);               // camera_device_id
     _mockLink->respondWithMavlinkMessage(msg);
 
-    qCDebug(MockLinkCameraLog) << "Sent CAMERA_SETTINGS for compId:" << compId
-                               << "mode:" << cam->cameraMode
-                               << "zoom:" << cam->zoomLevel
-                               << "focus:" << cam->focusLevel;
+    qCDebug(MockLinkCameraLog) << "Sent CAMERA_SETTINGS for compId:" << compId << "mode:" << cam->cameraMode
+                               << "zoom:" << cam->zoomLevel << "focus:" << cam->focusLevel;
 }
 
 void MockLinkCamera::_sendStorageInformation(uint8_t compId)
@@ -619,22 +605,19 @@ void MockLinkCamera::_sendStorageInformation(uint8_t compId)
 
     mavlink_message_t msg{};
     (void) mavlink_msg_storage_information_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        0,                                      // time_boot_ms
-        1,                                      // storage_id
-        1,                                      // storage_count
-        STORAGE_STATUS_READY,                   // status
-        static_cast<float>(kStorageTotalMiB),   // total_capacity (MiB)
-        static_cast<float>(kStorageTotalMiB - kStorageFreeMiB), // used_capacity (MiB)
-        static_cast<float>(kStorageFreeMiB),    // available_capacity (MiB)
-        NAN,                                    // read_speed
-        NAN,                                    // write_speed
-        STORAGE_TYPE_SD,                        // type
-        storageName,                            // name
-        0);                                     // storage_usage
+        _mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
+        0,                                                       // time_boot_ms
+        1,                                                       // storage_id
+        1,                                                       // storage_count
+        STORAGE_STATUS_READY,                                    // status
+        static_cast<float>(kStorageTotalMiB),                    // total_capacity (MiB)
+        static_cast<float>(kStorageTotalMiB - kStorageFreeMiB),  // used_capacity (MiB)
+        static_cast<float>(kStorageFreeMiB),                     // available_capacity (MiB)
+        NAN,                                                     // read_speed
+        NAN,                                                     // write_speed
+        STORAGE_TYPE_SD,                                         // type
+        storageName,                                             // name
+        0);                                                      // storage_usage
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent STORAGE_INFORMATION for compId:" << compId;
@@ -642,37 +625,33 @@ void MockLinkCamera::_sendStorageInformation(uint8_t compId)
 
 void MockLinkCamera::_sendCameraCaptureStatus(uint8_t compId)
 {
-    const CameraState *cam = _findCamera(compId);
+    const CameraState* cam = _findCamera(compId);
     if (!cam) {
         return;
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_camera_capture_status_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        0,                                              // time_boot_ms
-        cam->image_status,                              // image_status (ImageCaptureStatus enum)
-        cam->recording ? 1 : 0,                         // video_status (0=idle, 1=running)
-        cam->image_interval,                            // image_interval
-        0,                                              // recording_time_ms
-        static_cast<float>(kStorageFreeMiB),             // available_capacity
-        cam->imagesCaptured,                                // image_count
-        0);                                                 // camera_device_id
+    (void) mavlink_msg_camera_capture_status_pack_chan(_mockLink->vehicleId(), compId,
+                                                       _mockLink->outgoingMavlinkChannel(), &msg,
+                                                       0,                  // time_boot_ms
+                                                       cam->image_status,  // image_status (ImageCaptureStatus enum)
+                                                       cam->recording ? 1 : 0,  // video_status (0=idle, 1=running)
+                                                       cam->image_interval,     // image_interval
+                                                       0,                       // recording_time_ms
+                                                       static_cast<float>(kStorageFreeMiB),  // available_capacity
+                                                       cam->imagesCaptured,                  // image_count
+                                                       0);                                   // camera_device_id
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent CAMERA_CAPTURE_STATUS for compId:" << compId
                                << "status:" << _imageCaptureStatusToString(cam->image_status)
-                               << "interval:" << cam->image_interval
-                               << "recording:" << cam->recording
+                               << "interval:" << cam->image_interval << "recording:" << cam->recording
                                << "images:" << cam->imagesCaptured;
 }
 
 void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
 {
-    const CameraState *cam = _findCamera(compId);
+    const CameraState* cam = _findCamera(compId);
     if (!cam) {
         return;
     }
@@ -682,30 +661,26 @@ void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
     const int32_t lat = static_cast<int32_t>(_mockLink->vehicleLatitude() * 1e7);
     const int32_t lon = static_cast<int32_t>(_mockLink->vehicleLongitude() * 1e7);
     const float alt = static_cast<float>(_mockLink->vehicleAltitudeAMSL());
-    const float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};    // quaternion (not used in this mock, set to identity)
+    const float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};  // quaternion (not used in this mock, set to identity)
     const char fileUrl[MAVLINK_MSG_CAMERA_IMAGE_CAPTURED_FIELD_FILE_URL_LEN] = {};
 
     mavlink_message_t msg{};
     (void) mavlink_msg_camera_image_captured_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        0,                                              // time_boot_ms
-        0,                                              // time_utc
-        (compId - MAV_COMP_ID_CAMERA) + 1,              // camera_id (1-based, derived from compId)
-        lat,                                            // lat (degrees * 1E7)
-        lon,                                            // lon (degrees * 1E7)
-        alt,                                            // alt (MSL)
-        alt,                                            // relative_alt (same as MSL for simplicity)
-        q,                                              // q (quaternion, unused)
-        cam->imagesCaptured,                            // image_index
-        1,                                              // capture_result (1=success)
-        fileUrl);                                       // file_url
+        _mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
+        0,                                  // time_boot_ms
+        0,                                  // time_utc
+        (compId - MAV_COMP_ID_CAMERA) + 1,  // camera_id (1-based, derived from compId)
+        lat,                                // lat (degrees * 1E7)
+        lon,                                // lon (degrees * 1E7)
+        alt,                                // alt (MSL)
+        alt,                                // relative_alt (same as MSL for simplicity)
+        q,                                  // q (quaternion, unused)
+        cam->imagesCaptured,                // image_index
+        1,                                  // capture_result (1=success)
+        fileUrl);                           // file_url
     _mockLink->respondWithMavlinkMessage(msg);
 
-    qCDebug(MockLinkCameraLog) << "Sent CAMERA_IMAGE_CAPTURED for compId:" << compId
-                               << "index:" << cam->imagesCaptured;
+    qCDebug(MockLinkCameraLog) << "Sent CAMERA_IMAGE_CAPTURED for compId:" << compId << "index:" << cam->imagesCaptured;
 }
 
 void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamId)
@@ -727,43 +702,43 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
     QString servedUri;
     _mockLink->servedVideoStream(servedType, servedUri);
     switch (servedType) {
-    case MockConfiguration::VideoStreamRtpUdpH264:
-        streamType = VIDEO_STREAM_TYPE_RTPUDP;
-        encoding = VIDEO_STREAM_ENCODING_H264;
-        uri = servedUri;
-        break;
-    case MockConfiguration::VideoStreamRtpUdpH265:
-        streamType = VIDEO_STREAM_TYPE_RTPUDP;
-        encoding = VIDEO_STREAM_ENCODING_H265;
-        uri = servedUri;
-        break;
-    case MockConfiguration::VideoStreamRtspH264:
-        streamType = VIDEO_STREAM_TYPE_RTSP;
-        encoding = VIDEO_STREAM_ENCODING_H264;
-        uri = servedUri;
-        break;
-    case MockConfiguration::VideoStreamMpegTsUdp:
-        streamType = VIDEO_STREAM_TYPE_MPEG_TS;
-        encoding = VIDEO_STREAM_ENCODING_H264;
-        uri = servedUri;
-        break;
-    case MockConfiguration::VideoStreamMpegTsTcp:
-        streamType = VIDEO_STREAM_TYPE_TCP_MPEG;
-        encoding = VIDEO_STREAM_ENCODING_H264;
-        uri = servedUri;
-        break;
-    case MockConfiguration::VideoStreamNone:
+        case MockConfiguration::VideoStreamRtpUdpH264:
+            streamType = VIDEO_STREAM_TYPE_RTPUDP;
+            encoding = VIDEO_STREAM_ENCODING_H264;
+            uri = servedUri;
+            break;
+        case MockConfiguration::VideoStreamRtpUdpH265:
+            streamType = VIDEO_STREAM_TYPE_RTPUDP;
+            encoding = VIDEO_STREAM_ENCODING_H265;
+            uri = servedUri;
+            break;
+        case MockConfiguration::VideoStreamRtspH264:
+            streamType = VIDEO_STREAM_TYPE_RTSP;
+            encoding = VIDEO_STREAM_ENCODING_H264;
+            uri = servedUri;
+            break;
+        case MockConfiguration::VideoStreamMpegTsUdp:
+            streamType = VIDEO_STREAM_TYPE_MPEG_TS;
+            encoding = VIDEO_STREAM_ENCODING_H264;
+            uri = servedUri;
+            break;
+        case MockConfiguration::VideoStreamMpegTsTcp:
+            streamType = VIDEO_STREAM_TYPE_TCP_MPEG;
+            encoding = VIDEO_STREAM_ENCODING_H264;
+            uri = servedUri;
+            break;
+        case MockConfiguration::VideoStreamNone:
 #ifdef QGC_GST_STREAMING
-        // A specific stream type was requested but no live server is running (start failed).
-        // Advertise it as not-running with an empty URI so QGC doesn't try to open a receiver
-        // on a dead stream (video auto-configuration keys off the URI, not the RUNNING flag).
-        // When nothing was requested (the default), keep the historical static UDP advertisement.
-        if (_mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
-            flags = 0;
-            uri.clear();
-        }
+            // A specific stream type was requested but no live server is running (start failed).
+            // Advertise it as not-running with an empty URI so QGC doesn't try to open a receiver
+            // on a dead stream (video auto-configuration keys off the URI, not the RUNNING flag).
+            // When nothing was requested (the default), keep the historical static UDP advertisement.
+            if (_mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
+                flags = 0;
+                uri.clear();
+            }
 #endif
-        break;
+            break;
     }
 
     QByteArray uriBA = uri.toLocal8Bit();
@@ -771,24 +746,19 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
 
     mavlink_message_t msg{};
     (void) mavlink_msg_video_stream_information_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        streamId,                               // stream_id
-        kNumStreams,                            // count
-        streamType,                             // type
-        flags,                                  // flags
-        30,                                     // framerate
-        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
-        720,                                    // resolution_v
-        2000,                                   // bitrate (kbit/s, matches encoder settings)
-        0,                                      // rotation
-        70,                                     // hfov
-        nameBA.constData(),
-        uriBA.constData(),
-        encoding,
-        0);                                     // encoding_sub
+        _mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
+        streamId,     // stream_id
+        kNumStreams,  // count
+        streamType,   // type
+        flags,        // flags
+        30,           // framerate
+        1280,         // resolution_h (matches MockVideoStreamServer test source)
+        720,          // resolution_v
+        2000,         // bitrate (kbit/s, matches encoder settings)
+        0,            // rotation
+        70,           // hfov
+        nameBA.constData(), uriBA.constData(), encoding,
+        0);           // encoding_sub
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_INFORMATION for compId:" << compId << "stream:" << streamId
@@ -805,27 +775,24 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
     MockConfiguration::VideoStreamType servedType = MockConfiguration::VideoStreamNone;
     QString servedUri;
     _mockLink->servedVideoStream(servedType, servedUri);
-    if (servedType == MockConfiguration::VideoStreamNone
-            && _mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
+    if (servedType == MockConfiguration::VideoStreamNone &&
+        _mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
         flags = 0;
     }
 #endif
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_video_stream_status_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        streamId,                               // stream_id
-        flags,                                  // flags
-        30,                                     // framerate
-        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
-        720,                                    // resolution_v
-        2000,                                   // bitrate (kbit/s, matches encoder settings)
-        0,                                      // rotation
-        70,                                     // hfov
-        0);                                     // encoding (reserved in status)
+    (void) mavlink_msg_video_stream_status_pack_chan(_mockLink->vehicleId(), compId,
+                                                     _mockLink->outgoingMavlinkChannel(), &msg,
+                                                     streamId,  // stream_id
+                                                     flags,     // flags
+                                                     30,        // framerate
+                                                     1280,  // resolution_h (matches MockVideoStreamServer test source)
+                                                     720,   // resolution_v
+                                                     2000,  // bitrate (kbit/s, matches encoder settings)
+                                                     0,     // rotation
+                                                     70,    // hfov
+                                                     0);    // encoding (reserved in status)
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_STATUS for compId:" << compId << "stream:" << streamId;
@@ -833,50 +800,44 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
 
 void MockLinkCamera::_sendCameraTrackingImageStatus(uint8_t compId)
 {
-    const CameraState *cam = _findCamera(compId);
+    const CameraState* cam = _findCamera(compId);
     if (!cam || cam->trackingMode == CAMERA_TRACKING_MODE_NONE) {
         return;
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_camera_tracking_image_status_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        CAMERA_TRACKING_STATUS_FLAGS_ACTIVE,    // tracking_status
-        cam->trackingMode,                      // tracking_mode
-        CAMERA_TRACKING_TARGET_DATA_EMBEDDED,   // target_data
-        cam->trackPointX,                       // point_x
-        cam->trackPointY,                       // point_y
-        cam->trackRadius,                       // radius
-        cam->trackRecTopX,                      // rec_top_x
-        cam->trackRecTopY,                      // rec_top_y
-        cam->trackRecBottomX,                   // rec_bottom_x
-        cam->trackRecBottomY,                   // rec_bottom_y
-        0);                                     // camera_device_id
+    (void) mavlink_msg_camera_tracking_image_status_pack_chan(_mockLink->vehicleId(), compId,
+                                                              _mockLink->outgoingMavlinkChannel(), &msg,
+                                                              CAMERA_TRACKING_STATUS_FLAGS_ACTIVE,   // tracking_status
+                                                              cam->trackingMode,                     // tracking_mode
+                                                              CAMERA_TRACKING_TARGET_DATA_EMBEDDED,  // target_data
+                                                              cam->trackPointX,                      // point_x
+                                                              cam->trackPointY,                      // point_y
+                                                              cam->trackRadius,                      // radius
+                                                              cam->trackRecTopX,                     // rec_top_x
+                                                              cam->trackRecTopY,                     // rec_top_y
+                                                              cam->trackRecBottomX,                  // rec_bottom_x
+                                                              cam->trackRecBottomY,                  // rec_bottom_y
+                                                              0);                                    // camera_device_id
     _mockLink->respondWithMavlinkMessage(msg);
 }
 
 void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId)
 {
     mavlink_message_t msg{};
-    (void) mavlink_msg_command_ack_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        command,
-        result,
-        0,   // progress
-        0,   // result_param2
-        0,   // target_system
-        0);  // target_component
+    (void) mavlink_msg_command_ack_pack_chan(_mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
+                                             command, result,
+                                             0,   // progress
+                                             0,   // result_param2
+                                             0,   // target_system
+                                             0);  // target_component
     _mockLink->respondWithMavlinkMessage(msg);
 
     QString commandName = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command));
     QString logMsg = QStringLiteral("Sent COMMAND_ACK for compId: %1 command: %2 result: %3")
-                        .arg(compId).arg(commandName).arg(result);
+                         .arg(compId)
+                         .arg(commandName)
+                         .arg(result);
 
     if (command == MAV_CMD_REQUEST_MESSAGE && requestedMsgId >= 0) {
         const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(requestedMsgId));

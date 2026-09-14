@@ -1,36 +1,35 @@
 #include "InitialConnectTest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/qscopeguard.h>
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
 #include <memory>
 
-#include <QtTest/QSignalSpy>
-
+#include "ComponentInformationManager.h"
 #include "GeoFenceManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "MultiVehicleManager.h"
+#include "MavlinkSettings.h"
+#include "MissionManager.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MockLinkMissionItemHandler.h"
-#include "MissionManager.h"
+#include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "RallyPointManager.h"
+#include "SettingsManager.h"
 #include "StandardModes.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
-#include "ComponentInformationManager.h"
-#include "MavlinkSettings.h"
-#include "SettingsManager.h"
-
-#include <QtCore/QRegularExpression>
-#include <QtCore/qscopeguard.h>
-#include <QtTest/QTest>
 
 void InitialConnectTest::_performTestCases_data()
 {
     QTest::addColumn<int>("failureMode");
     QTest::addColumn<QString>("failureModeStr");
 
-    static const struct TestCase_s {
+    static const struct TestCase_s
+    {
         MockConfiguration::FailureMode_t failureMode;
         const char* failureModeStr;
     } rgTestCases[] = {
@@ -43,9 +42,8 @@ void InitialConnectTest::_performTestCases_data()
 
     int i = 0;
     for (const auto& testCase : rgTestCases) {
-        QTest::addRow("case_%d", i)
-            << static_cast<int>(testCase.failureMode)
-            << QString::fromLatin1(testCase.failureModeStr);
+        QTest::addRow("case_%d", i) << static_cast<int>(testCase.failureMode)
+                                    << QString::fromLatin1(testCase.failureModeStr);
         ++i;
     }
 }
@@ -101,9 +99,8 @@ void InitialConnectTest::_progressTracking()
                     if (!vehicle) {
                         return;
                     }
-                    connect(vehicle, &Vehicle::loadProgressChanged, vehicle, [&progressValues](float progress) {
-                        progressValues.append(progress);
-                    });
+                    connect(vehicle, &Vehicle::loadProgressChanged, vehicle,
+                            [&progressValues](float progress) { progressValues.append(progress); });
                 });
 
     _connectMockLink(MAV_AUTOPILOT_PX4);
@@ -212,8 +209,7 @@ void InitialConnectTest::_multipleReconnects()
 void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
 {
     // Injected rally read failure pops a transfer-failed app message.
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression("Rally Point transfer failed"));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("Rally Point transfer failed"));
     LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
@@ -239,8 +235,8 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
     QVERIFY(rallyPointManager);
 
     connect(geoFenceManager, &GeoFenceManager::loadComplete, this, [this]() {
-        _mockLink->setMissionItemFailureMode(
-            MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+        _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailReadRequestListNoResponse,
+                                             MAV_MISSION_ACCEPTED);
     });
 
     // Rally read fails internally (PlanManager exhausts retries) but still signals
@@ -282,35 +278,21 @@ void InitialConnectTest::_subsystemFailureFallsThrough_data()
     // | GeoFence       | Block after msn   | Yes     |
     // +----------------+-------------------+---------+
 
-    QTest::addRow("StandardModes")
-        << QList<uint32_t>{MAVLINK_MSG_ID_AVAILABLE_MODES}
-        << static_cast<int>(MockConfiguration::FailNone)
-        << false << false
-        << true;
+    QTest::addRow("StandardModes") << QList<uint32_t>{MAVLINK_MSG_ID_AVAILABLE_MODES}
+                                   << static_cast<int>(MockConfiguration::FailNone) << false << false << true;
 
-    QTest::addRow("CompInfo")
-        << QList<uint32_t>{MAVLINK_MSG_ID_COMPONENT_METADATA}
-        << static_cast<int>(MockConfiguration::FailNone)
-        << false << false
-        << true;
+    QTest::addRow("CompInfo") << QList<uint32_t>{MAVLINK_MSG_ID_COMPONENT_METADATA}
+                              << static_cast<int>(MockConfiguration::FailNone) << false << false << true;
 
-    QTest::addRow("Parameters")
-        << QList<uint32_t>{}
-        << static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)
-        << false << false
-        << false;
+    QTest::addRow("Parameters") << QList<uint32_t>{}
+                                << static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList) << false
+                                << false << false;
 
-    QTest::addRow("Mission")
-        << QList<uint32_t>{}
-        << static_cast<int>(MockConfiguration::FailNone)
-        << true << false
-        << true;
+    QTest::addRow("Mission") << QList<uint32_t>{} << static_cast<int>(MockConfiguration::FailNone) << true << false
+                             << true;
 
-    QTest::addRow("GeoFence")
-        << QList<uint32_t>{}
-        << static_cast<int>(MockConfiguration::FailNone)
-        << false << true
-        << true;
+    QTest::addRow("GeoFence") << QList<uint32_t>{} << static_cast<int>(MockConfiguration::FailNone) << false << true
+                              << true;
 }
 
 void InitialConnectTest::_subsystemFailureFallsThrough()
@@ -322,7 +304,8 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
     QFETCH(bool, expectParametersReady);
 
     // Per-row expected noise from the injected subsystem failure.
-    if (blockedMessageIds.contains(MAVLINK_MSG_ID_AVAILABLE_MODES) || blockedMessageIds.contains(MAVLINK_MSG_ID_COMPONENT_METADATA)) {
+    if (blockedMessageIds.contains(MAVLINK_MSG_ID_AVAILABLE_MODES) ||
+        blockedMessageIds.contains(MAVLINK_MSG_ID_COMPONENT_METADATA)) {
         ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                          QRegularExpression("Giving up sending command after max retries:"));
     }
@@ -335,8 +318,7 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
                          QRegularExpression("did not respond to request for parameters"));
     }
     if (blockMissionProtocolImmediately || blockMissionProtocolAfterMissionLoad) {
-        ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                         QRegularExpression("transfer failed"));
+        ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("transfer failed"));
     }
 
     LinkManager::instance()->setConnectionsAllowed();
@@ -362,8 +344,8 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
     }
 
     if (blockMissionProtocolImmediately) {
-        _mockLink->setMissionItemFailureMode(
-            MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+        _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailReadRequestListNoResponse,
+                                             MAV_MISSION_ACCEPTED);
     }
 
     QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
@@ -374,8 +356,8 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
         auto* missionManager = _vehicle->findChild<MissionManager*>();
         QVERIFY(missionManager);
         connect(missionManager, &MissionManager::newMissionItemsAvailable, this, [this]() {
-            _mockLink->setMissionItemFailureMode(
-                MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+            _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailReadRequestListNoResponse,
+                                                 MAV_MISSION_ACCEPTED);
         });
     }
 
@@ -420,12 +402,8 @@ void InitialConnectTest::_stateRunMatrix_data()
         const bool expectParameterDownloadSkipped = flying;
 
         QTest::addRow("HL_%d_LR_%d_Fly_%d", highLatency ? 1 : 0, logReplay ? 1 : 0, flying ? 1 : 0)
-            << highLatency << logReplay << flying
-            << expectAutopilotVersionRequest
-            << expectAvailableModesRequest
-            << expectParamRequest
-            << expectHashCheckOnly
-            << expectPlanRequestListTraffic
+            << highLatency << logReplay << flying << expectAutopilotVersionRequest << expectAvailableModesRequest
+            << expectParamRequest << expectHashCheckOnly << expectPlanRequestListTraffic
             << expectParameterDownloadSkipped;
     }
 }
@@ -454,9 +432,10 @@ void InitialConnectTest::_stateRunMatrix()
     // Enable noInitialDownloadWhenFlying setting for flying rows
     auto* noInitialDownloadWhenFlying = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying();
     const QVariant previousNoInitialDownloadWhenFlying = noInitialDownloadWhenFlying->rawValue();
-    const auto restoreNoInitialDownloadWhenFlying = qScopeGuard([noInitialDownloadWhenFlying, previousNoInitialDownloadWhenFlying]() {
-        noInitialDownloadWhenFlying->setRawValue(previousNoInitialDownloadWhenFlying);
-    });
+    const auto restoreNoInitialDownloadWhenFlying =
+        qScopeGuard([noInitialDownloadWhenFlying, previousNoInitialDownloadWhenFlying]() {
+            noInitialDownloadWhenFlying->setRawValue(previousNoInitialDownloadWhenFlying);
+        });
     noInitialDownloadWhenFlying->setRawValue(flying);
 
     LinkManager::instance()->setConnectionsAllowed();
@@ -521,8 +500,8 @@ void InitialConnectTest::_stateRunMatrix()
     // Mission/GeoFence/Rally are skipped for high-latency/log-replay or when flying.
     // Check each plan type individually via per-mission-type request list counts.
     const int missionReqCount = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_MISSION);
-    const int fenceReqCount   = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_FENCE);
-    const int rallyReqCount   = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_RALLY);
+    const int fenceReqCount = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_FENCE);
+    const int rallyReqCount = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_RALLY);
     if (!expectPlanRequestListTraffic) {
         QCOMPARE(missionReqCount, 0);
         QCOMPARE(fenceReqCount, 0);

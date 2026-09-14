@@ -1,8 +1,4 @@
 #include "VehicleComponent.h"
-#include "Fact.h"
-#include "ParameterManager.h"
-#include "QGCLoggingCategory.h"
-#include "Vehicle.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
@@ -11,13 +7,16 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
+#include "Fact.h"
+#include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+
 QGC_LOGGING_CATEGORY(VehicleComponentLog, "AutoPilotPlugins.VehicleComponent");
 
-VehicleComponent::VehicleComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent, QObject *parent)
-    : QObject(parent)
-    , _vehicle(vehicle)
-    , _autopilot(autopilot)
-    , _KnownVehicleComponent(KnownVehicleComponent)
+VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot,
+                                   AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent, QObject* parent)
+    : QObject(parent), _vehicle(vehicle), _autopilot(autopilot), _KnownVehicleComponent(KnownVehicleComponent)
 {
     // qCDebug(VehicleComponentLog) << Q_FUNC_INFO << this;
 
@@ -39,18 +38,19 @@ QStringList VehicleComponent::sectionIds() const
         return _expandedSectionIds;
     }
 
-    auto *pm = _vehicle ? _vehicle->parameterManager() : nullptr;
+    auto* pm = _vehicle ? _vehicle->parameterManager() : nullptr;
     if (!pm) {
         return _expandedSectionIds;
     }
 
     QStringList result = _expandedSectionIds;
-    for (const auto &filter : _repeatFilters) {
+    for (const auto& filter : _repeatFilters) {
         bool hasDisabled = false;
         for (int i = 0; i < filter.sectionIds.size(); i++) {
             if (!pm->parameterExists(ParameterManager::defaultComponentId, filter.paramNames[i]))
                 continue;
-            if (pm->getParameter(ParameterManager::defaultComponentId, filter.paramNames[i])->rawValue().toInt() == filter.disabledValue) {
+            if (pm->getParameter(ParameterManager::defaultComponentId, filter.paramNames[i])->rawValue().toInt() ==
+                filter.disabledValue) {
                 result.removeAll(filter.sectionIds[i]);
                 hasDisabled = true;
             }
@@ -101,7 +101,7 @@ void VehicleComponent::_ensureSectionsCached() const
     const QJsonObject constants = root.value("constants").toObject();
     const QJsonArray sectionsArray = root.value("sections").toArray();
 
-    auto resolveConstantInt = [&](const QString &ref) -> int {
+    auto resolveConstantInt = [&](const QString& ref) -> int {
         if (constants.contains(ref)) {
             const QJsonValue v = constants.value(ref);
             return v.isDouble() ? v.toInt() : v.toString().toInt();
@@ -110,7 +110,7 @@ void VehicleComponent::_ensureSectionsCached() const
         return ref.toInt();
     };
 
-    for (const QJsonValue &val : sectionsArray) {
+    for (const QJsonValue& val : sectionsArray) {
         const QJsonObject secObj = val.toObject();
         const QString name = secObj.value("title").toString();
         if (name.isEmpty()) {
@@ -122,10 +122,10 @@ void VehicleComponent::_ensureSectionsCached() const
         QStringList terms;
         terms.append(name);
         const QJsonArray kwArray = secObj.value("keywords").toArray();
-        for (const QJsonValue &kw : kwArray) {
+        for (const QJsonValue& kw : kwArray) {
             terms.append(kw.toString());
         }
-        for (const QJsonValue &ctrl : secObj.value("controls").toArray()) {
+        for (const QJsonValue& ctrl : secObj.value("controls").toArray()) {
             const QString label = ctrl.toObject().value("label").toString();
             if (!label.isEmpty()) {
                 terms.append(label);
@@ -156,17 +156,21 @@ void VehicleComponent::_ensureSectionsCached() const
             int count = 0;
             if (indexing == QStringLiteral("apm_battery")) {
                 auto battPrefix = [&](int i) -> QString {
-                    if (i == 0) return paramPrefix + QStringLiteral("_");
-                    if (i <= 8) return paramPrefix + QString::number(i + 1) + QStringLiteral("_");
+                    if (i == 0)
+                        return paramPrefix + QStringLiteral("_");
+                    if (i <= 8)
+                        return paramPrefix + QString::number(i + 1) + QStringLiteral("_");
                     return paramPrefix + QChar('A' + i - 9) + QStringLiteral("_");
                 };
                 auto battLabel = [](int i) -> QString {
-                    if (i <= 8) return QString::number(i + 1);
+                    if (i <= 8)
+                        return QString::number(i + 1);
                     return QString(QChar('A' + i - 9));
                 };
                 for (int i = 0; i < 16; i++) {
                     const QString probeParam = battPrefix(i) + probePostfix;
-                    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, probeParam))
+                    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId,
+                                                                       probeParam))
                         break;
                     count++;
                 }
@@ -189,10 +193,11 @@ void VehicleComponent::_ensureSectionsCached() const
                     }
                 }
             } else {
-                for (int i = startIndex; ; i++) {
+                for (int i = startIndex;; i++) {
                     const QString idx = (firstOmits && i == startIndex) ? QString() : QString::number(i);
                     const QString probeParam = paramPrefix + idx + probePostfix;
-                    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, probeParam))
+                    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId,
+                                                                       probeParam))
                         break;
                     count++;
                 }
@@ -231,20 +236,21 @@ void VehicleComponent::_ensureSectionsCached() const
     }
 }
 
-void VehicleComponent::addSummaryQmlComponent(QQmlContext *context, QQuickItem *parent)
+void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent)
 {
     if (!context) {
         qCWarning(VehicleComponentLog) << "Internal error";
         return;
     }
 
-    QQmlComponent component = new QQmlComponent(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"), this);
+    QQmlComponent component =
+        new QQmlComponent(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"), this);
     if (component.status() == QQmlComponent::Error) {
         qCWarning(VehicleComponentLog) << component.errors();
         return;
     }
 
-    QQuickItem *const item = qobject_cast<QQuickItem*>(component.create(context));
+    QQuickItem* const item = qobject_cast<QQuickItem*>(component.create(context));
     if (!item) {
         qCWarning(VehicleComponentLog) << "Internal error";
         return;
@@ -257,19 +263,21 @@ void VehicleComponent::addSummaryQmlComponent(QQmlContext *context, QQuickItem *
 void VehicleComponent::setupTriggerSignals()
 {
     // Watch for changed on trigger list params
-    for (const QString &paramName: setupCompleteChangedTriggerList()) {
+    for (const QString& paramName : setupCompleteChangedTriggerList()) {
         if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
-            Fact *const fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
+            Fact* const fact =
+                _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
             (void) connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
         }
     }
 
     // Watch enableParam facts so the sections list updates when items are enabled/disabled
     _ensureSectionsCached();
-    for (const auto &filter : _repeatFilters) {
-        for (const QString &paramName : filter.paramNames) {
+    for (const auto& filter : _repeatFilters) {
+        for (const QString& paramName : filter.paramNames) {
             if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
-                Fact *const fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
+                Fact* const fact =
+                    _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
                 (void) connect(fact, &Fact::valueChanged, this, &VehicleComponent::sectionIdsChanged);
             }
         }

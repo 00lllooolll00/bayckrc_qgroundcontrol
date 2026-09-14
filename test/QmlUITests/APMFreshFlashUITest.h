@@ -25,10 +25,10 @@ private slots:
 private:
     /// Click the given component button in the config sidebar and verify
     /// whether the prerequisite-setup message panel is shown.
-    void _verifyFramePrereq(const QString &compObjectName, bool expectPrereqShown);
+    void _verifyFramePrereq(const QString& compObjectName, bool expectPrereqShown);
 
     /// Verify the sidebar button for the given component shows the red
     /// setup-required icon (ConfigButton turns icon.color red when
     /// setupComplete is false).
-    void _verifySetupIndicator(const QString &compObjectName, bool expectSetupComplete);
+    void _verifySetupIndicator(const QString& compObjectName, bool expectSetupComplete);
 };

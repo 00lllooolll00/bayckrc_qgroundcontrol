@@ -5,87 +5,117 @@
 class VehicleFactGroup : public FactGroup
 {
     Q_OBJECT
-    Q_PROPERTY(Fact *roll                   READ roll                   CONSTANT)
-    Q_PROPERTY(Fact *pitch                  READ pitch                  CONSTANT)
-    Q_PROPERTY(Fact *heading                READ heading                CONSTANT)
-    Q_PROPERTY(Fact *rollRate               READ rollRate               CONSTANT)
-    Q_PROPERTY(Fact *pitchRate              READ pitchRate              CONSTANT)
-    Q_PROPERTY(Fact *yawRate                READ yawRate                CONSTANT)
-    Q_PROPERTY(Fact *groundSpeed            READ groundSpeed            CONSTANT)
-    Q_PROPERTY(Fact *airSpeed               READ airSpeed               CONSTANT)
-    Q_PROPERTY(Fact *airSpeedSetpoint       READ airSpeedSetpoint       CONSTANT)
-    Q_PROPERTY(Fact *climbRate              READ climbRate              CONSTANT)
-    Q_PROPERTY(Fact *altitudeRelative       READ altitudeRelative       CONSTANT)
-    Q_PROPERTY(Fact *altitudeAMSL           READ altitudeAMSL           CONSTANT)
-    Q_PROPERTY(Fact *altitudeAboveTerr      READ altitudeAboveTerr      CONSTANT)
-    Q_PROPERTY(Fact *altitudeTuning         READ altitudeTuning         CONSTANT)
-    Q_PROPERTY(Fact *altitudeTuningSetpoint READ altitudeTuningSetpoint CONSTANT)
-    Q_PROPERTY(Fact *xTrackError            READ xTrackError            CONSTANT)
-    Q_PROPERTY(Fact *rangeFinderDist        READ rangeFinderDist        CONSTANT)
-    Q_PROPERTY(Fact *flightDistance         READ flightDistance         CONSTANT)
-    Q_PROPERTY(Fact *distanceToHome         READ distanceToHome         CONSTANT)
-    Q_PROPERTY(Fact *timeToHome             READ timeToHome             CONSTANT)
-    Q_PROPERTY(Fact *missionItemIndex       READ missionItemIndex       CONSTANT)
-    Q_PROPERTY(Fact *headingToNextWP        READ headingToNextWP        CONSTANT)
-    Q_PROPERTY(Fact *distanceToNextWP       READ distanceToNextWP       CONSTANT)
-    Q_PROPERTY(Fact *headingToHome          READ headingToHome          CONSTANT)
-    Q_PROPERTY(Fact *headingFromHome        READ headingFromHome        CONSTANT)
-    Q_PROPERTY(Fact *headingFromGCS         READ headingFromGCS         CONSTANT)
-    Q_PROPERTY(Fact *distanceToGCS          READ distanceToGCS          CONSTANT)
-    Q_PROPERTY(Fact *hobbs                  READ hobbs                  CONSTANT)
-    Q_PROPERTY(Fact *throttlePct            READ throttlePct            CONSTANT)
-    Q_PROPERTY(Fact *imuTemp                READ imuTemp                CONSTANT)
-    Q_PROPERTY(Fact *rcRSSI                 READ rcRSSI                 CONSTANT)
+    Q_PROPERTY(Fact* roll READ roll CONSTANT)
+    Q_PROPERTY(Fact* pitch READ pitch CONSTANT)
+    Q_PROPERTY(Fact* heading READ heading CONSTANT)
+    Q_PROPERTY(Fact* rollRate READ rollRate CONSTANT)
+    Q_PROPERTY(Fact* pitchRate READ pitchRate CONSTANT)
+    Q_PROPERTY(Fact* yawRate READ yawRate CONSTANT)
+    Q_PROPERTY(Fact* groundSpeed READ groundSpeed CONSTANT)
+    Q_PROPERTY(Fact* airSpeed READ airSpeed CONSTANT)
+    Q_PROPERTY(Fact* airSpeedSetpoint READ airSpeedSetpoint CONSTANT)
+    Q_PROPERTY(Fact* climbRate READ climbRate CONSTANT)
+    Q_PROPERTY(Fact* altitudeRelative READ altitudeRelative CONSTANT)
+    Q_PROPERTY(Fact* altitudeAMSL READ altitudeAMSL CONSTANT)
+    Q_PROPERTY(Fact* altitudeAboveTerr READ altitudeAboveTerr CONSTANT)
+    Q_PROPERTY(Fact* altitudeTuning READ altitudeTuning CONSTANT)
+    Q_PROPERTY(Fact* altitudeTuningSetpoint READ altitudeTuningSetpoint CONSTANT)
+    Q_PROPERTY(Fact* xTrackError READ xTrackError CONSTANT)
+    Q_PROPERTY(Fact* rangeFinderDist READ rangeFinderDist CONSTANT)
+    Q_PROPERTY(Fact* flightDistance READ flightDistance CONSTANT)
+    Q_PROPERTY(Fact* distanceToHome READ distanceToHome CONSTANT)
+    Q_PROPERTY(Fact* timeToHome READ timeToHome CONSTANT)
+    Q_PROPERTY(Fact* missionItemIndex READ missionItemIndex CONSTANT)
+    Q_PROPERTY(Fact* headingToNextWP READ headingToNextWP CONSTANT)
+    Q_PROPERTY(Fact* distanceToNextWP READ distanceToNextWP CONSTANT)
+    Q_PROPERTY(Fact* headingToHome READ headingToHome CONSTANT)
+    Q_PROPERTY(Fact* headingFromHome READ headingFromHome CONSTANT)
+    Q_PROPERTY(Fact* headingFromGCS READ headingFromGCS CONSTANT)
+    Q_PROPERTY(Fact* distanceToGCS READ distanceToGCS CONSTANT)
+    Q_PROPERTY(Fact* hobbs READ hobbs CONSTANT)
+    Q_PROPERTY(Fact* throttlePct READ throttlePct CONSTANT)
+    Q_PROPERTY(Fact* imuTemp READ imuTemp CONSTANT)
+    Q_PROPERTY(Fact* rcRSSI READ rcRSSI CONSTANT)
 
 public:
-    explicit VehicleFactGroup(QObject *parent = nullptr);
+    explicit VehicleFactGroup(QObject* parent = nullptr);
 
-    Fact *roll() { return &_rollFact; }
-    Fact *pitch() { return &_pitchFact; }
-    Fact *heading() { return &_headingFact; }
-    Fact *rollRate() { return &_rollRateFact; }
-    Fact *pitchRate() { return &_pitchRateFact; }
-    Fact *yawRate() { return &_yawRateFact; }
-    Fact *airSpeed() { return &_airSpeedFact; }
-    Fact *airSpeedSetpoint() { return &_airSpeedSetpointFact; }
-    Fact *groundSpeed() { return &_groundSpeedFact; }
-    Fact *climbRate() { return &_climbRateFact; }
-    Fact *altitudeRelative() { return &_altitudeRelativeFact; }
-    Fact *altitudeAMSL() { return &_altitudeAMSLFact; }
-    Fact *altitudeAboveTerr() { return &_altitudeAboveTerrFact; }
-    Fact *altitudeTuning() { return &_altitudeTuningFact; }
-    Fact *altitudeTuningSetpoint() { return &_altitudeTuningSetpointFact; }
-    Fact *xTrackError() { return &_xTrackErrorFact; }
-    Fact *rangeFinderDist() { return &_rangeFinderDistFact; }
-    Fact *flightDistance() { return &_flightDistanceFact; }
-    Fact *distanceToHome() { return &_distanceToHomeFact; }
-    Fact *timeToHome() { return &_timeToHomeFact; }
-    Fact *missionItemIndex() { return &_missionItemIndexFact; }
-    Fact *headingToNextWP() { return &_headingToNextWPFact; }
-    Fact *distanceToNextWP() { return &_distanceToNextWPFact; }
-    Fact *headingToHome() { return &_headingToHomeFact; }
-    Fact *headingFromHome() { return &_headingFromHomeFact; }
-    Fact *headingFromGCS() { return &_headingFromGCSFact; }
-    Fact *distanceToGCS() { return &_distanceToGCSFact; }
-    Fact *hobbs() { return &_hobbsFact; }
-    Fact *throttlePct() { return &_throttlePctFact; }
-    Fact *imuTemp() { return &_imuTempFact; }
-    Fact *rcRSSI() { return &_rcRSSIFact; }
+    Fact* roll() { return &_rollFact; }
 
-    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
+    Fact* pitch() { return &_pitchFact; }
+
+    Fact* heading() { return &_headingFact; }
+
+    Fact* rollRate() { return &_rollRateFact; }
+
+    Fact* pitchRate() { return &_pitchRateFact; }
+
+    Fact* yawRate() { return &_yawRateFact; }
+
+    Fact* airSpeed() { return &_airSpeedFact; }
+
+    Fact* airSpeedSetpoint() { return &_airSpeedSetpointFact; }
+
+    Fact* groundSpeed() { return &_groundSpeedFact; }
+
+    Fact* climbRate() { return &_climbRateFact; }
+
+    Fact* altitudeRelative() { return &_altitudeRelativeFact; }
+
+    Fact* altitudeAMSL() { return &_altitudeAMSLFact; }
+
+    Fact* altitudeAboveTerr() { return &_altitudeAboveTerrFact; }
+
+    Fact* altitudeTuning() { return &_altitudeTuningFact; }
+
+    Fact* altitudeTuningSetpoint() { return &_altitudeTuningSetpointFact; }
+
+    Fact* xTrackError() { return &_xTrackErrorFact; }
+
+    Fact* rangeFinderDist() { return &_rangeFinderDistFact; }
+
+    Fact* flightDistance() { return &_flightDistanceFact; }
+
+    Fact* distanceToHome() { return &_distanceToHomeFact; }
+
+    Fact* timeToHome() { return &_timeToHomeFact; }
+
+    Fact* missionItemIndex() { return &_missionItemIndexFact; }
+
+    Fact* headingToNextWP() { return &_headingToNextWPFact; }
+
+    Fact* distanceToNextWP() { return &_distanceToNextWPFact; }
+
+    Fact* headingToHome() { return &_headingToHomeFact; }
+
+    Fact* headingFromHome() { return &_headingFromHomeFact; }
+
+    Fact* headingFromGCS() { return &_headingFromGCSFact; }
+
+    Fact* distanceToGCS() { return &_distanceToGCSFact; }
+
+    Fact* hobbs() { return &_hobbsFact; }
+
+    Fact* throttlePct() { return &_throttlePctFact; }
+
+    Fact* imuTemp() { return &_imuTempFact; }
+
+    Fact* rcRSSI() { return &_rcRSSIFact; }
+
+    void handleMessage(Vehicle* vehicle, const mavlink_message_t& message) override;
 
     /// Write a raw RSSI sample (0-100, or 255 for invalid) through the low-pass filter
     /// into the rcRSSI Fact. Called by Vehicle when an RC_CHANNELS message arrives.
     void updateRCRSSI(uint8_t rssi);
 
 protected:
-    void _handleAttitude(Vehicle *vehicle, const mavlink_message_t &message);
-    void _handleAttitudeQuaternion(Vehicle *vehicle, const mavlink_message_t &message);
-    void _handleAltitude(const mavlink_message_t &message);
-    void _handleVfrHud(const mavlink_message_t &message);
-    void _handleRawImuTemp(const mavlink_message_t &message);
-    void _handleNavControllerOutput(const mavlink_message_t &message);
-    void _handleRangefinder(const mavlink_message_t &message);
+    void _handleAttitude(Vehicle* vehicle, const mavlink_message_t& message);
+    void _handleAttitudeQuaternion(Vehicle* vehicle, const mavlink_message_t& message);
+    void _handleAltitude(const mavlink_message_t& message);
+    void _handleVfrHud(const mavlink_message_t& message);
+    void _handleRawImuTemp(const mavlink_message_t& message);
+    void _handleNavControllerOutput(const mavlink_message_t& message);
+    void _handleRangefinder(const mavlink_message_t& message);
 
     Fact _rollFact = Fact(0, QStringLiteral("roll"), FactMetaData::valueTypeDouble);
     Fact _pitchFact = Fact(0, QStringLiteral("pitch"), FactMetaData::valueTypeDouble);
@@ -112,8 +142,8 @@ protected:
     Fact _headingToNextWPFact = Fact(0, QStringLiteral("headingToNextWP"), FactMetaData::valueTypeDouble);
     Fact _distanceToNextWPFact = Fact(0, QStringLiteral("distanceToNextWP"), FactMetaData::valueTypeDouble);
     Fact _headingToHomeFact = Fact(0, QStringLiteral("headingToHome"), FactMetaData::valueTypeDouble);
-    Fact _headingFromHomeFact = Fact(0, QStringLiteral("headingFromHome"),FactMetaData::valueTypeDouble);
-    Fact _headingFromGCSFact = Fact(0, QStringLiteral("headingFromGCS"),FactMetaData::valueTypeDouble);
+    Fact _headingFromHomeFact = Fact(0, QStringLiteral("headingFromHome"), FactMetaData::valueTypeDouble);
+    Fact _headingFromGCSFact = Fact(0, QStringLiteral("headingFromGCS"), FactMetaData::valueTypeDouble);
     Fact _distanceToGCSFact = Fact(0, QStringLiteral("distanceToGCS"), FactMetaData::valueTypeDouble);
     Fact _hobbsFact = Fact(0, QStringLiteral("hobbs"), FactMetaData::valueTypeString);
     Fact _throttlePctFact = Fact(0, QStringLiteral("throttlePct"), FactMetaData::valueTypeUint16);

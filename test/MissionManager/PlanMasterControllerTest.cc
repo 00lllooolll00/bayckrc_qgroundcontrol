@@ -1,22 +1,22 @@
 #include "PlanMasterControllerTest.h"
 
-#include "AppSettings.h"
-#include "SurveyPlanCreator.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
-#include "MultiVehicleManager.h"
-#include "PlanMasterController.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "TakeoffMissionItem.h"
-#include "Vehicle.h"
-
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
+
+#include "AppSettings.h"
+#include "MissionManager.h"
+#include "MultiSignalSpy.h"
+#include "MultiVehicleManager.h"
+#include "PlanMasterController.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "SurveyPlanCreator.h"
+#include "TakeoffMissionItem.h"
+#include "Vehicle.h"
 
 void PlanMasterControllerTest::init()
 {
@@ -60,12 +60,13 @@ void PlanMasterControllerTest::_testTakeoffTextFileLoad()
     QVERIFY(file.write(kTakeoffMission) != -1);
     file.close();
 
-    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(
+        QGCMAVLink::FirmwareClassArduPilot);
 
     _masterController->loadFromFile(filename);
 
     QmlObjectListModel* visualItems = _masterController->missionController()->visualItems();
-    QCOMPARE(visualItems->count(), 3); // Mission settings, takeoff, waypoint
+    QCOMPARE(visualItems->count(), 3);  // Mission settings, takeoff, waypoint
 
     // The original bug caused the takeoff item to consume the following waypoint line,
     // resulting in a single takeoff item carrying the waypoint's values.
@@ -85,8 +86,7 @@ void PlanMasterControllerTest::_testActiveVehicleChanged()
 {
     // The test emits missionManager->error() twice to verify signal propagation.
     // Each emission triggers a showAppMessage debug log via PlanMasterController.
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression("Mission transfer failed"));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("Mission transfer failed"));
     // There was a defect where the PlanMasterController would, upon a new active vehicle,
     // overzelously disconnect all subscribers interested in the outgoing active vechicle.
     Vehicle* outgoingManagerVehicle = _masterController->managerVehicle();
@@ -116,10 +116,12 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
 {
     // Dirty-state transition matrix ("unchanged" means preserve prior value):
     //
-    // | State \ Action | Upload OK | Clear | SaveDirty=true | Load plan | Save file OK | Clear save-dirty | Download w/ items | Download empty |
+    // | State \ Action | Upload OK | Clear | SaveDirty=true | Load plan | Save file OK | Clear save-dirty | Download w/
+    // items | Download empty |
     // |----------------|-----------|-------|----------------|-----------|--------------|------------------|-------------------|----------------|
-    // | dirtyForSave   | unchanged | false | true           | false     | false        | false            | false             | false          |
-    // | dirtyForUpload | false     | false | true           | true      | unchanged    | unchanged        | false             | false          |
+    // | dirtyForSave   | unchanged | false | true           | false     | false        | false            | false |
+    // false          | | dirtyForUpload | false     | false | true           | true      | unchanged    | unchanged |
+    // false             | false          |
 
     // Data columns:
     //  - scenario: DirtyScenario enum value selecting which action path to execute
@@ -134,7 +136,8 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
     QTest::addColumn<int>("expectedDirtyForSave");
     QTest::addColumn<int>("expectedDirtyForUpload");
 
-    struct ScenarioExpectation {
+    struct ScenarioExpectation
+    {
         DirtyScenario scenario;
         const char* name;
         DirtyState expectedDirtyForSave;
@@ -142,18 +145,19 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
     };
 
     const QList<ScenarioExpectation> scenarioExpectations = {
-        { UploadPreservesSaveDirtyFalse,      "upload completion keeps save false",  DirtyStateUnchanged, DirtyStateFalse },
-        { UploadPreservesSaveDirtyTrue,       "upload completion keeps save true",   DirtyStateUnchanged, DirtyStateFalse },
-        { UploadFalseOnPlanClear,             "upload false on clear",               DirtyStateFalse,     DirtyStateFalse },
-        { UploadTrueWhenSaveTrue,             "upload true when save true",          DirtyStateTrue,      DirtyStateTrue },
-        { UploadTrueOnNewPlanLoad,            "upload true on new plan load",        DirtyStateFalse,     DirtyStateTrue },
-        { SaveToFilePreservesUploadDirtyTrue, "saveToFile keeps upload true",        DirtyStateFalse,     DirtyStateUnchanged },
-        { SaveToFilePreservesUploadDirtyFalse,"saveToFile keeps upload false",       DirtyStateFalse,     DirtyStateUnchanged },
-        { SaveFalseOnSuccessfulLoad,          "save false on successful load",       DirtyStateFalse,     DirtyStateTrue },
-        { ClearSaveDirtyPreservesUploadTrue,  "clear save dirty keeps upload true",  DirtyStateFalse,     DirtyStateUnchanged },
-        { ClearSaveDirtyPreservesUploadFalse, "clear save dirty keeps upload false", DirtyStateFalse,     DirtyStateUnchanged },
-        { DownloadWithItemsNotDirtyForSave,   "download with items stays clean",     DirtyStateFalse,     DirtyStateFalse },
-        { DownloadEmptyNotDirtyForSave,       "download empty keeps save clean",     DirtyStateFalse,     DirtyStateFalse },
+        {UploadPreservesSaveDirtyFalse, "upload completion keeps save false", DirtyStateUnchanged, DirtyStateFalse},
+        {UploadPreservesSaveDirtyTrue, "upload completion keeps save true", DirtyStateUnchanged, DirtyStateFalse},
+        {UploadFalseOnPlanClear, "upload false on clear", DirtyStateFalse, DirtyStateFalse},
+        {UploadTrueWhenSaveTrue, "upload true when save true", DirtyStateTrue, DirtyStateTrue},
+        {UploadTrueOnNewPlanLoad, "upload true on new plan load", DirtyStateFalse, DirtyStateTrue},
+        {SaveToFilePreservesUploadDirtyTrue, "saveToFile keeps upload true", DirtyStateFalse, DirtyStateUnchanged},
+        {SaveToFilePreservesUploadDirtyFalse, "saveToFile keeps upload false", DirtyStateFalse, DirtyStateUnchanged},
+        {SaveFalseOnSuccessfulLoad, "save false on successful load", DirtyStateFalse, DirtyStateTrue},
+        {ClearSaveDirtyPreservesUploadTrue, "clear save dirty keeps upload true", DirtyStateFalse, DirtyStateUnchanged},
+        {ClearSaveDirtyPreservesUploadFalse, "clear save dirty keeps upload false", DirtyStateFalse,
+         DirtyStateUnchanged},
+        {DownloadWithItemsNotDirtyForSave, "download with items stays clean", DirtyStateFalse, DirtyStateFalse},
+        {DownloadEmptyNotDirtyForSave, "download empty keeps save clean", DirtyStateFalse, DirtyStateFalse},
     };
 
     const QList<DirtyState> initialStates = {
@@ -173,15 +177,14 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
                     expectedDirtyForUpload = DirtyStateUnchanged;
                 }
 
-                const QString rowName = QStringLiteral("%1 [init save=%2 upload=%3]")
-                                            .arg(expectation.name)
-                                            .arg(initialDirtyForSave == DirtyStateTrue ? QStringLiteral("true") : QStringLiteral("false"))
-                                            .arg(initialDirtyForUpload == DirtyStateTrue ? QStringLiteral("true") : QStringLiteral("false"));
+                const QString rowName =
+                    QStringLiteral("%1 [init save=%2 upload=%3]")
+                        .arg(expectation.name)
+                        .arg(initialDirtyForSave == DirtyStateTrue ? QStringLiteral("true") : QStringLiteral("false"))
+                        .arg(initialDirtyForUpload == DirtyStateTrue ? QStringLiteral("true")
+                                                                     : QStringLiteral("false"));
                 QTest::newRow(rowName.toLatin1().constData())
-                    << +expectation.scenario
-                    << +initialDirtyForSave
-                    << +initialDirtyForUpload
-                    << +expectedDirtyForSave
+                    << +expectation.scenario << +initialDirtyForSave << +initialDirtyForUpload << +expectedDirtyForSave
                     << +expectedDirtyForUpload;
             }
         }
@@ -206,13 +209,13 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
 
     const auto dirtyStateToBool = [](int state) -> bool {
         switch (state) {
-        case DirtyStateFalse:
-            return false;
-        case DirtyStateTrue:
-            return true;
-        default:
-            Q_ASSERT(false); // Invalid test data
-            return false;
+            case DirtyStateFalse:
+                return false;
+            case DirtyStateTrue:
+                return true;
+            default:
+                Q_ASSERT(false);  // Invalid test data
+                return false;
         }
     };
 
@@ -226,68 +229,70 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
     QSignalSpy dirtyForUploadChangedSpy(_masterController, &PlanMasterController::dirtyForUploadChanged);
 
     switch (scenario) {
-    case UploadPreservesSaveDirtyFalse: {
-        _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
-        _masterController->_sendRallyPointsComplete();
-        break;
-    }
-    case UploadPreservesSaveDirtyTrue: {
-        _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
-        _masterController->_sendRallyPointsComplete();
-        break;
-    }
-    case UploadFalseOnPlanClear:
-        _masterController->removeAll();
-        break;
-    case UploadTrueWhenSaveTrue:
-        _masterController->_setDirtyForSave(true);
-        break;
-    case UploadTrueOnNewPlanLoad:
-        _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
-        break;
-    case SaveToFilePreservesUploadDirtyTrue: {
-        const QString saveFile = QDir::temp().filePath(QStringLiteral("qgc_planmaster_test_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
-        QVERIFY(_masterController->saveToFile(saveFile));
-        QFile::remove(saveFile);
-        break;
-    }
-    case SaveToFilePreservesUploadDirtyFalse: {
-        const QString saveFile = QDir::temp().filePath(QStringLiteral("qgc_planmaster_test_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
-        QVERIFY(_masterController->saveToFile(saveFile));
-        QFile::remove(saveFile);
-        break;
-    }
-    case SaveFalseOnSuccessfulLoad:
-        _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
-        break;
-    case ClearSaveDirtyPreservesUploadTrue:
-        _masterController->_setDirtyForSave(false);
-        break;
-    case ClearSaveDirtyPreservesUploadFalse:
-        _masterController->_setDirtyForSave(false);
-        break;
-    case DownloadWithItemsNotDirtyForSave: {
-        QVERIFY(_masterController->containsItems());
-        _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
-        _masterController->_loadRallyPointsComplete();
-        break;
-    }
-    case DownloadEmptyNotDirtyForSave: {
-        QVERIFY(!_masterController->containsItems());
-        _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
-        _masterController->_loadRallyPointsComplete();
-        break;
-    }
+        case UploadPreservesSaveDirtyFalse: {
+            _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
+            _masterController->_sendRallyPointsComplete();
+            break;
+        }
+        case UploadPreservesSaveDirtyTrue: {
+            _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
+            _masterController->_sendRallyPointsComplete();
+            break;
+        }
+        case UploadFalseOnPlanClear:
+            _masterController->removeAll();
+            break;
+        case UploadTrueWhenSaveTrue:
+            _masterController->_setDirtyForSave(true);
+            break;
+        case UploadTrueOnNewPlanLoad:
+            _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+            break;
+        case SaveToFilePreservesUploadDirtyTrue: {
+            const QString saveFile = QDir::temp().filePath(
+                QStringLiteral("qgc_planmaster_test_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
+            QVERIFY(_masterController->saveToFile(saveFile));
+            QFile::remove(saveFile);
+            break;
+        }
+        case SaveToFilePreservesUploadDirtyFalse: {
+            const QString saveFile = QDir::temp().filePath(
+                QStringLiteral("qgc_planmaster_test_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
+            QVERIFY(_masterController->saveToFile(saveFile));
+            QFile::remove(saveFile);
+            break;
+        }
+        case SaveFalseOnSuccessfulLoad:
+            _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+            break;
+        case ClearSaveDirtyPreservesUploadTrue:
+            _masterController->_setDirtyForSave(false);
+            break;
+        case ClearSaveDirtyPreservesUploadFalse:
+            _masterController->_setDirtyForSave(false);
+            break;
+        case DownloadWithItemsNotDirtyForSave: {
+            QVERIFY(_masterController->containsItems());
+            _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
+            _masterController->_loadRallyPointsComplete();
+            break;
+        }
+        case DownloadEmptyNotDirtyForSave: {
+            QVERIFY(!_masterController->containsItems());
+            _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
+            _masterController->_loadRallyPointsComplete();
+            break;
+        }
     }
 
     const auto resolveExpected = [](int expectedState, bool unchangedValue) -> bool {
         switch (expectedState) {
-        case DirtyStateFalse:
-            return false;
-        case DirtyStateTrue:
-            return true;
-        case DirtyStateUnchanged:
-            return unchangedValue;
+            case DirtyStateFalse:
+                return false;
+            case DirtyStateTrue:
+                return true;
+            case DirtyStateUnchanged:
+                return unchangedValue;
         }
         return unchangedValue;
     };
@@ -334,13 +339,15 @@ void PlanMasterControllerTest::_testFileAssociationSetOnLoad()
 
 void PlanMasterControllerTest::_testFailedLoadClearsFileAssociation()
 {
-    struct MalformedFileCase {
+    struct MalformedFileCase
+    {
         const char* fileName;
         const char* contents;
     };
+
     const QList<MalformedFileCase> malformedCases = {
-        { "Malformed.waypoints", "not a mission file" }, // Text parse failure
-        { "Malformed.plan",      "{ not valid json" },   // JSON validation failure
+        {"Malformed.waypoints", "not a mission file"},  // Text parse failure
+        {"Malformed.plan", "{ not valid json"},         // JSON validation failure
     };
 
     QTemporaryDir tempDir;
@@ -359,8 +366,7 @@ void PlanMasterControllerTest::_testFailedLoadClearsFileAssociation()
         malformedFile.close();
 
         // A failed load clears the file association
-        expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                         QRegularExpression("Error loading Plan file"));
+        expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("Error loading Plan file"));
         _masterController->loadFromFile(malformedPath);
         verifyExpectedLogMessage();
 
@@ -480,8 +486,8 @@ void PlanMasterControllerTest::_testSaveUpdatesFileName()
     QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("MissionPlanner"));
 
     // Save to a completely different path
-    const QString saveFile = QDir::temp().filePath(
-        QStringLiteral("qgc_planmaster_rename_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
+    const QString saveFile =
+        QDir::temp().filePath(QStringLiteral("qgc_planmaster_rename_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
     QVERIFY(_masterController->saveToFile(saveFile));
 
     // Name should now reflect the new file base name

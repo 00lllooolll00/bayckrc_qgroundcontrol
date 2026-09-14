@@ -1,8 +1,8 @@
 #pragma once
 
-#include "QmlUITestBase.h"
-
 #include <QtPositioning/QGeoCoordinate>
+
+#include "QmlUITestBase.h"
 
 class QQuickItem;
 
@@ -26,27 +26,28 @@ private slots:
 
 private:
     /// Complete expected state of all Plan view UI under test
-    struct PlanUIState {
+    struct PlanUIState
+    {
         bool templatesVisible;
         bool templatesEnabled;  ///< only checked when templatesVisible
         bool takeoffEnabled;
         bool waypointEnabled;
-        bool waypointChecked;   ///< add-waypoint-on-click mode active
+        bool waypointChecked;  ///< add-waypoint-on-click mode active
         bool patternEnabled;
-        bool roiEnabled;        ///< only checked if ROI button is visible (vehicle support)
-        bool roiChecked;        ///< add-ROI-on-click mode active
-        bool roiCancelText;     ///< ROI button reads "Cancel ROI" (an ROI is active in the plan)
+        bool roiEnabled;       ///< only checked if ROI button is visible (vehicle support)
+        bool roiChecked;       ///< add-ROI-on-click mode active
+        bool roiCancelText;    ///< ROI button reads "Cancel ROI" (an ROI is active in the plan)
         bool landEnabled;
-        QString landText;       ///< expected Land button label ("Return" for multirotor)
+        QString landText;      ///< expected Land button label ("Return" for multirotor)
         bool saveEnabled;
         bool savePrimary;
-        int itemCount;          ///< expected visualItems.count (mission settings item counts as 1)
+        int itemCount;  ///< expected visualItems.count (mission settings item counts as 1)
     };
 
     /// Verify every Plan view UI element against the full expected state.
     /// Also checks the invariants that hold while offline: Upload disabled
     /// and not highlighted, Open/Clear always enabled.
-    void _verifyFullState(const PlanUIState &state, const QString &context);
+    void _verifyFullState(const PlanUIState& state, const QString& context);
 
     /// Navigate to the Plan view and position the map at a known center/zoom
     /// so map clicks are deterministic.

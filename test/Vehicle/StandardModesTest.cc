@@ -15,9 +15,8 @@ void StandardModesTest::_monitorSequenceBumpTriggersRequery()
     // StandardModes to re-query the mode list.
     _mockLink->bumpAvailableModesMonitorSequence();
 
-    QTRY_VERIFY_WITH_TIMEOUT(
-        _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES) > baselineRequests,
-        TestTimeout::longMs());
+    QTRY_VERIFY_WITH_TIMEOUT(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES) > baselineRequests,
+                             TestTimeout::longMs());
 }
 
 UT_REGISTER_TEST(StandardModesTest, TestLabel::Integration, TestLabel::Vehicle)

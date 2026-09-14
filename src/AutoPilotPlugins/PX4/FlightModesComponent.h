@@ -15,13 +15,17 @@ public:
     QString iconResource(void) const final;
     QUrl setupSource(void) const final;
     QUrl summaryQmlSource(void) const final;
+
     bool requiresSetup() const final { return false; }
+
     bool setupComplete() const final { return true; }
+
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+
     QStringList sectionIds() const final;
     QString sectionDisplayName(const QString& sectionId) const final;
 
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name;
+    QVariantList _summaryItems;
 };

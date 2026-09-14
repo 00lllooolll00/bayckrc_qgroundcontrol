@@ -33,5 +33,5 @@ private:
     void _ignoreParamResponseTimeouts();
     void _noFailureWorker(MockConfiguration::FailureMode_t failureMode);
     void _setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess,
-                                  const QString &paramName, MAV_AUTOPILOT autopilot);
+                                  const QString& paramName, MAV_AUTOPILOT autopilot);
 };

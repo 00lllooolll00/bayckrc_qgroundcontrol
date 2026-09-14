@@ -1,16 +1,17 @@
 #include "APMParameterMetaDataTest.h"
-#include "APMParameterMetaData.h"
-#include "ParameterMetaData.h"
-#include "ParameterMetaDataTestHelper.h"
 
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QVersionNumber>
 
+#include "APMParameterMetaData.h"
+#include "ParameterMetaData.h"
+#include "ParameterMetaDataTestHelper.h"
+
 using namespace Qt::StringLiterals;
 
-static const char *kAPMJson = R"({
+static const char* kAPMJson = R"({
     "TEST_": {
         "TEST_PARAM": {
             "DisplayName": "Test Parameter",
@@ -49,7 +50,7 @@ static const char *kAPMJson = R"({
     }
 })";
 
-static APMParameterMetaData *_loadFromJson(const QByteArray &jsonData, QObject *parent)
+static APMParameterMetaData* _loadFromJson(const QByteArray& jsonData, QObject* parent)
 {
     return loadMetaDataFromJson<APMParameterMetaData>(jsonData, parent);
 }
@@ -59,7 +60,7 @@ void APMParameterMetaDataTest::_parseBasicParameter()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->name(), "TEST_PARAM");
     QCOMPARE(fact->shortDescription(), "Test Parameter");
@@ -75,14 +76,14 @@ void APMParameterMetaDataTest::_parseRange()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->rawMin().toFloat(), 0.01f);
     QCOMPARE(fact->rawMax().toFloat(), 0.5f);
     QCOMPARE(fact->rawUserMin().toFloat(), 0.01f);
     QCOMPARE(fact->rawUserMax().toFloat(), 0.5f);
 
-    FactMetaData *range = meta->getMetaDataForFact("TEST_RANGE", FactMetaData::valueTypeFloat);
+    FactMetaData* range = meta->getMetaDataForFact("TEST_RANGE", FactMetaData::valueTypeFloat);
     QVERIFY(range);
     QCOMPARE(range->rawMin().toFloat(), -10.5f);
     QCOMPARE(range->rawMax().toFloat(), 50.0f);
@@ -95,7 +96,7 @@ void APMParameterMetaDataTest::_parseEnumValues()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_ENUM", FactMetaData::valueTypeInt32);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_ENUM", FactMetaData::valueTypeInt32);
     QVERIFY(fact);
     QCOMPARE(fact->enumStrings().count(), 4);
     QCOMPARE(fact->enumStrings()[0], "Disabled");
@@ -113,7 +114,7 @@ void APMParameterMetaDataTest::_parseBitmask()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_BITMASK", FactMetaData::valueTypeInt32);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_BITMASK", FactMetaData::valueTypeInt32);
     QVERIFY(fact);
     QCOMPARE(fact->bitmaskStrings().count(), 4);
     QCOMPARE(fact->bitmaskStrings()[0], "First");
@@ -131,7 +132,7 @@ void APMParameterMetaDataTest::_parseReadOnly()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_RO", FactMetaData::valueTypeInt32);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_RO", FactMetaData::valueTypeInt32);
     QVERIFY(fact);
     QVERIFY(fact->readOnly());
 }
@@ -141,7 +142,7 @@ void APMParameterMetaDataTest::_parseRebootRequired()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QVERIFY(fact->vehicleRebootRequired());
 }
@@ -151,14 +152,14 @@ void APMParameterMetaDataTest::_parseIncrement()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QVERIFY(qAbs(fact->rawIncrement() - 0.005) < 1e-6);
 }
 
 void APMParameterMetaDataTest::_handleDuplicateParam()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "DUP_PARAM": { "DisplayName": "First",  "Description": "First desc" }
         },
@@ -167,12 +168,13 @@ void APMParameterMetaDataTest::_handleDuplicateParam()
         }
     })";
 
-    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg, QRegularExpression("Duplicate parameter found: \"DUP_PARAM\""));
+    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Duplicate parameter found: \"DUP_PARAM\""));
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     verifyExpectedLogMessage();
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("DUP_PARAM", FactMetaData::valueTypeInt32);
+    FactMetaData* fact = meta->getMetaDataForFact("DUP_PARAM", FactMetaData::valueTypeInt32);
     QVERIFY(fact);
     QVERIFY(!fact->shortDescription().isEmpty());
 }
@@ -182,7 +184,7 @@ void APMParameterMetaDataTest::_getMetaDataGenericFallback()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("NONEXISTENT", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("NONEXISTENT", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->category(), "Advanced");
 }
@@ -192,7 +194,7 @@ void APMParameterMetaDataTest::_getMetaDataPIDDecimalPlaces()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("ATC_RAT_RLL_P", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("ATC_RAT_RLL_P", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->decimalPlaces(), 6);
 }
@@ -202,11 +204,11 @@ void APMParameterMetaDataTest::_parseCategory()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->category(), "Standard");
 
-    FactMetaData *adv = meta->getMetaDataForFact("TEST_ENUM", FactMetaData::valueTypeInt32);
+    FactMetaData* adv = meta->getMetaDataForFact("TEST_ENUM", FactMetaData::valueTypeInt32);
     QVERIFY(adv);
     QCOMPARE(adv->category(), "Advanced");
 }
@@ -216,7 +218,7 @@ void APMParameterMetaDataTest::_parseUnits()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(kAPMJson, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->rawUnits(), "1/s");
 }
@@ -230,7 +232,7 @@ void APMParameterMetaDataTest::_loadGuard()
     meta->loadParameterFactMetaDataFile(QStringLiteral("nonexistent.json"));
 
     // Original data should still be intact
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->name(), "TEST_PARAM");
 }
@@ -238,11 +240,12 @@ void APMParameterMetaDataTest::_loadGuard()
 void APMParameterMetaDataTest::_loadMissingFile()
 {
     APMParameterMetaData meta;
-    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Unable to open parameter meta data file:"));
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Unable to open parameter meta data file:"));
     meta.loadParameterFactMetaDataFile(QStringLiteral("/nonexistent/path/file.json"));
     verifyExpectedLogMessage();
 
-    FactMetaData *fact = meta.getMetaDataForFact("ANY", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta.getMetaDataForFact("ANY", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->category(), "Advanced");
 }
@@ -252,7 +255,7 @@ void APMParameterMetaDataTest::_loadEmptyJson()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson("{}", nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("ANY", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("ANY", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->category(), "Advanced");
 }
@@ -267,16 +270,16 @@ void APMParameterMetaDataTest::_loadBundledAPMMetaData()
     APMParameterMetaData meta;
     meta.loadParameterFactMetaDataFile(file);
 
-    FactMetaData *thrFilt = meta.getMetaDataForFact("PILOT_THR_FILT", FactMetaData::valueTypeFloat);
+    FactMetaData* thrFilt = meta.getMetaDataForFact("PILOT_THR_FILT", FactMetaData::valueTypeFloat);
     QVERIFY(thrFilt);
     QCOMPARE(thrFilt->name(), "PILOT_THR_FILT");
     QCOMPARE(thrFilt->rawUnits(), "Hz");
 
-    FactMetaData *thrBhv = meta.getMetaDataForFact("PILOT_THR_BHV", FactMetaData::valueTypeInt32);
+    FactMetaData* thrBhv = meta.getMetaDataForFact("PILOT_THR_BHV", FactMetaData::valueTypeInt32);
     QVERIFY(thrBhv);
     QVERIFY(thrBhv->bitmaskStrings().count() >= 3);
 
-    FactMetaData *battMon = meta.getMetaDataForFact("BATT_MONITOR", FactMetaData::valueTypeFloat);
+    FactMetaData* battMon = meta.getMetaDataForFact("BATT_MONITOR", FactMetaData::valueTypeFloat);
     QVERIFY(battMon);
     QVERIFY(!battMon->shortDescription().isEmpty());
 }
@@ -302,7 +305,8 @@ void APMParameterMetaDataTest::_verifyFullAPMParse()
     QStringList paramNames;
     const QJsonObject root = doc.object();
     for (auto groupIt = root.constBegin(); groupIt != root.constEnd(); ++groupIt) {
-        if (!groupIt->isObject()) continue;
+        if (!groupIt->isObject())
+            continue;
         const QJsonObject params = groupIt->toObject();
         for (auto paramIt = params.constBegin(); paramIt != params.constEnd(); ++paramIt) {
             if (paramIt->isObject() && !paramNames.contains(paramIt.key())) {
@@ -315,15 +319,16 @@ void APMParameterMetaDataTest::_verifyFullAPMParse()
     int missingName = 0;
     int withDesc = 0;
 
-    for (const QString &name : paramNames) {
-        FactMetaData *fact = meta.getMetaDataForFact(name, FactMetaData::valueTypeFloat);
+    for (const QString& name : paramNames) {
+        FactMetaData* fact = meta.getMetaDataForFact(name, FactMetaData::valueTypeFloat);
         QVERIFY2(fact, qPrintable(QString("null for %1").arg(name)));
 
         if (fact->name().isEmpty()) {
             missingName++;
             continue;
         }
-        if (!fact->shortDescription().isEmpty()) withDesc++;
+        if (!fact->shortDescription().isEmpty())
+            withDesc++;
     }
 
     QCOMPARE(missingName, 0);
@@ -353,7 +358,7 @@ void APMParameterMetaDataTest::_versionFromJsonDataAPMFormat()
 
 void APMParameterMetaDataTest::_invalidEnumKeySkipped()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "TEST_INVENUM": {
                 "DisplayName": "Inv Enum",
@@ -366,8 +371,9 @@ void APMParameterMetaDataTest::_invalidEnumKeySkipped()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     QVERIFY(meta);
 
-    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg, QRegularExpression("Non-numeric key: \"abc\" for \"TEST_INVENUM\""));
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_INVENUM", FactMetaData::valueTypeInt32);
+    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Non-numeric key: \"abc\" for \"TEST_INVENUM\""));
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_INVENUM", FactMetaData::valueTypeInt32);
     verifyExpectedLogMessage();
     QVERIFY(fact);
     QCOMPARE(fact->enumStrings().count(), 2);
@@ -377,7 +383,7 @@ void APMParameterMetaDataTest::_invalidEnumKeySkipped()
 
 void APMParameterMetaDataTest::_invalidBitmaskIndexSkipped()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "TEST_INVBM": {
                 "DisplayName": "Inv Bitmask",
@@ -390,8 +396,9 @@ void APMParameterMetaDataTest::_invalidBitmaskIndexSkipped()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     QVERIFY(meta);
 
-    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg, QRegularExpression("Non-numeric key: \"abc\" for \"TEST_INVBM\""));
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_INVBM", FactMetaData::valueTypeInt32);
+    expectLogMessage("FirmwarePlugin.APMParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Non-numeric key: \"abc\" for \"TEST_INVBM\""));
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_INVBM", FactMetaData::valueTypeInt32);
     verifyExpectedLogMessage();
     QVERIFY(fact);
     QCOMPARE(fact->bitmaskStrings().count(), 2);
@@ -403,7 +410,7 @@ void APMParameterMetaDataTest::_invalidBitmaskIndexSkipped()
 
 void APMParameterMetaDataTest::_outOfRangeBitmaskIndexSkipped()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "TEST_OORBM": {
                 "DisplayName": "OOR Bitmask",
@@ -416,8 +423,9 @@ void APMParameterMetaDataTest::_outOfRangeBitmaskIndexSkipped()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     QVERIFY(meta);
 
-    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping out-of-range bitmask index for \"TEST_OORBM\" bit: 64"));
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_OORBM", FactMetaData::valueTypeInt32);
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping out-of-range bitmask index for \"TEST_OORBM\" bit: 64"));
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_OORBM", FactMetaData::valueTypeInt32);
     verifyExpectedLogMessage();
     QVERIFY(fact);
     QCOMPARE(fact->bitmaskStrings().count(), 2);
@@ -427,7 +435,7 @@ void APMParameterMetaDataTest::_outOfRangeBitmaskIndexSkipped()
 
 void APMParameterMetaDataTest::_parseEnumSentinelOutsideRange()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "TEST_SENTINEL": {
                 "DisplayName": "Sentinel enum",
@@ -441,7 +449,7 @@ void APMParameterMetaDataTest::_parseEnumSentinelOutsideRange()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_SENTINEL", FactMetaData::valueTypeFloat);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_SENTINEL", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QCOMPARE(fact->rawMin().toFloat(), 0.5f);
     QCOMPARE(fact->rawMax().toFloat(), 10.0f);
@@ -453,7 +461,7 @@ void APMParameterMetaDataTest::_parseEnumSentinelOutsideRange()
 
 void APMParameterMetaDataTest::_parseEnumNegativeSentinelIntType()
 {
-    static const char *json = R"({
+    static const char* json = R"({
         "TEST_": {
             "TEST_SENTINEL_INT": {
                 "DisplayName": "Int sentinel enum",
@@ -467,7 +475,7 @@ void APMParameterMetaDataTest::_parseEnumNegativeSentinelIntType()
     QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
     QVERIFY(meta);
 
-    FactMetaData *fact = meta->getMetaDataForFact("TEST_SENTINEL_INT", FactMetaData::valueTypeInt32);
+    FactMetaData* fact = meta->getMetaDataForFact("TEST_SENTINEL_INT", FactMetaData::valueTypeInt32);
     QVERIFY(fact);
     QCOMPARE(fact->rawMin().toInt(), 0);
     QCOMPARE(fact->rawMax().toInt(), 100);

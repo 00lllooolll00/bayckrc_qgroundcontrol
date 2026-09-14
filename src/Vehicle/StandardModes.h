@@ -1,21 +1,22 @@
 #pragma once
 
+#include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+
 #include "FirmwarePlugin.h"
 #include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
 #include "VehicleTypes.h"
-
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtCore/QMap>
 class Vehicle;
 
 class StandardModes : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
-    struct Mode {
+    struct Mode
+    {
         QString name;
         uint8_t standardMode;
         bool advanced;
@@ -28,18 +29,18 @@ public:
 
     void availableModesMonitorReceived(uint8_t seq);
 
-    void gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message);
+    void gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
+                    const mavlink_message_t& message);
 
 signals:
     void modesUpdated();
     void requestCompleted();
 
 private:
-
     void requestMode(int modeIndex);
     void ensureUniqueModeNames();
 
-    Vehicle*const _vehicle;
+    Vehicle* const _vehicle;
 
     bool _requestActive{false};
     bool _wantReset{false};

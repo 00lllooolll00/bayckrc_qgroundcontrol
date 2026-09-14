@@ -17,13 +17,10 @@ public:
     ///   shortDescription QString      — one-line summary
     ///   enumStrings      QStringList  — ordered enum labels (empty if not an enum)
     ///   enumValues       QVariantList — corresponding numeric values (parallel array)
-    static void enrichForPX4(QVariantList &parameters);
+    static void enrichForPX4(QVariantList& parameters);
 
     /// Enrich parameters from an APM DataFlash file. Adds the same keys as enrichForPX4().
     /// @param vehicleType  APM vehicle name: "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"
     /// @param major / minor  Firmware version numbers parsed from the log (pass -1 if unknown).
-    static void enrichForAPM(QVariantList &parameters,
-                             const QString &vehicleType,
-                             int major,
-                             int minor);
+    static void enrichForAPM(QVariantList& parameters, const QString& vehicleType, int major, int minor);
 };

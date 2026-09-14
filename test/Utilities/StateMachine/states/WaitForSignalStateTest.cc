@@ -1,19 +1,14 @@
 #include "WaitForSignalStateTest.h"
-#include "StateTestCommon.h"
 
+#include "StateTestCommon.h"
 
 void WaitForSignalStateTest::_testWaitForSignalState()
 {
     QStateMachine machine;
     QObject signalSource;
 
-    auto* waitState = new WaitForSignalState(
-        QStringLiteral("TestWait"),
-        &machine,
-        &signalSource,
-        &QObject::objectNameChanged,
-        0
-    );
+    auto* waitState =
+        new WaitForSignalState(QStringLiteral("TestWait"), &machine, &signalSource, &QObject::objectNameChanged, 0);
 
     auto* finalState = addFinalState(&machine);
 
@@ -27,9 +22,8 @@ void WaitForSignalStateTest::_testWaitForSignalState()
 
     QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
-    QTimer::singleShot(50, &signalSource, [&signalSource]() {
-        signalSource.setObjectName(QStringLiteral("triggered"));
-    });
+    QTimer::singleShot(50, &signalSource,
+                       [&signalSource]() { signalSource.setObjectName(QStringLiteral("triggered")); });
 
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
@@ -42,16 +36,10 @@ void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
     bool timeoutReached = false;
     const int timeoutMs = 100;
 
-    auto* waitState = new WaitForSignalState(
-        QStringLiteral("TestWaitTimeout"),
-        &machine,
-        &signalSource,
-        &QObject::objectNameChanged,
-        timeoutMs
-    );
-    auto* timeoutState = new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() {
-        timeoutReached = true;
-    });
+    auto* waitState = new WaitForSignalState(QStringLiteral("TestWaitTimeout"), &machine, &signalSource,
+                                             &QObject::objectNameChanged, timeoutMs);
+    auto* timeoutState =
+        new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() { timeoutReached = true; });
     auto* finalState = addFinalState(&machine);
 
     waitState->addTransition(waitState, &QGCState::advance, finalState);
@@ -76,13 +64,8 @@ void WaitForSignalStateTest::_testCompletedSignal()
     QStateMachine machine;
     QObject signalSource;
 
-    auto* waitState = new WaitForSignalState(
-        QStringLiteral("TestCompleted"),
-        &machine,
-        &signalSource,
-        &QObject::objectNameChanged,
-        0
-    );
+    auto* waitState = new WaitForSignalState(QStringLiteral("TestCompleted"), &machine, &signalSource,
+                                             &QObject::objectNameChanged, 0);
 
     auto* finalState = addFinalState(&machine);
 
@@ -97,9 +80,8 @@ void WaitForSignalStateTest::_testCompletedSignal()
     machine.start();
 
     // Trigger the signal
-    QTimer::singleShot(50, &signalSource, [&signalSource]() {
-        signalSource.setObjectName(QStringLiteral("triggered"));
-    });
+    QTimer::singleShot(50, &signalSource,
+                       [&signalSource]() { signalSource.setObjectName(QStringLiteral("triggered")); });
 
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     // Both completed() and advance() should have fired
@@ -115,13 +97,8 @@ void WaitForSignalStateTest::_testTimedOutSignal()
     QObject signalSource;
     const int timeoutMs = 50;
 
-    auto* waitState = new WaitForSignalState(
-        QStringLiteral("TestTimedOut"),
-        &machine,
-        &signalSource,
-        &QObject::objectNameChanged,
-        timeoutMs
-    );
+    auto* waitState = new WaitForSignalState(QStringLiteral("TestTimedOut"), &machine, &signalSource,
+                                             &QObject::objectNameChanged, timeoutMs);
 
     auto* finalState = addFinalState(&machine);
 

@@ -325,8 +325,8 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
     const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);
     const QString rtspPassword = sourceUrl.password(QUrl::FullyDecoded);
     if (!rtspUser.isEmpty()) {
-        g_object_set(source, "user-id", rtspUser.toUtf8().constData(), "user-pw",
-                     rtspPassword.toUtf8().constData(), nullptr);
+        g_object_set(source, "user-id", rtspUser.toUtf8().constData(), "user-pw", rtspPassword.toUtf8().constData(),
+                     nullptr);
     }
     return source;
 }
@@ -335,7 +335,8 @@ GstElement* buildTcpSource(const QUrl& sourceUrl)
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
+                                        << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
         return nullptr;
     }
     const QString host = sourceUrl.host();
@@ -358,7 +359,8 @@ GstElement* buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
+                                        << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
         return nullptr;
     }
 
@@ -527,7 +529,8 @@ GstElement* create(const QString& uri, const Config& config)
     const bool isTcpMPEGTS = (scheme == QLatin1String("tcp"));
 
     if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS) {
-        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
+                                       << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
         return nullptr;
     }
 
@@ -560,8 +563,8 @@ GstElement* create(const QString& uri, const Config& config)
 
         parser = gst_element_factory_make(isUdpH265 ? "h265parse" : "parsebin", "parser");
         if (!parser) {
-            qCCritical(GstSourceFactoryLog) << "gst_element_factory_make("
-                                            << (isUdpH265 ? "'h265parse'" : "'parsebin'") << ") failed";
+            qCCritical(GstSourceFactoryLog)
+                << "gst_element_factory_make(" << (isUdpH265 ? "'h265parse'" : "'parsebin'") << ") failed";
             break;
         }
 

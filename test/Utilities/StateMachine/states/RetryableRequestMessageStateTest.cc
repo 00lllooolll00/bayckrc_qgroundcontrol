@@ -1,13 +1,13 @@
 #include "RetryableRequestMessageStateTest.h"
-#include "MAVLinkLib.h"
-#include "StateTestCommon.h"
-
-#include "QGCStateMachine.h"
-#include "MultiVehicleManager.h"
-#include "MockLink.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
+
+#include "MAVLinkLib.h"
+#include "MockLink.h"
+#include "MultiVehicleManager.h"
+#include "QGCStateMachine.h"
+#include "StateTestCommon.h"
 
 void RetryableRequestMessageStateTest::_testSuccessFirstAttempt()
 {
@@ -22,9 +22,7 @@ void RetryableRequestMessageStateTest::_testSuccessFirstAttempt()
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageNone);
 
     auto* requestState = new RetryableRequestMessageState(
-        QStringLiteral("RequestDebug"),
-        &machine,
-        MAVLINK_MSG_ID_DEBUG,
+        QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG,
         [&messageReceived](Vehicle*, const mavlink_message_t& msg) {
             QCOMPARE(msg.msgid, static_cast<uint32_t>(MAVLINK_MSG_ID_DEBUG));
             messageReceived = true;
@@ -70,16 +68,14 @@ void RetryableRequestMessageStateTest::_testRetryOnFailure()
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageCommandAcceptedMsgNotSent);
 
     auto* requestState = new RetryableRequestMessageState(
-        QStringLiteral("RequestDebug"),
-        &machine,
-        MAVLINK_MSG_ID_DEBUG,
+        QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG,
         [&messageReceived, &handlerCallCount](Vehicle*, const mavlink_message_t&) {
             handlerCallCount++;
             messageReceived = true;
         },
-        2,                      // max retries
+        2,    // max retries
         MAV_COMP_ID_AUTOPILOT1,
-        1000                    // 1 second timeout per attempt
+        1000  // 1 second timeout per attempt
     );
     auto* finalState = new QFinalState(&machine);
 
@@ -119,20 +115,16 @@ void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
 
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageCommandNoResponse);
 
-    auto* requestState = new RetryableRequestMessageState(
-        QStringLiteral("RequestDebug"),
-        &machine,
-        MAVLINK_MSG_ID_DEBUG,
-        nullptr,
-        1,                      // max 1 retry (so 2 attempts total)
-        MAV_COMP_ID_AUTOPILOT1,
-        500                     // Short timeout
-    );
+    auto* requestState =
+        new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG, nullptr,
+                                         1,   // max 1 retry (so 2 attempts total)
+                                         MAV_COMP_ID_AUTOPILOT1,
+                                         500  // Short timeout
+        );
     auto* finalState = new QFinalState(&machine);
 
-    connect(requestState, &RetryableRequestMessageState::retriesExhausted, this, [&retriesExhaustedEmitted]() {
-        retriesExhaustedEmitted = true;
-    });
+    connect(requestState, &RetryableRequestMessageState::retriesExhausted, this,
+            [&retriesExhaustedEmitted]() { retriesExhaustedEmitted = true; });
 
     // Default behavior: advance even after max retries (graceful degradation)
     requestState->addTransition(requestState, &QGCState::advance, finalState);
@@ -168,23 +160,16 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
 
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageCommandNoResponse);
 
-    auto* requestState = new RetryableRequestMessageState(
-        QStringLiteral("RequestDebug"),
-        &machine,
-        MAVLINK_MSG_ID_DEBUG,
-        nullptr,
-        0,                      // No retries
-        MAV_COMP_ID_AUTOPILOT1,
-        500
-    );
+    auto* requestState =
+        new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG, nullptr,
+                                         0,   // No retries
+                                         MAV_COMP_ID_AUTOPILOT1, 500);
     requestState->setFailOnMaxRetries(true);  // Emit error() instead of advance()
 
-    auto* successState = new FunctionState(QStringLiteral("Success"), &machine, [&successStateReached]() {
-        successStateReached = true;
-    });
-    auto* errorState = new FunctionState(QStringLiteral("Error"), &machine, [&errorStateReached]() {
-        errorStateReached = true;
-    });
+    auto* successState = new FunctionState(QStringLiteral("Success"), &machine,
+                                           [&successStateReached]() { successStateReached = true; });
+    auto* errorState =
+        new FunctionState(QStringLiteral("Error"), &machine, [&errorStateReached]() { errorStateReached = true; });
     auto* finalState = new QFinalState(&machine);
 
     requestState->addTransition(requestState, &QGCState::advance, successState);

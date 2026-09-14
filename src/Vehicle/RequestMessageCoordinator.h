@@ -27,9 +27,9 @@ public:
     /// Requests the vehicle to send the specified message. Will retry a number of times.
     ///     @param resultHandler Callback for result
     ///     @param resultHandlerData Opaque data passed back to resultHandler
-    void requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData,
-                        int compId, int messageId,
-                        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f);
+    void requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId,
+                        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f,
+                        float param5 = 0.0f);
 
     /// Called for every inbound mavlink message so the coordinator can correlate arrivals
     /// with outstanding requests and enforce per-request timeouts.
@@ -46,22 +46,26 @@ public:
     static QString failureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode);
 
 private:
-    typedef struct RequestMessageInfo {
-        QPointer<Vehicle>           vehicle;                        // QPointer automatically becomes null when Vehicle is destroyed
-        RequestMessageCoordinator*  coordinator         = nullptr;  // Back-pointer so the static ack handler can reach the instance.
-        int                         compId              = 0;
-        int                         msgId               = 0;
-        float                       param1              = 0.0f;
-        float                       param2              = 0.0f;
-        float                       param3              = 0.0f;
-        float                       param4              = 0.0f;
-        float                       param5              = 0.0f;
-        RequestMessageResultHandler resultHandler       = nullptr;
-        void*                       resultHandlerData   = nullptr;
-        bool                        commandAckReceived  = false;    // We keep track of the ack/message being received since the order in which this will come in is random
-        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo when both the message is received and we get the ack
-        QElapsedTimer               messageWaitElapsedTimer;        // Elapsed time since we started waiting message to show up
-        mavlink_message_t           message;
+    typedef struct RequestMessageInfo
+    {
+        QPointer<Vehicle> vehicle;  // QPointer automatically becomes null when Vehicle is destroyed
+        RequestMessageCoordinator* coordinator =
+            nullptr;                // Back-pointer so the static ack handler can reach the instance.
+        int compId = 0;
+        int msgId = 0;
+        float param1 = 0.0f;
+        float param2 = 0.0f;
+        float param3 = 0.0f;
+        float param4 = 0.0f;
+        float param5 = 0.0f;
+        RequestMessageResultHandler resultHandler = nullptr;
+        void* resultHandlerData = nullptr;
+        bool commandAckReceived = false;  // We keep track of the ack/message being received since the order in which
+                                          // this will come in is random
+        bool messageReceived = false;     // We only delete the allocated RequestMessageInfo when both the message is
+                                          // received and we get the ack
+        QElapsedTimer messageWaitElapsedTimer;  // Elapsed time since we started waiting message to show up
+        mavlink_message_t message;
     } RequestMessageInfo_t;
 
     void _removeInfo(int compId, int msgId);
@@ -69,15 +73,19 @@ private:
     void _sendNow(RequestMessageInfo_t* info);
     void _sendNextFromQueue(int compId);
 
-    static void _cmdResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+    static void _cmdResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack,
+                                  MavCmdResultFailureCode_t failureCode);
 
     /// Result handler that outstanding requests are repointed to once their owning context is
     /// destroyed. Intentionally does nothing.
-    static void _noOpResultHandler(void* resultHandlerData, MAV_RESULT commandResult, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    static void _noOpResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
+                                   RequestMessageResultHandlerFailureCode_t failureCode,
+                                   const mavlink_message_t& message);
 
-    Vehicle*                                                _vehicle     = nullptr;
-    MavCommandQueue*                                        _commandQueue = nullptr;
+    Vehicle* _vehicle = nullptr;
+    MavCommandQueue* _commandQueue = nullptr;
 
-    QMap<int /* compId */, QMap<int /* msgId */, RequestMessageInfo_t*>> _infoMap;   // Active requests awaiting response
-    QMap<int /* compId */, QList<RequestMessageInfo_t*>>                  _queueMap; // Per-component queue waiting for active request to finish
+    QMap<int /* compId */, QMap<int /* msgId */, RequestMessageInfo_t*>> _infoMap;  // Active requests awaiting response
+    QMap<int /* compId */, QList<RequestMessageInfo_t*>>
+        _queueMap;  // Per-component queue waiting for active request to finish
 };

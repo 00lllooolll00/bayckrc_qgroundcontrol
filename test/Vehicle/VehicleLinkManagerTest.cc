@@ -1,4 +1,3 @@
-#include "QmlObjectListModel.h"
 #include "VehicleLinkManagerTest.h"
 
 #include <QtCore/QRegularExpression>
@@ -8,6 +7,7 @@
 #include "LinkManager.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
+#include "QmlObjectListModel.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -107,11 +107,13 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
 
 void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 {
-    struct MockLinkInfo {
+    struct MockLinkInfo
+    {
         SharedLinkConfigurationPtr config;
         SharedLinkInterfacePtr link;
         MockLink* mock = nullptr;
     };
+
     MockLinkInfo primary;
     MockLinkInfo secondary;
     _startMockLink(1, false /*highLatency*/, false /*incrementVehicleId*/, primary.config, primary.link);
@@ -160,8 +162,9 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 
     // Comm loss/regain on the secondary link should only update status text
     secondary.mock->setCommLost(true);
-    QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
-             true);
+    QCOMPARE(
+        multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
+        true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
     rgStatus = vehicleLinkManager->linkStatuses();
@@ -172,8 +175,9 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
     multiSpy.clearAllSignals();
 
     secondary.mock->setCommLost(false);
-    QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
-             true);
+    QCOMPARE(
+        multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
+        true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
     rgStatus = vehicleLinkManager->linkStatuses();
@@ -190,8 +194,7 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
     primary.mock->setCommLost(true);
     QCOMPARE(multiSpy.waitForSignal(_primaryLinkChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
-    QVERIFY(
-        multiSpy.onlyEmittedOnce(_primaryLinkChangedSignalName, _linkStatusesChangedSignalName));
+    QVERIFY(multiSpy.onlyEmittedOnce(_primaryLinkChangedSignalName, _linkStatusesChangedSignalName));
 
     QCOMPARE(secondary.mock, vehicleLinkManager->primaryLink().lock().get());
     // Primary switch must not reorder the link list, otherwise the cached indices are invalid
@@ -205,8 +208,9 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 
     // Comm regained on the original primary should leave the secondary as primary and only update status
     primary.mock->setCommLost(false);
-    QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
-             true);
+    QCOMPARE(
+        multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
+        true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
     QCOMPARE(secondary.mock, vehicleLinkManager->primaryLink().lock().get());
@@ -224,8 +228,7 @@ void VehicleLinkManagerTest::_multiLinkTotalCommLossRecoveryTest()
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
     // Primary link switchover produces a showAppMessage debug log.
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression("Switching communication to"));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("Switching communication to"));
 
     SharedLinkConfigurationPtr mockConfig1;
     SharedLinkInterfacePtr mockLink1;

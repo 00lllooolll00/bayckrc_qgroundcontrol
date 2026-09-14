@@ -5,8 +5,8 @@
 #include <iterator>
 
 #include "MissionManager.h"
-#include "UnitTestCoords.h"
 #include "MultiSignalSpy.h"
+#include "UnitTestCoords.h"
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     {"0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",
      {0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT, 10.0, 20.0, 30.0, 40.0, true, false,
@@ -34,8 +34,7 @@ void MissionManagerTest::init()
     MissionControllerManagerTest::init();
     // All failure-handling tests deliberately trigger mission transfer failures which
     // cause showAppMessage() debug logs. Ignore them for the whole fixture.
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression("Mission transfer failed"));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, QRegularExpression("Mission transfer failed"));
     // ArduPilot metadata includes an invalid enum value for RTL_CONE_SLOPE; skip warning is expected.
     ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
                      QRegularExpression("Skipping invalid enum value"));
@@ -96,7 +95,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
         // Validate item count in mission manager
-        int expectedCount = (int)_cTestCases;
+        int expectedCount = (int) _cTestCases;
         if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             // Home position at position 0 comes from vehicle
             expectedCount++;
@@ -148,13 +147,13 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     if (shouldFail) {
         cMissionItemsExpected = 0;
     } else {
-        cMissionItemsExpected = (int)_cTestCases;
+        cMissionItemsExpected = (int) _cTestCases;
         if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             // Home position at position 0 comes from vehicle
             cMissionItemsExpected++;
         }
     }
-    QCOMPARE(_missionManager->missionItems().count(), (int)cMissionItemsExpected);
+    QCOMPARE(_missionManager->missionItems().count(), (int) cMissionItemsExpected);
     int firstActualItem = 0;
     if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         // First item is home position, don't validate it
@@ -174,7 +173,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QCOMPARE(actual->coordinate().latitude(), testCase->expectedItem.coordinate.latitude());
         QCOMPARE(actual->coordinate().longitude(), testCase->expectedItem.coordinate.longitude());
         QCOMPARE(actual->coordinate().altitude(), testCase->expectedItem.coordinate.altitude());
-        QCOMPARE((int)actual->command(), (int)testCase->expectedItem.command);
+        QCOMPARE((int) actual->command(), (int) testCase->expectedItem.command);
         QCOMPARE(actual->param1(), testCase->expectedItem.param1);
         QCOMPARE(actual->param2(), testCase->expectedItem.param2);
         QCOMPARE(actual->param3(), testCase->expectedItem.param3);
@@ -187,7 +186,8 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
 
 void MissionManagerTest::_testWriteFailureHandlingWorker()
 {
-    struct WriteTestCase_t {
+    struct WriteTestCase_t
+    {
         const char* failureText;
         MockLinkMissionItemHandler::FailureMode_t failureMode;
         bool shouldFail;
@@ -216,7 +216,8 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
 
 void MissionManagerTest::_testReadFailureHandlingWorker()
 {
-    struct ReadTestCase_t {
+    struct ReadTestCase_t
+    {
         const char* failureText;
         MockLinkMissionItemHandler::FailureMode_t failureMode;
         bool shouldFail;
@@ -281,7 +282,8 @@ void MissionManagerTest::_testErrorAckFailureStrings()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
-    struct ErrorStringTestCase_t {
+    struct ErrorStringTestCase_t
+    {
         const char* ackResultStr;
         MAV_MISSION_RESULT ackResult;
     };

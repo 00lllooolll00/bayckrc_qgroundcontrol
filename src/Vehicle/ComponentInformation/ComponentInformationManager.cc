@@ -1,32 +1,41 @@
 #include "ComponentInformationManager.h"
-#include "ComponentInformationTranslation.h"
-#include "ComponentInformationCache.h"
-#include "Vehicle.h"
-#include "CompInfoGeneral.h"
-#include "CompInfoParam.h"
-#include "CompInfoEvents.h"
-#include "CompInfoActuators.h"
-#include "QGCCachedFileDownload.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QStandardPaths>
 
+#include "CompInfoActuators.h"
+#include "CompInfoEvents.h"
+#include "CompInfoGeneral.h"
+#include "CompInfoParam.h"
+#include "ComponentInformationCache.h"
+#include "ComponentInformationTranslation.h"
+#include "QGCCachedFileDownload.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformation.ComponentInformationManager")
 
-ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
-    : QGCStateMachine("ComponentInformationManager", vehicle, parent)
-    , _requestTypeStateMachine(this, this)
-    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache"), this))
-    , _fileCache(ComponentInformationCache::defaultInstance())
-    , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
+ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObject* parent)
+    : QGCStateMachine("ComponentInformationManager", vehicle, parent),
+      _requestTypeStateMachine(this, this),
+      _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                                                        QLatin1String("/QGCCompInfoFileDownloadCache"),
+                                                    this)),
+      _fileCache(ComponentInformationCache::defaultInstance()),
+      _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
     qCDebug(ComponentInformationManagerLog) << this;
-    qCDebug(ComponentInformationManagerLog) << "Cache location:" << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
+    qCDebug(ComponentInformationManagerLog)
+        << "Cache location:"
+        << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
 
-    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
-    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
-    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]     = new CompInfoEvents    (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
-    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_ACTUATORS]  = new CompInfoActuators (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL] =
+        new CompInfoGeneral(MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER] =
+        new CompInfoParam(MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS] =
+        new CompInfoEvents(MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_ACTUATORS] =
+        new CompInfoActuators(MAV_COMP_ID_AUTOPILOT1, vehicle, this);
 
     _createStates();
     _wireTransitions();
@@ -44,59 +53,36 @@ void ComponentInformationManager::_createStates()
 {
     // State 1: Request general component information
     _stateRequestGeneral = new AsyncFunctionState(
-        QStringLiteral("RequestGeneral"),
-        this,
-        [this](AsyncFunctionState* state) { _requestCompInfoGeneral(state); }
-    );
+        QStringLiteral("RequestGeneral"), this, [this](AsyncFunctionState* state) { _requestCompInfoGeneral(state); });
     registerState(_stateRequestGeneral);
 
     // State 2: Update URIs after general info received
-    _stateUpdateUri = addFunctionState(
-        QStringLiteral("UpdateUri"),
-        [this]() { _updateAllUri(); }
-    );
+    _stateUpdateUri = addFunctionState(QStringLiteral("UpdateUri"), [this]() { _updateAllUri(); });
 
     // State 3: Request parameter metadata (skippable)
     _stateRequestParam = new SkippableAsyncState(
-        QStringLiteral("RequestParam"),
-        this,
-        [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER); },
+        QStringLiteral("RequestParam"), this, [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER); },
         [this](SkippableAsyncState* state) { _requestCompInfoParam(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported"; });
     registerState(_stateRequestParam);
 
     // State 4: Request events metadata (skippable)
     _stateRequestEvents = new SkippableAsyncState(
-        QStringLiteral("RequestEvents"),
-        this,
-        [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_EVENTS); },
+        QStringLiteral("RequestEvents"), this, [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_EVENTS); },
         [this](SkippableAsyncState* state) { _requestCompInfoEvents(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported"; });
     registerState(_stateRequestEvents);
 
     // State 5: Request actuators metadata (skippable)
     _stateRequestActuators = new SkippableAsyncState(
-        QStringLiteral("RequestActuators"),
-        this,
+        QStringLiteral("RequestActuators"), this,
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_ACTUATORS); },
         [this](SkippableAsyncState* state) { _requestCompInfoActuators(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported"; });
     registerState(_stateRequestActuators);
 
     // State 6: Signal completion
-    _stateComplete = addFunctionState(
-        QStringLiteral("Complete"),
-        [this]() { _signalComplete(); }
-    );
+    _stateComplete = addFunctionState(QStringLiteral("Complete"), [this]() { _signalComplete(); });
 
     // Final state
     _stateFinal = addFinalState(QStringLiteral("Final"));
@@ -172,12 +158,13 @@ float ComponentInformationManager::progress() const
     return static_cast<float>(_currentStateIndex) / static_cast<float>(_stateCount);
 }
 
-void ComponentInformationManager::requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData)
+void ComponentInformationManager::requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn,
+                                                                 void* requestAllCompleteFnData)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
-    _requestAllCompleteFn       = requestAllCompletFn;
-    _requestAllCompleteFnData   = requestAllCompleteFnData;
+    _requestAllCompleteFn = requestAllCompletFn;
+    _requestAllCompleteFnData = requestAllCompleteFnData;
 
     // Guard against double-start: a request while already running just updates the
     // callback pointers; the running machine still emits requestAllComplete at the end.
@@ -201,7 +188,8 @@ void ComponentInformationManager::_updateAllUri()
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
-    CompInfoGeneral* general = qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
+    CompInfoGeneral* general =
+        qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
     for (auto& compInfo : _compInfoMap[MAV_COMP_ID_AUTOPILOT1]) {
         general->setUris(*compInfo);
     }
@@ -237,15 +225,16 @@ void ComponentInformationManager::_signalComplete()
 
     if (_requestAllCompleteFn) {
         (*_requestAllCompleteFn)(_requestAllCompleteFnData);
-        _requestAllCompleteFn      = nullptr;
-        _requestAllCompleteFnData  = nullptr;
+        _requestAllCompleteFn = nullptr;
+        _requestAllCompleteFnData = nullptr;
     }
     emit requestAllComplete();
 }
 
 bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type) const
 {
-    CompInfoGeneral* general = qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
+    CompInfoGeneral* general =
+        qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
     return general ? general->isMetaDataTypeSupported(type) : false;
 }
 
@@ -260,10 +249,12 @@ CompInfoParam* ComponentInformationManager::compInfoParam(uint8_t compId)
 
 CompInfoGeneral* ComponentInformationManager::compInfoGeneral(uint8_t compId)
 {
-    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_GENERAL) ? qobject_cast<CompInfoGeneral*>(_compInfoMap[compId][COMP_METADATA_TYPE_GENERAL]) : nullptr;
+    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_GENERAL)
+               ? qobject_cast<CompInfoGeneral*>(_compInfoMap[compId][COMP_METADATA_TYPE_GENERAL])
+               : nullptr;
 }
 
 QString ComponentInformationManager::_getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation)
 {
-    return QString::asprintf("%08x_%02i_%i", crc, compInfoType, (int)isTranslation);
+    return QString::asprintf("%08x_%02i_%i", crc, compInfoType, (int) isTranslation);
 }

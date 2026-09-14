@@ -1,13 +1,13 @@
 #include "VehicleFactGroup.h"
-#include "Vehicle.h"
-#include "QGCMath.h"
-
-#include <cmath>
 
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
+#include <cmath>
 
-VehicleFactGroup::VehicleFactGroup(QObject *parent)
+#include "QGCMath.h"
+#include "Vehicle.h"
+
+VehicleFactGroup::VehicleFactGroup(QObject* parent)
     : FactGroup(100, QStringLiteral(":/json/Vehicle/VehicleFact.json"), parent)
 {
     _addFact(&_rollFact);
@@ -76,32 +76,32 @@ void VehicleFactGroup::updateRCRSSI(uint8_t rssi)
     }
 }
 
-void VehicleFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+void VehicleFactGroup::handleMessage(Vehicle* vehicle, const mavlink_message_t& message)
 {
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_ATTITUDE:
-        _handleAttitude(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-        _handleAttitudeQuaternion(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_ALTITUDE:
-        _handleAltitude(message);
-        break;
-    case MAVLINK_MSG_ID_VFR_HUD:
-        _handleVfrHud(message);
-        break;
-    case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
-        _handleNavControllerOutput(message);
-        break;
-    case MAVLINK_MSG_ID_RAW_IMU:
-        _handleRawImuTemp(message);
-        break;
-    case MAVLINK_MSG_ID_RANGEFINDER:
-        _handleRangefinder(message);
-        break;
-    default:
-        break;
+        case MAVLINK_MSG_ID_ATTITUDE:
+            _handleAttitude(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+            _handleAttitudeQuaternion(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_ALTITUDE:
+            _handleAltitude(message);
+            break;
+        case MAVLINK_MSG_ID_VFR_HUD:
+            _handleVfrHud(message);
+            break;
+        case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
+            _handleNavControllerOutput(message);
+            break;
+        case MAVLINK_MSG_ID_RAW_IMU:
+            _handleRawImuTemp(message);
+            break;
+        case MAVLINK_MSG_ID_RANGEFINDER:
+            _handleRangefinder(message);
+            break;
+        default:
+            break;
     }
 }
 
@@ -126,7 +126,7 @@ void VehicleFactGroup::_handleAttitudeWorker(double rollRadians, double pitchRad
     heading()->setRawValue(yawDegrees);
 }
 
-void VehicleFactGroup::_handleAttitude(Vehicle *vehicle, const mavlink_message_t &message)
+void VehicleFactGroup::_handleAttitude(Vehicle* vehicle, const mavlink_message_t& message)
 {
     if ((message.sysid != vehicle->id()) || (message.compid != vehicle->compId())) {
         return;
@@ -144,7 +144,7 @@ void VehicleFactGroup::_handleAttitude(Vehicle *vehicle, const mavlink_message_t
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleAltitude(const mavlink_message_t &message)
+void VehicleFactGroup::_handleAltitude(const mavlink_message_t& message)
 {
     mavlink_altitude_t altitude{};
     mavlink_msg_altitude_decode(&message, &altitude);
@@ -157,7 +157,7 @@ void VehicleFactGroup::_handleAltitude(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink_message_t &message)
+void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle* vehicle, const mavlink_message_t& message)
 {
     // only accept the attitude message from the vehicle's flight controller
     if ((message.sysid != vehicle->id()) || (message.compid != vehicle->compId())) {
@@ -171,7 +171,8 @@ void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink
 
     QQuaternion quat(attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4);
     QVector3D rates(attitudeQuaternion.rollspeed, attitudeQuaternion.pitchspeed, attitudeQuaternion.yawspeed);
-    QQuaternion repr_offset(attitudeQuaternion.repr_offset_q[0], attitudeQuaternion.repr_offset_q[1], attitudeQuaternion.repr_offset_q[2], attitudeQuaternion.repr_offset_q[3]);
+    QQuaternion repr_offset(attitudeQuaternion.repr_offset_q[0], attitudeQuaternion.repr_offset_q[1],
+                            attitudeQuaternion.repr_offset_q[2], attitudeQuaternion.repr_offset_q[3]);
 
     // if repr_offset is valid, rotate attitude and rates
     if (repr_offset.length() >= 0.5f) {
@@ -180,7 +181,7 @@ void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink
     }
 
     float attRoll, attPitch, attYaw;
-    float q[] = { quat.scalar(), quat.x(), quat.y(), quat.z() };
+    float q[] = {quat.scalar(), quat.x(), quat.y(), quat.z()};
     mavlink_quaternion_to_euler(q, &attRoll, &attPitch, &attYaw);
 
     _handleAttitudeWorker(attRoll, attPitch, attYaw);
@@ -192,7 +193,7 @@ void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleNavControllerOutput(const mavlink_message_t &message)
+void VehicleFactGroup::_handleNavControllerOutput(const mavlink_message_t& message)
 {
     mavlink_nav_controller_output_t navControllerOutput{};
     mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
@@ -205,7 +206,7 @@ void VehicleFactGroup::_handleNavControllerOutput(const mavlink_message_t &messa
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleVfrHud(const mavlink_message_t &message)
+void VehicleFactGroup::_handleVfrHud(const mavlink_message_t& message)
 {
     mavlink_vfr_hud_t vfrHud{};
     mavlink_msg_vfr_hud_decode(&message, &vfrHud);
@@ -219,13 +220,13 @@ void VehicleFactGroup::_handleVfrHud(const mavlink_message_t &message)
     }
     altitudeTuning()->setRawValue(vfrHud.alt - _altitudeTuningOffset);
     if (!qIsNaN(vfrHud.groundspeed) && !qIsNaN(_distanceToHomeFact.cookedValue().toDouble())) {
-      timeToHome()->setRawValue(_distanceToHomeFact.cookedValue().toDouble() / vfrHud.groundspeed);
+        timeToHome()->setRawValue(_distanceToHomeFact.cookedValue().toDouble() / vfrHud.groundspeed);
     }
 
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleRawImuTemp(const mavlink_message_t &message)
+void VehicleFactGroup::_handleRawImuTemp(const mavlink_message_t& message)
 {
     mavlink_raw_imu_t imuRaw{};
     mavlink_msg_raw_imu_decode(&message, &imuRaw);
@@ -235,7 +236,7 @@ void VehicleFactGroup::_handleRawImuTemp(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleRangefinder(const mavlink_message_t &message)
+void VehicleFactGroup::_handleRangefinder(const mavlink_message_t& message)
 {
     mavlink_rangefinder_t rangefinder{};
     mavlink_msg_rangefinder_decode(&message, &rangefinder);

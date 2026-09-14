@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QMap>
-
 #include <memory>
 
 #include "Joystick.h"
@@ -83,7 +82,7 @@ private slots:
 private:
     JoystickSDL* _findJoystickByInstanceId(int instanceId);
     void _pumpEvents();
-    static void _seedButtonActionSetting(const QString &joystickName, int buttonIndex, const QString &actionName);
+    static void _seedButtonActionSetting(const QString& joystickName, int buttonIndex, const QString& actionName);
 
     std::unique_ptr<MockJoystick> _mockJoystick;
     QMap<QString, Joystick*> _discoveredJoysticks;

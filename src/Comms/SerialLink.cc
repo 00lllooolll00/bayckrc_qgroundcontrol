@@ -1,25 +1,26 @@
 #include "SerialLink.h"
-#include "QGCLoggingCategory.h"
-#include "QGCSerialPortInfo.h"
+
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
+#include "QGCLoggingCategory.h"
+#include "QGCSerialPortInfo.h"
+
 QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 
 namespace {
-    constexpr int CONNECT_TIMEOUT_MS = 1000;
+constexpr int CONNECT_TIMEOUT_MS = 1000;
 }
 
 /*===========================================================================*/
 
-SerialConfiguration::SerialConfiguration(const QString &name, QObject *parent)
-    : LinkConfiguration(name, parent)
+SerialConfiguration::SerialConfiguration(const QString& name, QObject* parent) : LinkConfiguration(name, parent)
 {
     qCDebug(SerialLinkLog) << this;
 }
 
-SerialConfiguration::SerialConfiguration(const SerialConfiguration *source, QObject *parent)
+SerialConfiguration::SerialConfiguration(const SerialConfiguration* source, QObject* parent)
     : LinkConfiguration(source, parent)
 {
     qCDebug(SerialLinkLog) << this;
@@ -32,7 +33,7 @@ SerialConfiguration::~SerialConfiguration()
     qCDebug(SerialLinkLog) << this;
 }
 
-void SerialConfiguration::setPortName(const QString &name)
+void SerialConfiguration::setPortName(const QString& name)
 {
     const QString portName = name.trimmed();
     if (portName.isEmpty()) {
@@ -52,7 +53,7 @@ void SerialConfiguration::setPortName(const QString &name)
     }
 }
 
-void SerialConfiguration::copyFrom(const LinkConfiguration *source)
+void SerialConfiguration::copyFrom(const LinkConfiguration* source)
 {
     LinkConfiguration::copyFrom(source);
 
@@ -69,7 +70,7 @@ void SerialConfiguration::copyFrom(const LinkConfiguration *source)
     setdtrForceLow(serialSource->dtrForceLow());
 }
 
-void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
+void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
 
@@ -87,7 +88,7 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.endGroup();
 }
 
-void SerialConfiguration::saveSettings(QSettings &settings, const QString &root) const
+void SerialConfiguration::saveSettings(QSettings& settings, const QString& root) const
 {
     settings.beginGroup(root);
 
@@ -107,34 +108,25 @@ QStringList SerialConfiguration::supportedBaudRates()
 {
     static const QSet<qint32> kDefaultSupportedBaudRates = {
 #ifdef Q_OS_UNIX
-        50,
-        75,
+        50,     75,
 #endif
         110,
 #ifdef Q_OS_UNIX
-        150,
-        200,
-        134,
+        150,    200,    134,
 #endif
-        300,
-        600,
-        1200,
+        300,    600,    1200,
 #ifdef Q_OS_UNIX
         1800,
 #endif
-        2400,
-        4800,
-        9600,
+        2400,   4800,   9600,
 #ifdef Q_OS_WIN
         14400,
 #endif
-        19200,
-        38400,
+        19200,  38400,
 #ifdef Q_OS_WIN
         56000,
 #endif
-        57600,
-        115200,
+        57600,  115200,
 #ifdef Q_OS_WIN
         128000,
 #endif
@@ -142,8 +134,7 @@ QStringList SerialConfiguration::supportedBaudRates()
 #ifdef Q_OS_WIN
         256000,
 #endif
-        460800,
-        500000,
+        460800, 500000,
 #ifdef Q_OS_LINUX
         576000,
 #endif
@@ -153,7 +144,8 @@ QStringList SerialConfiguration::supportedBaudRates()
     const QList<qint32> activeSupportedBaudRates = QSerialPortInfo::standardBaudRates();
 
     QSet<qint32> mergedBaudRateSet(kDefaultSupportedBaudRates.constBegin(), kDefaultSupportedBaudRates.constEnd());
-    (void) mergedBaudRateSet.unite(QSet<qint32>(activeSupportedBaudRates.constBegin(), activeSupportedBaudRates.constEnd()));
+    (void) mergedBaudRateSet.unite(
+        QSet<qint32>(activeSupportedBaudRates.constBegin(), activeSupportedBaudRates.constEnd()));
 
     QList<qint32> mergedBaudRateList = mergedBaudRateSet.values();
     std::sort(mergedBaudRateList.begin(), mergedBaudRateList.end());
@@ -167,10 +159,10 @@ QStringList SerialConfiguration::supportedBaudRates()
     return supportBaudRateStrings;
 }
 
-QString SerialConfiguration::cleanPortDisplayName(const QString &name)
+QString SerialConfiguration::cleanPortDisplayName(const QString& name)
 {
     const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &portInfo : availablePorts) {
+    for (const QSerialPortInfo& portInfo : availablePorts) {
         if (portInfo.systemLocation() == name) {
 #ifdef Q_OS_ANDROID
             // Android port names (bus/usb/001/003) aren't human-readable. Prefer the USB
@@ -194,9 +186,7 @@ QString SerialConfiguration::cleanPortDisplayName(const QString &name)
 
 /*===========================================================================*/
 
-SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
-    : QObject(parent)
-    , _serialConfig(config)
+SerialWorker::SerialWorker(const SerialConfiguration* config, QObject* parent) : QObject(parent), _serialConfig(config)
 {
     qCDebug(SerialLinkLog) << this;
 
@@ -286,7 +276,7 @@ void SerialWorker::disconnectFromPort()
     _port->close();
 }
 
-void SerialWorker::writeData(const QByteArray &data)
+void SerialWorker::writeData(const QByteArray& data)
 {
     if (data.isEmpty()) {
         emit errorOccurred(tr("Data to Send is Empty"));
@@ -370,21 +360,21 @@ void SerialWorker::_onPortBytesWritten(qint64 bytes) const
 void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
 {
     switch (portError) {
-    case QSerialPort::NoError:
-        qCDebug(SerialLinkLog) << "About to open port" << _port->portName();
-        return;
-    case QSerialPort::ResourceError:
-        // We get this when a usb cable is unplugged - close port to allow reconnection
-        qCDebug(SerialLinkLog) << "Resource error (likely USB disconnect):" << _port->errorString();
-        _port->close();
-        return;
-    case QSerialPort::PermissionError:
-        if (_serialConfig->isAutoConnect()) {
+        case QSerialPort::NoError:
+            qCDebug(SerialLinkLog) << "About to open port" << _port->portName();
             return;
-        }
-        break;
-    default:
-        break;
+        case QSerialPort::ResourceError:
+            // We get this when a usb cable is unplugged - close port to allow reconnection
+            qCDebug(SerialLinkLog) << "Resource error (likely USB disconnect):" << _port->errorString();
+            _port->close();
+            return;
+        case QSerialPort::PermissionError:
+            if (_serialConfig->isAutoConnect()) {
+                return;
+            }
+            break;
+        default:
+            break;
     }
 
     const QString errorString = _port->errorString();
@@ -405,7 +395,7 @@ void SerialWorker::_checkPortAvailability()
     bool portExists = false;
     const QString configuredPort = _serialConfig->portName();
     const auto availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &info : availablePorts) {
+    for (const QSerialPortInfo& info : availablePorts) {
         // Compare against the real port identity, not the human-readable display
         // name, which may be a USB description string (e.g. on Android).
         if ((info.systemLocation() == configuredPort) || (info.portName() == configuredPort)) {
@@ -421,11 +411,11 @@ void SerialWorker::_checkPortAvailability()
 
 /*===========================================================================*/
 
-SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
-    : LinkInterface(config, parent)
-    , _serialConfig(qobject_cast<const SerialConfiguration*>(config.get()))
-    , _worker(new SerialWorker(_serialConfig))
-    , _workerThread(new QThread(this))
+SerialLink::SerialLink(SharedLinkConfigurationPtr& config, QObject* parent)
+    : LinkInterface(config, parent),
+      _serialConfig(qobject_cast<const SerialConfiguration*>(config.get())),
+      _worker(new SerialWorker(_serialConfig)),
+      _workerThread(new QThread(this))
 {
     qCDebug(SerialLinkLog) << this;
 
@@ -490,23 +480,25 @@ void SerialLink::_onDisconnected()
     }
 }
 
-void SerialLink::_onErrorOccurred(const QString &errorString)
+void SerialLink::_onErrorOccurred(const QString& errorString)
 {
     qCWarning(SerialLinkLog) << "Communication error:" << errorString;
-    emit communicationError(tr("Serial Link Error"), tr("Link %1: (Port: %2) %3").arg(_serialConfig->name(), _serialConfig->portName(), errorString));
+    emit communicationError(
+        tr("Serial Link Error"),
+        tr("Link %1: (Port: %2) %3").arg(_serialConfig->name(), _serialConfig->portName(), errorString));
 }
 
-void SerialLink::_onDataReceived(const QByteArray &data)
+void SerialLink::_onDataReceived(const QByteArray& data)
 {
     emit bytesReceived(this, data);
 }
 
-void SerialLink::_onDataSent(const QByteArray &data)
+void SerialLink::_onDataSent(const QByteArray& data)
 {
     emit bytesSent(this, data);
 }
 
-void SerialLink::_writeBytes(const QByteArray &data)
+void SerialLink::_writeBytes(const QByteArray& data)
 {
     (void) QMetaObject::invokeMethod(_worker, "writeData", Qt::QueuedConnection, Q_ARG(QByteArray, data));
 }

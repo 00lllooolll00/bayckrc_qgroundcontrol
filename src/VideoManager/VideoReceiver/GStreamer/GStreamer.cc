@@ -131,7 +131,8 @@ bool _verifyPlugins()
     }
     // GStreamer 1.22+ fuses videoconvert+videoscale into videoconvertscale; accept either.
     if (!hasPlugin("videoconvertscale") && !(hasPlugin("videoconvert") && hasPlugin("videoscale"))) {
-        qCCritical(GStreamerLog) << "Required GStreamer plugin not found: videoconvertscale (or videoconvert+videoscale)";
+        qCCritical(GStreamerLog)
+            << "Required GStreamer plugin not found: videoconvertscale (or videoconvert+videoscale)";
         result = false;
     }
 
@@ -455,17 +456,28 @@ void onMainWindowReady(QQuickWindow* window)
 #if defined(QGC_HAS_ANY_GPU_PATH)
     if (QRhi* rhi = QGCRhiCapture::cachedRhi()) {
         switch (rhi->backend()) {
-            case QRhi::OpenGLES2: api = QSGRendererInterface::OpenGL; break;
-            case QRhi::D3D11:     api = QSGRendererInterface::Direct3D11; break;
-            case QRhi::D3D12:     api = QSGRendererInterface::Direct3D12; break;
-            case QRhi::Metal:     api = QSGRendererInterface::Metal; break;
-            case QRhi::Vulkan:    api = QSGRendererInterface::Vulkan; break;
-            default: break;
+            case QRhi::OpenGLES2:
+                api = QSGRendererInterface::OpenGL;
+                break;
+            case QRhi::D3D11:
+                api = QSGRendererInterface::Direct3D11;
+                break;
+            case QRhi::D3D12:
+                api = QSGRendererInterface::Direct3D12;
+                break;
+            case QRhi::Metal:
+                api = QSGRendererInterface::Metal;
+                break;
+            case QRhi::Vulkan:
+                api = QSGRendererInterface::Vulkan;
+                break;
+            default:
+                break;
         }
     }
 #endif
-    qCInfo(GStreamerLog) << "Resolved RHI backend:" << graphicsApiName(api) << "→ zero-copy path:"
-                         << zeroCopyFamilyForApi(api);
+    qCInfo(GStreamerLog) << "Resolved RHI backend:" << graphicsApiName(api)
+                         << "→ zero-copy path:" << zeroCopyFamilyForApi(api);
 }
 
 QList<VideoDecoderOptions> availableDecoderFamilies()

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "QGCStateMachine.h"
 #include "MAVLinkMessageType.h"
+#include "QGCStateMachine.h"
 
 class Vehicle;
 class SkippableAsyncState;

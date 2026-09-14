@@ -1,13 +1,12 @@
 #pragma once
 
+#include <QtCore/QFile>
+#include <QtQmlIntegration/QtQmlIntegration>
+#include <atomic>
+
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "QGCMAVLinkTypes.h"
-
-#include <QtCore/QFile>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <atomic>
 
 class QTimer;
 
@@ -21,20 +20,25 @@ class LogReplayConfiguration : public LinkConfiguration
     Q_PROPERTY(QString filename READ logFilename WRITE setLogFilename NOTIFY filenameChanged)
 
 public:
-    explicit LogReplayConfiguration(const QString &name, QObject *parent = nullptr);
-    explicit LogReplayConfiguration(const LogReplayConfiguration *copy, QObject *parent = nullptr);
+    explicit LogReplayConfiguration(const QString& name, QObject* parent = nullptr);
+    explicit LogReplayConfiguration(const LogReplayConfiguration* copy, QObject* parent = nullptr);
     virtual ~LogReplayConfiguration();
 
     LinkType type() const override { return LinkConfiguration::TypeLogReplay; }
-    void copyFrom(const LinkConfiguration *source) override;
-    void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) const override;
+
+    void copyFrom(const LinkConfiguration* source) override;
+    void loadSettings(QSettings& settings, const QString& root) override;
+    void saveSettings(QSettings& settings, const QString& root) const override;
+
     QString settingsURL() const override { return QStringLiteral("LogReplaySettings.qml"); }
+
     QString settingsTitle() const override { return tr("Log Replay Link Settings"); }
 
     QString logFilenameShort() const;
+
     QString logFilename() const { return _logFilename; }
-    void setLogFilename(const QString &logFilename);
+
+    void setLogFilename(const QString& logFilename);
 
 signals:
     void filenameChanged();
@@ -50,17 +54,18 @@ class LogReplayWorker : public QObject
     Q_OBJECT
 
 public:
-    explicit LogReplayWorker(const LogReplayConfiguration *config, QObject *parent = nullptr);
+    explicit LogReplayWorker(const LogReplayConfiguration* config, QObject* parent = nullptr);
     ~LogReplayWorker();
 
     bool isConnected() const { return _isConnected; }
+
     bool isPlaying() const;
 
 signals:
     void connected();
     void disconnected();
-    void errorOccurred(const QString &errorString);
-    void dataReceived(const QByteArray &data);
+    void errorOccurred(const QString& errorString);
+    void dataReceived(const QByteArray& data);
     void logFileStats(uint32_t logDurationSecs);
     void playbackStarted();
     void playbackPaused();
@@ -81,16 +86,16 @@ private slots:
     void _readNextLogEntry();
 
 private:
-    quint64 _parseTimestamp(const QByteArray &bytes);
-    quint64 _seekToNextMavlinkMessage(mavlink_message_t &nextMsg);
+    quint64 _parseTimestamp(const QByteArray& bytes);
+    quint64 _seekToNextMavlinkMessage(mavlink_message_t& nextMsg);
     quint64 _findLastTimestamp();
-    quint64 _readNextMavlinkMessage(QByteArray &bytes);
+    quint64 _readNextMavlinkMessage(QByteArray& bytes);
     bool _loadLogFile();
     void _resetPlaybackToBeginning();
     void _signalCurrentLogTimeSecs();
 
-    const LogReplayConfiguration *_logReplayConfig = nullptr;
-    QTimer *_readTickTimer = nullptr;
+    const LogReplayConfiguration* _logReplayConfig = nullptr;
+    QTimer* _readTickTimer = nullptr;
 
     std::atomic<bool> _isConnected{false};
     uint8_t _mavlinkChannel = 0;
@@ -117,11 +122,12 @@ class LogReplayLink : public LinkInterface
     Q_OBJECT
 
 public:
-    explicit LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
+    explicit LogReplayLink(SharedLinkConfigurationPtr& config, QObject* parent = nullptr);
     virtual ~LogReplayLink();
 
     bool isConnected() const override;
     void disconnect() override;
+
     bool isLogReplay() const final { return true; }
 
     bool isPlaying() const;
@@ -139,17 +145,19 @@ signals:
     void currentLogTimeSecs(uint32_t secs);
 
 private slots:
-    void _writeBytes(const QByteArray &bytes) override { Q_UNUSED(bytes); }
+
+    void _writeBytes(const QByteArray& bytes) override { Q_UNUSED(bytes); }
+
     void _onConnected();
     void _onDisconnected();
-    void _onErrorOccurred(const QString &errorString);
-    void _onDataReceived(const QByteArray &data);
+    void _onErrorOccurred(const QString& errorString);
+    void _onDataReceived(const QByteArray& data);
 
 private:
     bool _connect() override;
 
-    const LogReplayConfiguration *_logReplayConfig = nullptr;
-    LogReplayWorker *_worker = nullptr;
-    QThread *_workerThread = nullptr;
+    const LogReplayConfiguration* _logReplayConfig = nullptr;
+    LogReplayWorker* _worker = nullptr;
+    QThread* _workerThread = nullptr;
     std::atomic<bool> _disconnectedEmitted{false};
 };

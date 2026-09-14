@@ -44,7 +44,8 @@ private slots:
     void _testPlanCreatorsFiltered();
 
 private:
-    enum DirtyScenario {
+    enum DirtyScenario
+    {
         UploadPreservesSaveDirtyTrue,
         UploadPreservesSaveDirtyFalse,
         UploadFalseOnPlanClear,
@@ -59,7 +60,8 @@ private:
         DownloadEmptyNotDirtyForSave,
     };
 
-    enum DirtyState {
+    enum DirtyState
+    {
         DirtyStateFalse,
         DirtyStateTrue,
         DirtyStateUnchanged

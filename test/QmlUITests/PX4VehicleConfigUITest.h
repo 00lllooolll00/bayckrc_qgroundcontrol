@@ -21,5 +21,5 @@ private slots:
 private:
     /// Click each axis button in \a axisNames in order, waiting for a polish
     /// pass between each click.  Used by _testDisconnectWithPIDTuningOpen().
-    void _cycleAxisButtons(const QStringList &axisNames);
+    void _cycleAxisButtons(const QStringList& axisNames);
 };

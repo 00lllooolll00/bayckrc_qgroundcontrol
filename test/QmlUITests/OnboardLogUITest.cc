@@ -6,7 +6,6 @@
 #include <QtCore/QTemporaryDir>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
-
 #include <algorithm>
 
 #include "MockLink.h"
@@ -99,7 +98,8 @@ void OnboardLogUITest::_verifyIdleButtonStates(int logCount)
 // (when more than one log).
 void OnboardLogUITest::_fullPageStateChecks(int logCount)
 {
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 15000), "log entry rows never appeared");
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 15000),
+             "log entry rows never appeared");
 
     _verifyIdleButtonStates(logCount);
     if (QTest::currentTestFailed())
@@ -174,7 +174,8 @@ void OnboardLogUITest::_eraseAllAndVerifyEmpty()
     QVERIFY(clickButton(QStringLiteral("onboardLog_eraseAllButton")));
     QVERIFY(waitForDialog(QStringLiteral("Delete All Onboard Log Files")));
     QVERIFY(rejectDialog());
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 2000), "logs must remain after rejecting the erase confirmation");
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 2000),
+             "logs must remain after rejecting the erase confirmation");
 
     QVERIFY(clickButton(QStringLiteral("onboardLog_eraseAllButton")));
     QVERIFY(waitForDialog(QStringLiteral("Delete All Onboard Log Files")));
@@ -207,178 +208,186 @@ void OnboardLogUITest::_messagesFullPageUITest()
 void OnboardLogUITest::_ftpFullPageUITest()
 {
     _ftpTransport = true;
-    runWithMockLink([] { return MockLink::startPX4MockLink(MockConfiguration::OptionFtpCapability); },
-                    [&](QPointer<MockLink> mockLink, Vehicle* /*vehicle*/) {
-                        // log_new is newest so it sorts to row 0. The burst read delay paces
-                        // the download so it can be canceled mid-transfer and runs long enough
-                        // to outlast the 500ms progress-status throttle.
-                        const QList<MockLinkFTP::LogFile> logFiles = {
-                            {QStringLiteral("log_old.ulg"), 4000, 1700000000},
-                            {QStringLiteral("log_new.ulg"), 150000, 1700086400},
-                        };
-                        mockLink->mockLinkFTP()->setLogFiles(logFiles);
-                        mockLink->mockLinkFTP()->setBurstReadDelayMs(20);
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(MockConfiguration::OptionFtpCapability); },
+        [&](QPointer<MockLink> mockLink, Vehicle* /*vehicle*/) {
+            // log_new is newest so it sorts to row 0. The burst read delay paces
+            // the download so it can be canceled mid-transfer and runs long enough
+            // to outlast the 500ms progress-status throttle.
+            const QList<MockLinkFTP::LogFile> logFiles = {
+                {QStringLiteral("log_old.ulg"), 4000, 1700000000},
+                {QStringLiteral("log_new.ulg"), 150000, 1700086400},
+            };
+            mockLink->mockLinkFTP()->setLogFiles(logFiles);
+            mockLink->mockLinkFTP()->setBurstReadDelayMs(20);
 
-                        _navigateToOnboardLogsPage();
-                        if (QTest::currentTestFailed())
-                            return;
+            _navigateToOnboardLogsPage();
+            if (QTest::currentTestFailed())
+                return;
 
-                        _fullPageStateChecks(2);
-                        if (QTest::currentTestFailed())
-                            return;
+            _fullPageStateChecks(2);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Start a slow download and verify the button states while it runs
-                        QVERIFY(clickButton(QStringLiteral("onboardLogCheckbox_0")));
+            // Start a slow download and verify the button states while it runs
+            QVERIFY(clickButton(QStringLiteral("onboardLogCheckbox_0")));
 
-                        QTemporaryDir tempDir;
-                        QVERIFY(tempDir.isValid());
-                        QGCFileDialogController::setTestNextFileForAccept(tempDir.path());
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_downloadButton")));
+            QTemporaryDir tempDir;
+            QVERIFY(tempDir.isValid());
+            QGCFileDialogController::setTestNextFileForAccept(tempDir.path());
+            QVERIFY(clickButton(QStringLiteral("onboardLog_downloadButton")));
 
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_cancelButton"), true);
-                        if (QTest::currentTestFailed())
-                            return;
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_refreshButton"), false);
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_selectAllButton"), false);
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_downloadButton"), false);
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_sortButton"), false);
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_eraseAllButton"), false);
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_eraseSelectedButton"), false);
-                        if (QTest::currentTestFailed())
-                            return;
+            _verifyButtonEnabled(QStringLiteral("onboardLog_cancelButton"), true);
+            if (QTest::currentTestFailed())
+                return;
+            _verifyButtonEnabled(QStringLiteral("onboardLog_refreshButton"), false);
+            _verifyButtonEnabled(QStringLiteral("onboardLog_selectAllButton"), false);
+            _verifyButtonEnabled(QStringLiteral("onboardLog_downloadButton"), false);
+            _verifyButtonEnabled(QStringLiteral("onboardLog_sortButton"), false);
+            _verifyButtonEnabled(QStringLiteral("onboardLog_eraseAllButton"), false);
+            _verifyButtonEnabled(QStringLiteral("onboardLog_eraseSelectedButton"), false);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Cancel the download mid-transfer
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_cancelButton")));
-                        QQuickItem* const statusLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogStatus_0"), 2000);
-                        QVERIFY(statusLabel);
-                        QTRY_COMPARE_WITH_TIMEOUT(statusLabel->property("text").toString(), QStringLiteral("Canceled"), 10000);
-                        _verifyIdleButtonStates(2);
-                        if (QTest::currentTestFailed())
-                            return;
+            // Cancel the download mid-transfer
+            QVERIFY(clickButton(QStringLiteral("onboardLog_cancelButton")));
+            QQuickItem* const statusLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogStatus_0"), 2000);
+            QVERIFY(statusLabel);
+            QTRY_COMPARE_WITH_TIMEOUT(statusLabel->property("text").toString(), QStringLiteral("Canceled"), 10000);
+            _verifyIdleButtonStates(2);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Multi-log download via Select All: the second log shows Waiting
-                        // while the first downloads and progress text replaces its status
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_selectAllButton")));
-                        _verifyButtonEnabled(QStringLiteral("onboardLog_downloadButton"), true);
-                        if (QTest::currentTestFailed())
-                            return;
+            // Multi-log download via Select All: the second log shows Waiting
+            // while the first downloads and progress text replaces its status
+            QVERIFY(clickButton(QStringLiteral("onboardLog_selectAllButton")));
+            _verifyButtonEnabled(QStringLiteral("onboardLog_downloadButton"), true);
+            if (QTest::currentTestFailed())
+                return;
 
-                        QTemporaryDir multiDir;
-                        QVERIFY(multiDir.isValid());
-                        QGCFileDialogController::setTestNextFileForAccept(multiDir.path());
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_downloadButton")));
+            QTemporaryDir multiDir;
+            QVERIFY(multiDir.isValid());
+            QGCFileDialogController::setTestNextFileForAccept(multiDir.path());
+            QVERIFY(clickButton(QStringLiteral("onboardLog_downloadButton")));
 
-                        // Row 0 (log_new, 150KB) downloads first while row 1 queues as Waiting
-                        QQuickItem* const statusLabel1 = findVisibleItem(_rootItem, QStringLiteral("onboardLogStatus_1"), 2000);
-                        QVERIFY(statusLabel1);
-                        QTRY_COMPARE_WITH_TIMEOUT(statusLabel1->property("text").toString(), QStringLiteral("Waiting"), 10000);
+            // Row 0 (log_new, 150KB) downloads first while row 1 queues as Waiting
+            QQuickItem* const statusLabel1 = findVisibleItem(_rootItem, QStringLiteral("onboardLogStatus_1"), 2000);
+            QVERIFY(statusLabel1);
+            QTRY_COMPARE_WITH_TIMEOUT(statusLabel1->property("text").toString(), QStringLiteral("Waiting"), 10000);
 
-                        // In-progress status shows "<size> (<rate>/s)" while downloading.
-                        // Poll every event-loop pass since the progress text can be brief.
-                        QStringList observedStatuses;
-                        QElapsedTimer downloadTimer;
-                        downloadTimer.start();
-                        while ((statusLabel->property("text").toString() != QStringLiteral("Downloaded")) && (downloadTimer.elapsed() < 60000)) {
-                            const QString currentStatus = statusLabel->property("text").toString();
-                            if (observedStatuses.isEmpty() || (observedStatuses.constLast() != currentStatus)) {
-                                observedStatuses.append(currentStatus);
-                            }
-                            QCoreApplication::processEvents();
-                        }
-                        QCOMPARE(statusLabel->property("text").toString(), QStringLiteral("Downloaded"));
-                        const bool sawProgressStatus = std::any_of(observedStatuses.cbegin(), observedStatuses.cend(),
-                                                                   [](const QString& s) { return s.contains(QStringLiteral("/s)")); });
-                        QVERIFY2(sawProgressStatus, qPrintable(QStringLiteral("statuses seen: ") + observedStatuses.join(QStringLiteral(", "))));
+            // In-progress status shows "<size> (<rate>/s)" while downloading.
+            // Poll every event-loop pass since the progress text can be brief.
+            QStringList observedStatuses;
+            QElapsedTimer downloadTimer;
+            downloadTimer.start();
+            while ((statusLabel->property("text").toString() != QStringLiteral("Downloaded")) &&
+                   (downloadTimer.elapsed() < 60000)) {
+                const QString currentStatus = statusLabel->property("text").toString();
+                if (observedStatuses.isEmpty() || (observedStatuses.constLast() != currentStatus)) {
+                    observedStatuses.append(currentStatus);
+                }
+                QCoreApplication::processEvents();
+            }
+            QCOMPARE(statusLabel->property("text").toString(), QStringLiteral("Downloaded"));
+            const bool sawProgressStatus =
+                std::any_of(observedStatuses.cbegin(), observedStatuses.cend(),
+                            [](const QString& s) { return s.contains(QStringLiteral("/s)")); });
+            QVERIFY2(sawProgressStatus,
+                     qPrintable(QStringLiteral("statuses seen: ") + observedStatuses.join(QStringLiteral(", "))));
 
-                        QTRY_COMPARE_WITH_TIMEOUT(statusLabel1->property("text").toString(), QStringLiteral("Downloaded"), 30000);
-                        _verifyIdleButtonStates(2);
-                        if (QTest::currentTestFailed())
-                            return;
+            QTRY_COMPARE_WITH_TIMEOUT(statusLabel1->property("text").toString(), QStringLiteral("Downloaded"), 30000);
+            _verifyIdleButtonStates(2);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Both files saved under their remote names with correct contents
-                        for (const auto& logFile : logFiles) {
-                            const QString downloadFile = QDir(multiDir.path()).filePath(logFile.name);
-                            QVERIFY2(QFile::exists(downloadFile), qPrintable(logFile.name));
-                            QFile file(downloadFile);
-                            QVERIFY(file.open(QIODevice::ReadOnly));
-                            QCOMPARE(file.readAll(), mockLink->mockLinkFTP()->logFileContents(logFile.name));
-                        }
+            // Both files saved under their remote names with correct contents
+            for (const auto& logFile : logFiles) {
+                const QString downloadFile = QDir(multiDir.path()).filePath(logFile.name);
+                QVERIFY2(QFile::exists(downloadFile), qPrintable(logFile.name));
+                QFile file(downloadFile);
+                QVERIFY(file.open(QIODevice::ReadOnly));
+                QCOMPARE(file.readAll(), mockLink->mockLinkFTP()->logFileContents(logFile.name));
+            }
 
-                        // Refresh re-lists from the vehicle: a newly added log appears
-                        QList<MockLinkFTP::LogFile> updatedLogFiles = logFiles;
-                        updatedLogFiles.append({QStringLiteral("log_extra.ulg"), 3000, 1700172800});
-                        mockLink->mockLinkFTP()->setLogFiles(updatedLogFiles);
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_refreshButton")));
-                        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 15000), "third log never appeared after refresh");
-                        _verifyIdleButtonStates(3);
-                        if (QTest::currentTestFailed())
-                            return;
+            // Refresh re-lists from the vehicle: a newly added log appears
+            QList<MockLinkFTP::LogFile> updatedLogFiles = logFiles;
+            updatedLogFiles.append({QStringLiteral("log_extra.ulg"), 3000, 1700172800});
+            mockLink->mockLinkFTP()->setLogFiles(updatedLogFiles);
+            QVERIFY(clickButton(QStringLiteral("onboardLog_refreshButton")));
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 15000),
+                     "third log never appeared after refresh");
+            _verifyIdleButtonStates(3);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Selective erase with a single row selected
-                        QVERIFY(clickButton(QStringLiteral("onboardLogCheckbox_0")));
-                        _verifySelectionButtonStates(true);
-                        if (QTest::currentTestFailed())
-                            return;
+            // Selective erase with a single row selected
+            QVERIFY(clickButton(QStringLiteral("onboardLogCheckbox_0")));
+            _verifySelectionButtonStates(true);
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Rejecting the confirmation leaves all logs in place
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_eraseSelectedButton")));
-                        QVERIFY(waitForDialog(QStringLiteral("Delete Selected Onboard Log Files")));
-                        QVERIFY(rejectDialog());
-                        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 2000),
-                                 "logs must remain after rejecting the selective erase confirmation");
+            // Rejecting the confirmation leaves all logs in place
+            QVERIFY(clickButton(QStringLiteral("onboardLog_eraseSelectedButton")));
+            QVERIFY(waitForDialog(QStringLiteral("Delete Selected Onboard Log Files")));
+            QVERIFY(rejectDialog());
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 2000),
+                     "logs must remain after rejecting the selective erase confirmation");
 
-                        // Accepting erases only the selected log (row 0 = log_extra) and auto-refreshes
-                        QVERIFY(clickButton(QStringLiteral("onboardLog_eraseSelectedButton")));
-                        QVERIFY(waitForDialog(QStringLiteral("Delete Selected Onboard Log Files")));
-                        QVERIFY(acceptDialog());
-                        QTRY_VERIFY_WITH_TIMEOUT(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 50) == nullptr, 15000);
-                        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_1"), 2000),
-                                 "two logs must remain after selective erase");
-                        _verifyIdleButtonStates(2);
-                        if (QTest::currentTestFailed())
-                            return;
+            // Accepting erases only the selected log (row 0 = log_extra) and auto-refreshes
+            QVERIFY(clickButton(QStringLiteral("onboardLog_eraseSelectedButton")));
+            QVERIFY(waitForDialog(QStringLiteral("Delete Selected Onboard Log Files")));
+            QVERIFY(acceptDialog());
+            QTRY_VERIFY_WITH_TIMEOUT(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_2"), 50) == nullptr,
+                                     15000);
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_1"), 2000),
+                     "two logs must remain after selective erase");
+            _verifyIdleButtonStates(2);
+            if (QTest::currentTestFailed())
+                return;
 
-                        _eraseAllAndVerifyEmpty();
-                    });
+            _eraseAllAndVerifyEmpty();
+        });
 }
 
 void OnboardLogUITest::_ftpDownloadUITest()
 {
-    runWithMockLink([] { return MockLink::startPX4MockLink(MockConfiguration::OptionFtpCapability); },
-                    [&](QPointer<MockLink> mockLink, Vehicle* /*vehicle*/) {
-                        // log_1 has no modification time so its date is unknown
-                        const QList<MockLinkFTP::LogFile> logFiles = {
-                            {QStringLiteral("log_1.ulg"), 5000, 0},
-                            {QStringLiteral("log_2.ulg"), 12345, 1700086400},
-                        };
-                        mockLink->mockLinkFTP()->setLogFiles(logFiles);
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(MockConfiguration::OptionFtpCapability); },
+        [&](QPointer<MockLink> mockLink, Vehicle* /*vehicle*/) {
+            // log_1 has no modification time so its date is unknown
+            const QList<MockLinkFTP::LogFile> logFiles = {
+                {QStringLiteral("log_1.ulg"), 5000, 0},
+                {QStringLiteral("log_2.ulg"), 12345, 1700086400},
+            };
+            mockLink->mockLinkFTP()->setLogFiles(logFiles);
 
-                        _navigateToOnboardLogsPage();
-                        if (QTest::currentTestFailed())
-                            return;
+            _navigateToOnboardLogsPage();
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Entries without a valid timestamp sort last and must show "Date Unknown", not a blank cell
-                        QQuickItem* const knownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_0"), 15000);
-                        QVERIFY(knownDateLabel);
-                        QTRY_VERIFY_WITH_TIMEOUT(!knownDateLabel->property("text").toString().isEmpty(), 5000);
-                        QVERIFY(knownDateLabel->property("text").toString() != QStringLiteral("Date Unknown"));
-                        QQuickItem* const unknownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_1"), 2000);
-                        QVERIFY(unknownDateLabel);
-                        QTRY_COMPARE_WITH_TIMEOUT(unknownDateLabel->property("text").toString(), QStringLiteral("Date Unknown"), 5000);
+            // Entries without a valid timestamp sort last and must show "Date Unknown", not a blank cell
+            QQuickItem* const knownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_0"), 15000);
+            QVERIFY(knownDateLabel);
+            QTRY_VERIFY_WITH_TIMEOUT(!knownDateLabel->property("text").toString().isEmpty(), 5000);
+            QVERIFY(knownDateLabel->property("text").toString() != QStringLiteral("Date Unknown"));
+            QQuickItem* const unknownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_1"), 2000);
+            QVERIFY(unknownDateLabel);
+            QTRY_COMPARE_WITH_TIMEOUT(unknownDateLabel->property("text").toString(), QStringLiteral("Date Unknown"),
+                                      5000);
 
-                        QTemporaryDir tempDir;
-                        QVERIFY(tempDir.isValid());
+            QTemporaryDir tempDir;
+            QVERIFY(tempDir.isValid());
 
-                        _downloadFirstLogAndVerify(tempDir.path());
-                        if (QTest::currentTestFailed())
-                            return;
+            _downloadFirstLogAndVerify(tempDir.path());
+            if (QTest::currentTestFailed())
+                return;
 
-                        // Entries are sorted newest-first, so row 0 is log_2.ulg. FTP downloads keep the remote name.
-                        const QString downloadFile = QDir(tempDir.path()).filePath(QStringLiteral("log_2.ulg"));
-                        QVERIFY(QFile::exists(downloadFile));
+            // Entries are sorted newest-first, so row 0 is log_2.ulg. FTP downloads keep the remote name.
+            const QString downloadFile = QDir(tempDir.path()).filePath(QStringLiteral("log_2.ulg"));
+            QVERIFY(QFile::exists(downloadFile));
 
-                        QFile file(downloadFile);
-                        QVERIFY(file.open(QIODevice::ReadOnly));
-                        QCOMPARE(file.readAll(), mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_2.ulg")));
-                    });
+            QFile file(downloadFile);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            QCOMPARE(file.readAll(), mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_2.ulg")));
+        });
 }

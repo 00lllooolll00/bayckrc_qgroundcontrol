@@ -1,23 +1,21 @@
 #include "VehicleTest.h"
 
+#include <QtCore/QStringList>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-#include <QtCore/QStringList>
 
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMath.h"
 #include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(VehicleTestLog, "Test.VehicleTest")
 
-VehicleTest::VehicleTest(QObject* parent) : UnitTest(parent)
-{
-}
+VehicleTest::VehicleTest(QObject* parent) : UnitTest(parent) {}
 
 void VehicleTest::init()
 {
@@ -129,7 +127,8 @@ void VehicleTest::simulateConnectionRemoved()
     }
 }
 
-void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode, MockConfiguration::Options options)
+void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode,
+                                   MockConfiguration::Options options)
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
 
@@ -156,7 +155,7 @@ void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::F
 
     // Connect to destroyed signal to prevent dangling pointer
     if (_mockLink) {
-        (void)connect(_mockLink, &QObject::destroyed, this, [this]() { _mockLink = nullptr; });
+        (void) connect(_mockLink, &QObject::destroyed, this, [this]() { _mockLink = nullptr; });
     }
 
     QVERIFY2(UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")),
@@ -216,8 +215,8 @@ QString VehicleTest::failureContextSummary() const
                          .arg(_vehicle->id())
                          .arg(_vehicle->isInitialConnectComplete()));
         if (_vehicle->parameterManager()) {
-            lines.append(QStringLiteral("VehicleTest: parametersReady=%1")
-                             .arg(_vehicle->parameterManager()->parametersReady()));
+            lines.append(
+                QStringLiteral("VehicleTest: parametersReady=%1").arg(_vehicle->parameterManager()->parametersReady()));
         }
     }
 

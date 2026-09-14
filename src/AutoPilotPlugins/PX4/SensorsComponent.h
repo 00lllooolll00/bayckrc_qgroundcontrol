@@ -9,8 +9,8 @@ class SensorsComponent : public VehicleComponent
 public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
 
-    Q_PROPERTY(bool airspeedCalSupported    READ _airspeedCalSupported  STORED false NOTIFY setupCompleteChanged)
-    Q_PROPERTY(bool airspeedCalRequired     READ _airspeedCalRequired   STORED false NOTIFY setupCompleteChanged)
+    Q_PROPERTY(bool airspeedCalSupported READ _airspeedCalSupported STORED false NOTIFY setupCompleteChanged)
+    Q_PROPERTY(bool airspeedCalRequired READ _airspeedCalRequired STORED false NOTIFY setupCompleteChanged)
 
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
@@ -25,17 +25,19 @@ public:
     virtual QUrl summaryQmlSource(void) const override;
     QStringList sectionIds() const override;
     QString sectionDisplayName(const QString& sectionId) const override;
+
     bool showFirstSectionOnRootClick() const override { return true; }
-    bool sectionSetupComplete(const QString &sectionId) const override;
+
+    bool sectionSetupComplete(const QString& sectionId) const override;
 
 private:
-    bool _airspeedCalSupported  (void) const;
-    bool _airspeedCalRequired   (void) const;
+    bool _airspeedCalSupported(void) const;
+    bool _airspeedCalRequired(void) const;
 
-    const QString   _name;
-    QVariantList    _summaryItems;
-    QStringList     _deviceIds;
-    QStringList     _airspeedCalTriggerParams;
+    const QString _name;
+    QVariantList _summaryItems;
+    QStringList _deviceIds;
+    QStringList _airspeedCalTriggerParams;
 
     static constexpr const char* _airspeedBreakerParam = "CBRK_AIRSPD_CHK";
     static constexpr const char* _airspeedDisabledParam = "FW_ARSP_MODE";

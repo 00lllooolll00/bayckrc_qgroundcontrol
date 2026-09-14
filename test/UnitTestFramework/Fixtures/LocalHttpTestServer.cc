@@ -21,17 +21,25 @@ struct RawResponderState
 QByteArray httpReasonPhrase(int statusCode)
 {
     switch (statusCode) {
-    case 200: return QByteArrayLiteral("OK");
-    case 204: return QByteArrayLiteral("No Content");
-    case 206: return QByteArrayLiteral("Partial Content");
-    case 304: return QByteArrayLiteral("Not Modified");
-    case 400: return QByteArrayLiteral("Bad Request");
-    case 404: return QByteArrayLiteral("Not Found");
-    case 500: return QByteArrayLiteral("Internal Server Error");
-    default: return QByteArrayLiteral("Status");
+        case 200:
+            return QByteArrayLiteral("OK");
+        case 204:
+            return QByteArrayLiteral("No Content");
+        case 206:
+            return QByteArrayLiteral("Partial Content");
+        case 304:
+            return QByteArrayLiteral("Not Modified");
+        case 400:
+            return QByteArrayLiteral("Bad Request");
+        case 404:
+            return QByteArrayLiteral("Not Found");
+        case 500:
+            return QByteArrayLiteral("Internal Server Error");
+        default:
+            return QByteArrayLiteral("Status");
     }
 }
-} // namespace
+}  // namespace
 
 LocalHttpTestServer::~LocalHttpTestServer()
 {
@@ -69,9 +77,10 @@ QString LocalHttpTestServer::url(const QString& path) const
 void LocalHttpTestServer::installHttpResponder(const QByteArray& body, int statusCode, const QByteArray& contentType,
                                                int cacheMaxAge)
 {
-    QByteArray header = QStringLiteral("HTTP/1.1 %1 %2\r\n"
-                                       "Content-Type: %3\r\n"
-                                       "Connection: close\r\n")
+    QByteArray header = QStringLiteral(
+                            "HTTP/1.1 %1 %2\r\n"
+                            "Content-Type: %3\r\n"
+                            "Connection: close\r\n")
                             .arg(statusCode)
                             .arg(QString::fromLatin1(httpReasonPhrase(statusCode)))
                             .arg(QString::fromLatin1(contentType))

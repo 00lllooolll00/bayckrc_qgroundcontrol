@@ -3,7 +3,6 @@
 #include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
-
 #include <algorithm>
 
 #include "Fact.h"

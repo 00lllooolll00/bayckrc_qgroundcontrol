@@ -1,4 +1,5 @@
 #include "RetryTransitionTest.h"
+
 #include "TransitionTestCommon.h"
 
 namespace {
@@ -6,15 +7,17 @@ class RetryInspectableWaitState : public WaitStateBase
 {
 public:
     RetryInspectableWaitState(const QString& name, QState* parent, int timeoutMsecs)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
+        : WaitStateBase(name, parent, timeoutMsecs)
+    {}
 
     bool waitSignalConnected = false;
 
 protected:
     void connectWaitSignal() override { waitSignalConnected = true; }
+
     void disconnectWaitSignal() override { waitSignalConnected = false; }
 };
-}
+}  // namespace
 
 void RetryTransitionTest::_testRetryActionCalled()
 {
@@ -25,24 +28,20 @@ void RetryTransitionTest::_testRetryActionCalled()
 
     // Create a state that will timeout (we never call complete())
     auto* startState = new AsyncFunctionState(
-        QStringLiteral("Start"),
-        &machine,
+        QStringLiteral("Start"), &machine,
         [](AsyncFunctionState*) {
             // Don't complete - let it timeout
         },
         50  // 50ms timeout
     );
 
-    auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
-        targetReached = true;
-    });
+    auto* targetState =
+        new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() { targetReached = true; });
     auto* finalState = addFinalState(&machine);
 
     // RetryTransition with 1 retry
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
-        [&retryCount]() { retryCount++; },
+        startState, &WaitStateBase::timeout, targetState, [&retryCount]() { retryCount++; },
         1  // max 1 retry
     );
     startState->addTransition(retryTransition);
@@ -50,7 +49,8 @@ void RetryTransitionTest::_testRetryActionCalled()
     machine.setInitialState(startState);
 
     // Should finish after retry + final transition
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QCOMPARE(retryCount, 1);  // Retry action called once
@@ -66,25 +66,19 @@ void RetryTransitionTest::_testTransitionAfterMaxRetries()
     bool alternateReached = false;
 
     auto* startState = new AsyncFunctionState(
-        QStringLiteral("Start"),
-        &machine,
-        [](AsyncFunctionState*) {},
+        QStringLiteral("Start"), &machine, [](AsyncFunctionState*) {},
         30  // 30ms timeout
     );
 
-    auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
-        targetReached = true;
-    });
-    auto* alternateState = new FunctionState(QStringLiteral("Alternate"), &machine, [&alternateReached]() {
-        alternateReached = true;
-    });
+    auto* targetState =
+        new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() { targetReached = true; });
+    auto* alternateState =
+        new FunctionState(QStringLiteral("Alternate"), &machine, [&alternateReached]() { alternateReached = true; });
     auto* finalState = addFinalState(&machine);
 
     // RetryTransition goes to targetState after retries exhausted
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
-        [&retryCount]() { retryCount++; },
+        startState, &WaitStateBase::timeout, targetState, [&retryCount]() { retryCount++; },
         2  // max 2 retries
     );
     startState->addTransition(retryTransition);
@@ -96,12 +90,13 @@ void RetryTransitionTest::_testTransitionAfterMaxRetries()
     alternateState->addTransition(alternateState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
-    QCOMPARE(retryCount, 2);      // Both retries used
-    QVERIFY(targetReached);       // Transitioned to retry target
-    QVERIFY(!alternateReached);   // Not to alternate
+    QCOMPARE(retryCount, 2);     // Both retries used
+    QVERIFY(targetReached);      // Transitioned to retry target
+    QVERIFY(!alternateReached);  // Not to alternate
 }
 
 void RetryTransitionTest::_testRetryCountResets()
@@ -111,27 +106,19 @@ void RetryTransitionTest::_testRetryCountResets()
     QStateMachine machine;
     int retryCount = 0;
 
-    auto* startState = new AsyncFunctionState(
-        QStringLiteral("Start"),
-        &machine,
-        [](AsyncFunctionState*) {},
-        30
-    );
+    auto* startState = new AsyncFunctionState(QStringLiteral("Start"), &machine, [](AsyncFunctionState*) {}, 30);
 
     auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, []() {});
     auto* finalState = addFinalState(&machine);
 
-    auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
-        [&retryCount]() { retryCount++; },
-        1
-    );
+    auto* retryTransition =
+        new RetryTransition(startState, &WaitStateBase::timeout, targetState, [&retryCount]() { retryCount++; }, 1);
     startState->addTransition(retryTransition);
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
 
@@ -147,29 +134,25 @@ void RetryTransitionTest::_testMultipleRetries()
     bool targetReached = false;
 
     auto* startState = new AsyncFunctionState(
-        QStringLiteral("Start"),
-        &machine,
-        [](AsyncFunctionState*) {},
+        QStringLiteral("Start"), &machine, [](AsyncFunctionState*) {},
         20  // Short timeout for faster test
     );
 
-    auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
-        targetReached = true;
-    });
+    auto* targetState =
+        new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() { targetReached = true; });
     auto* finalState = addFinalState(&machine);
 
     // Test with 3 retries
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
-        [&retryCount]() { retryCount++; },
+        startState, &WaitStateBase::timeout, targetState, [&retryCount]() { retryCount++; },
         3  // max 3 retries
     );
     startState->addTransition(retryTransition);
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QCOMPARE(retryCount, 3);  // All 3 retries used
@@ -183,30 +166,23 @@ void RetryTransitionTest::_testZeroRetries()
     int retryCount = 0;
     bool targetReached = false;
 
-    auto* startState = new AsyncFunctionState(
-        QStringLiteral("Start"),
-        &machine,
-        [](AsyncFunctionState*) {},
-        30
-    );
+    auto* startState = new AsyncFunctionState(QStringLiteral("Start"), &machine, [](AsyncFunctionState*) {}, 30);
 
-    auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
-        targetReached = true;
-    });
+    auto* targetState =
+        new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() { targetReached = true; });
     auto* finalState = addFinalState(&machine);
 
     // Zero retries = immediate transition on first timeout
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
-        [&retryCount]() { retryCount++; },
+        startState, &WaitStateBase::timeout, targetState, [&retryCount]() { retryCount++; },
         0  // max 0 retries
     );
     startState->addTransition(retryTransition);
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QCOMPARE(retryCount, 0);  // No retries attempted
@@ -224,18 +200,17 @@ void RetryTransitionTest::_testWaitRearmedBeforeRetryAction()
     auto* finalState = addFinalState(&machine);
 
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout,
-        targetState,
+        startState, &WaitStateBase::timeout, targetState,
         [&waitWasRearmedBeforeRetryAction, startState]() {
             waitWasRearmedBeforeRetryAction = startState->waitSignalConnected;
         },
-        1
-    );
+        1);
     startState->addTransition(retryTransition);
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QVERIFY(waitWasRearmedBeforeRetryAction);

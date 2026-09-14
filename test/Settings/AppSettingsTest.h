@@ -13,5 +13,5 @@ private slots:
     void _offlineEditingFirmwareClassEnumFiltered();
 
 private:
-    void _verifyFirmwareClassEnumFiltered(Fact *fact);
+    void _verifyFirmwareClassEnumFiltered(Fact* fact);
 };

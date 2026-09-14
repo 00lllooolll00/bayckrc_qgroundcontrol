@@ -1,23 +1,22 @@
 #include "LinkInterface.h"
-#include "MAVLinkLib.h"
-#include "LinkManager.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
-#include "SigningController.h"
 
 #include <QtCore/QThread>
 #include <QtQml/QQmlEngine>
 
+#include "AppMessages.h"
+#include "LinkManager.h"
+#include "MAVLinkLib.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "SigningController.h"
+
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
 
 namespace {
-    constexpr int WORKER_SHUTDOWN_TIMEOUT_MS = 3000;
+constexpr int WORKER_SHUTDOWN_TIMEOUT_MS = 3000;
 }
 
-LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
-    : QObject(parent)
-    , _config(config)
+LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, QObject* parent) : QObject(parent), _config(config)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -31,7 +30,7 @@ LinkInterface::~LinkInterface()
     _config.reset();
 }
 
-void LinkInterface::_shutdownWorkerThread(QThread *thread, const QLoggingCategory &category, bool allowTerminate)
+void LinkInterface::_shutdownWorkerThread(QThread* thread, const QLoggingCategory& category, bool allowTerminate)
 {
     if (!thread) {
         return;
@@ -63,7 +62,7 @@ void LinkInterface::_shutdownWorkerThread(QThread *thread, const QLoggingCategor
     _orphanWorkerThread(thread);
 }
 
-void LinkInterface::_orphanWorkerThread(QThread *thread)
+void LinkInterface::_orphanWorkerThread(QThread* thread)
 {
     thread->setParent(nullptr);
 
@@ -109,7 +108,7 @@ bool LinkInterface::_allocateMavlinkChannel()
 
     qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
 
-    mavlink_set_proto_version(_mavlinkChannel, MAVLINK_VERSION); // We only support v2 protcol
+    mavlink_set_proto_version(_mavlinkChannel, MAVLINK_VERSION);  // We only support v2 protcol
 
     _signingController = std::make_unique<SigningController>(static_cast<mavlink_channel_t>(_mavlinkChannel));
     _signingController->clearSigning();
@@ -141,13 +140,13 @@ void LinkInterface::_freeMavlinkChannel()
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
-void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
+void LinkInterface::writeBytesThreadSafe(const char* bytes, int length)
 {
     const QByteArray data(bytes, length);
     (void) QMetaObject::invokeMethod(this, "_writeBytes", Qt::AutoConnection, data);
 }
 
-void LinkInterface::sendMessageThreadSafe(mavlink_message_t &message)
+void LinkInterface::sendMessageThreadSafe(mavlink_message_t& message)
 {
     // Re-sign with a current timestamp; the cached-resend path (Vehicle::sendMessageMultiple) otherwise ships frozen
     // signed bytes whose timestamp drifts behind wall clock and gets OLD_TIMESTAMP-rejected. No-op when signing is
@@ -158,7 +157,7 @@ void LinkInterface::sendMessageThreadSafe(mavlink_message_t &message)
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     const int len = mavlink_msg_to_send_buffer(buffer, &message);
-    writeBytesThreadSafe(reinterpret_cast<const char *>(buffer), len);
+    writeBytesThreadSafe(reinterpret_cast<const char*>(buffer), len);
 }
 
 void LinkInterface::removeVehicleReference()
@@ -177,7 +176,8 @@ void LinkInterface::_connectionRemoved()
         // Since there are no vehicles on the link we can disconnect it right now
         disconnect();
     } else {
-        // If there are still vehicles on this link we allow communication lost to trigger and don't automatically disconect until all the vehicles go away
+        // If there are still vehicles on this link we allow communication lost to trigger and don't automatically
+        // disconect until all the vehicles go away
     }
 }
 
@@ -204,6 +204,7 @@ void LinkInterface::reportMavlinkV1Traffic()
     const QString message = tr("MAVLink v1 traffic detected on link '%1'. "
                                "%2 only supports MAVLink v2. "
                                "Please ensure your vehicle is configured to use MAVLink v2.")
-                                .arg(linkName).arg(qgcApp()->applicationName());
+                                .arg(linkName)
+                                .arg(qgcApp()->applicationName());
     QGC::showAppMessage(message);
 }

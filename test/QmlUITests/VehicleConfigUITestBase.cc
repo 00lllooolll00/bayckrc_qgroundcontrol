@@ -24,7 +24,7 @@ namespace {
 /// one visible text, control or image item with a non-zero size. Layout
 /// containers report a size even when all their children are hidden, so only
 /// leaf content items count.
-bool hasVisibleContent(QQuickItem *item)
+bool hasVisibleContent(QQuickItem* item)
 {
     if (!item->isVisible()) {
         return false;
@@ -33,8 +33,8 @@ bool hasVisibleContent(QQuickItem *item)
         (item->inherits("QQuickText") || item->inherits("QQuickControl") || item->inherits("QQuickImageBase"))) {
         return true;
     }
-    const QList<QQuickItem *> children = item->childItems();
-    for (QQuickItem *child : children) {
+    const QList<QQuickItem*> children = item->childItems();
+    for (QQuickItem* child : children) {
         if (hasVisibleContent(child)) {
             return true;
         }
@@ -42,7 +42,7 @@ bool hasVisibleContent(QQuickItem *item)
     return false;
 }
 
-} // namespace
+}  // namespace
 
 void VehicleConfigUITestBase::navigateToConfigureView()
 {
@@ -54,9 +54,9 @@ void VehicleConfigUITestBase::navigateToConfigureView()
              "vehicleConfig_root not found after navigating to Configure");
 }
 
-QQuickItem *VehicleConfigUITestBase::clickSidebarButton(const QString &objectName)
+QQuickItem* VehicleConfigUITestBase::clickSidebarButton(const QString& objectName)
 {
-    QQuickItem *btn = findVisibleItem(_rootItem, objectName, 3000);
+    QQuickItem* btn = findVisibleItem(_rootItem, objectName, 3000);
     if (!btn) {
         QTest::qFail(qPrintable(QStringLiteral("Sidebar button not found: %1").arg(objectName)), __FILE__, __LINE__);
         return nullptr;
@@ -70,13 +70,13 @@ QQuickItem *VehicleConfigUITestBase::clickSidebarButton(const QString &objectNam
     return btn;
 }
 
-void VehicleConfigUITestBase::resetParamsToFirmwareDefaults(Vehicle *vehicle, const QString &sentinelParamName)
+void VehicleConfigUITestBase::resetParamsToFirmwareDefaults(Vehicle* vehicle, const QString& sentinelParamName)
 {
-    ParameterManager *mgr = vehicle->parameterManager();
+    ParameterManager* mgr = vehicle->parameterManager();
 
     // The sentinel parameter is non-default in the MockLink params file but
     // defaults to 0 in the parameter metadata, so it signals the refresh completing
-    Fact *sentinelFact = mgr->getParameter(ParameterManager::defaultComponentId, sentinelParamName);
+    Fact* sentinelFact = mgr->getParameter(ParameterManager::defaultComponentId, sentinelParamName);
     QVERIFY2(sentinelFact, qPrintable(QStringLiteral("%1 fact not found").arg(sentinelParamName)));
     QVERIFY2(sentinelFact->rawValue().toInt() != 0,
              qPrintable(QStringLiteral("%1 already at default before reset").arg(sentinelParamName)));
@@ -90,13 +90,13 @@ void VehicleConfigUITestBase::resetParamsToFirmwareDefaults(Vehicle *vehicle, co
              "Parameters never refreshed to firmware defaults");
 }
 
-void VehicleConfigUITestBase::resetAPMParamsToUncalibrated(Vehicle *vehicle)
+void VehicleConfigUITestBase::resetAPMParamsToUncalibrated(Vehicle* vehicle)
 {
-    ParameterManager *mgr = vehicle->parameterManager();
+    ParameterManager* mgr = vehicle->parameterManager();
 
     QVERIFY2(mgr->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X")),
              "COMPASS_OFS_X parameter not found");
-    Fact *compassOfs = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X"));
+    Fact* compassOfs = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X"));
     QVERIFY2(compassOfs, "COMPASS_OFS_X fact not found");
 
     // Sends MAV_CMD_PREFLIGHT_STORAGE param1=2 which MockLink's APM branch zeroes
@@ -108,49 +108,50 @@ void VehicleConfigUITestBase::resetAPMParamsToUncalibrated(Vehicle *vehicle)
              "COMPASS_OFS_X never refreshed to 0 after APM param reset");
 }
 
-void VehicleConfigUITestBase::clickThroughAllComponents(Vehicle *vehicle, const QString &vehicleName)
+void VehicleConfigUITestBase::clickThroughAllComponents(Vehicle* vehicle, const QString& vehicleName)
 {
     const QString prefix = vehicleName.isEmpty() ? QString() : (vehicleName + QStringLiteral(": "));
 
     const QVariantList components = vehicle->autopilotPlugin()->vehicleComponents();
-    QVERIFY2(!components.isEmpty(),
-             qPrintable(QStringLiteral("%1No vehicle components found").arg(prefix)));
+    QVERIFY2(!components.isEmpty(), qPrintable(QStringLiteral("%1No vehicle components found").arg(prefix)));
 
-    for (const QVariant &compVariant : components) {
-        auto *comp = compVariant.value<VehicleComponent *>();
+    for (const QVariant& compVariant : components) {
+        auto* comp = compVariant.value<VehicleComponent*>();
         if (!comp) {
             continue;
         }
 
         // Match the objectName set in VehicleConfigView.qml:
         // "vehicleConfig_comp_" + compName.replace(/ /g, "")
-        const QString cleanName  = QString(comp->name()).remove(QLatin1Char(' '));
+        const QString cleanName = QString(comp->name()).remove(QLatin1Char(' '));
         const QString buttonName = QStringLiteral("vehicleConfig_comp_") + cleanName;
 
-        QQuickItem *btn = findVisibleItem(_rootItem, buttonName, 2000);
+        QQuickItem* btn = findVisibleItem(_rootItem, buttonName, 2000);
         if (!btn) {
             // Component may be hidden (e.g. optional peripheral not present) – skip silently
             continue;
         }
 
         clickSidebarButton(buttonName);
-        if (QTest::currentTestFailed()) return;
+        if (QTest::currentTestFailed())
+            return;
 
-        QQuickItem *loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
-        QVERIFY2(loader,
-                 qPrintable(QStringLiteral("%1vehicleConfig_panelLoader not found after clicking %2")
-                                .arg(prefix, comp->name())));
-        QVERIFY2(loader->property("item").value<QQuickItem *>() != nullptr,
-                 qPrintable(QStringLiteral("%1Panel loader has no item after clicking %2")
-                                .arg(prefix, comp->name())));
+        QQuickItem* loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
+        QVERIFY2(
+            loader,
+            qPrintable(
+                QStringLiteral("%1vehicleConfig_panelLoader not found after clicking %2").arg(prefix, comp->name())));
+        QVERIFY2(loader->property("item").value<QQuickItem*>() != nullptr,
+                 qPrintable(QStringLiteral("%1Panel loader has no item after clicking %2").arg(prefix, comp->name())));
 
         verifyPanelContentVisible(prefix + comp->name());
-        if (QTest::currentTestFailed()) return;
+        if (QTest::currentTestFailed())
+            return;
 
         // Click each section button in the expanded tree and verify the page
         // shows content for that section
         const QStringList sectionIds = comp->sectionIds();
-        for (const QString &sectionId : sectionIds) {
+        for (const QString& sectionId : sectionIds) {
             // Matches objectName in VehicleConfigView.qml: "vehicleConfig_section_" + id without spaces
             const QString sectionButtonName =
                 QStringLiteral("vehicleConfig_section_") + QString(sectionId).remove(QLatin1Char(' '));
@@ -159,26 +160,28 @@ void VehicleConfigUITestBase::clickThroughAllComponents(Vehicle *vehicle, const 
                 continue;
             }
             clickSidebarButton(sectionButtonName);
-            if (QTest::currentTestFailed()) return;
+            if (QTest::currentTestFailed())
+                return;
             verifyPanelContentVisible(prefix + comp->name() + QStringLiteral(" / ") + sectionId);
-            if (QTest::currentTestFailed()) return;
+            if (QTest::currentTestFailed())
+                return;
         }
     }
 }
 
-void VehicleConfigUITestBase::verifyPanelContentVisible(const QString &context)
+void VehicleConfigUITestBase::verifyPanelContentVisible(const QString& context)
 {
-    QQuickItem *loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
+    QQuickItem* loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
     QVERIFY2(loader, qPrintable(context + QStringLiteral(": vehicleConfig_panelLoader not found")));
 
-    QQuickItem *panel = loader->property("item").value<QQuickItem *>();
+    QQuickItem* panel = loader->property("item").value<QQuickItem*>();
     QVERIFY2(panel, qPrintable(context + QStringLiteral(": panel loader has no item")));
 
     // For SetupPage-based panels check the page content, not the SetupPage
     // chrome (title/description) which renders even when the content is blank
-    QQuickItem *target = panel;
-    if (QQuickItem *contentLoader = panel->findChild<QQuickItem *>(QStringLiteral("setupPage_contentLoader"))) {
-        QQuickItem *contentItem = contentLoader->property("item").value<QQuickItem *>();
+    QQuickItem* target = panel;
+    if (QQuickItem* contentLoader = panel->findChild<QQuickItem*>(QStringLiteral("setupPage_contentLoader"))) {
+        QQuickItem* contentItem = contentLoader->property("item").value<QQuickItem*>();
         QVERIFY2(contentItem, qPrintable(context + QStringLiteral(": setup page content loader has no item")));
         target = contentItem;
     }
@@ -187,9 +190,9 @@ void VehicleConfigUITestBase::verifyPanelContentVisible(const QString &context)
              qPrintable(context + QStringLiteral(": page loaded but renders no visible content (blank page)")));
 }
 
-void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehicle, const QString &vehicleName)
+void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle* vehicle, const QString& vehicleName)
 {
-    Fact *languageFact = SettingsManager::instance()->appSettings()->qLocaleLanguage();
+    Fact* languageFact = SettingsManager::instance()->appSettings()->qLocaleLanguage();
     const QVariant savedLanguage = languageFact->rawValue();
 
     // A mid-test failure must not leak the language setting into later tests
@@ -219,16 +222,19 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
         languageFact->setRawValue(QLocale::English);
         QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to English");
         verifyExpectedLogMessage();
-        if (QTest::currentTestFailed()) return;
+        if (QTest::currentTestFailed())
+            return;
     }
 
     clickThroughAllComponents(vehicle, vehicleName);
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
     // Language anchor: capture live English text so the switch can be verified
     // to actually retranslate the UI (not just flip the setting)
     clickSidebarButton(QStringLiteral("vehicleConfig_comp_Sensors"));
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
     QPointer<QQuickItem> anchor = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000);
     QVERIFY2(anchor, "Calibrate Compass language anchor not found");
     const QString englishAnchorText = anchor->property("text").toString();
@@ -238,16 +244,19 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
     languageFact->setRawValue(QLocale::Chinese);
     QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to Chinese");
     verifyExpectedLogMessage();
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
     QVERIFY2(anchor, "Language anchor destroyed during language switch");
-    QVERIFY2(QTest::qWaitFor([&] { return anchor && (anchor->property("text").toString() != englishAnchorText); }, 3000),
-             qPrintable(QStringLiteral("UI text did not change after switching to Chinese (still '%1')")
-                            .arg(englishAnchorText)));
+    QVERIFY2(
+        QTest::qWaitFor([&] { return anchor && (anchor->property("text").toString() != englishAnchorText); }, 3000),
+        qPrintable(
+            QStringLiteral("UI text did not change after switching to Chinese (still '%1')").arg(englishAnchorText)));
 
     const QString zhPrefix = vehicleName.isEmpty() ? QStringLiteral("zh_CN") : vehicleName + QStringLiteral(" zh_CN");
     clickThroughAllComponents(vehicle, zhPrefix);
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
     // No restore needed when the saved language was already Chinese (no change, no dialog)
     if (languageFact->rawValue() != savedLanguage) {
@@ -262,25 +271,29 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
     // The saved language may itself be non-English, so only verify retranslation
     // back to the English anchor when it renders English
     if (savedLanguage.toInt() == QLocale::English) {
-        QPointer<QQuickItem> restoredAnchor = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000);
+        QPointer<QQuickItem> restoredAnchor =
+            findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000);
         if (restoredAnchor) {
-            QVERIFY2(QTest::qWaitFor([&] { return restoredAnchor && (restoredAnchor->property("text").toString() == englishAnchorText); }, 3000),
+            QVERIFY2(QTest::qWaitFor(
+                         [&] {
+                             return restoredAnchor &&
+                                    (restoredAnchor->property("text").toString() == englishAnchorText);
+                         },
+                         3000),
                      "UI text did not return to English after restoring language");
         }
     }
 }
 
-void VehicleConfigUITestBase::waitForParamRefreshQuiet(Vehicle *vehicle)
+void VehicleConfigUITestBase::waitForParamRefreshQuiet(Vehicle* vehicle)
 {
-    ParameterManager *mgr = vehicle->parameterManager();
+    ParameterManager* mgr = vehicle->parameterManager();
     QElapsedTimer sinceLastResponse;
     sinceLastResponse.start();
 
     QObject context;
-    QObject::connect(mgr, &ParameterManager::_paramRequestReadSuccess, &context,
-                     [&] { sinceLastResponse.restart(); });
-    QObject::connect(mgr, &ParameterManager::_paramRequestReadFailure, &context,
-                     [&] { sinceLastResponse.restart(); });
+    QObject::connect(mgr, &ParameterManager::_paramRequestReadSuccess, &context, [&] { sinceLastResponse.restart(); });
+    QObject::connect(mgr, &ParameterManager::_paramRequestReadFailure, &context, [&] { sinceLastResponse.restart(); });
 
     QVERIFY2(QTest::qWaitFor([&] { return sinceLastResponse.elapsed() > 500; }, 10000),
              "waitForParamRefreshQuiet: parameter refresh traffic still active after 10s");
@@ -289,10 +302,12 @@ void VehicleConfigUITestBase::waitForParamRefreshQuiet(Vehicle *vehicle)
 void VehicleConfigUITestBase::navigateToAPMSensorsPage()
 {
     navigateToConfigureView();
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
-    QQuickItem *sensorsBtn = clickSidebarButton(QStringLiteral("vehicleConfig_comp_Sensors"));
-    if (QTest::currentTestFailed()) return;
+    QQuickItem* sensorsBtn = clickSidebarButton(QStringLiteral("vehicleConfig_comp_Sensors"));
+    if (QTest::currentTestFailed())
+        return;
 
     // The Sensors component has no sub-sections on APM; clicking the button opens the page.
     // The Accelerometer indicator button must appear.
@@ -303,24 +318,26 @@ void VehicleConfigUITestBase::navigateToAPMSensorsPage()
     Q_UNUSED(sensorsBtn);
 }
 
-void VehicleConfigUITestBase::verifyAPMCalIndicators(bool compassGreen, bool accelGreen, const char *context)
+void VehicleConfigUITestBase::verifyAPMCalIndicators(bool compassGreen, bool accelGreen, const char* context)
 {
-    struct Check {
-        const char *name;
+    struct Check
+    {
+        const char* name;
         bool expectedGreen;
     };
+
     const Check checks[] = {
-        { "sensorsSetup_calibrateCompass", compassGreen },
-        { "sensorsSetup_calibrateAccel",   accelGreen   },
+        {"sensorsSetup_calibrateCompass", compassGreen},
+        {"sensorsSetup_calibrateAccel", accelGreen},
     };
 
-    for (const Check &c : checks) {
+    for (const Check& c : checks) {
         QPointer<QQuickItem> btn = findVisibleItem(_rootItem, QLatin1String(c.name), 3000);
-        QVERIFY2(btn, qPrintable(QStringLiteral("Button not found (%1): %2")
-                                     .arg(QLatin1String(context), QLatin1String(c.name))));
-        (void) QTest::qWaitFor([&] {
-            return btn && (btn->property("indicatorGreen").toBool() == c.expectedGreen);
-        }, 3000);
+        QVERIFY2(
+            btn,
+            qPrintable(QStringLiteral("Button not found (%1): %2").arg(QLatin1String(context), QLatin1String(c.name))));
+        (void) QTest::qWaitFor([&] { return btn && (btn->property("indicatorGreen").toBool() == c.expectedGreen); },
+                               3000);
         QVERIFY2(btn, qPrintable(QStringLiteral("Button destroyed while waiting (%1): %2")
                                      .arg(QLatin1String(context), QLatin1String(c.name))));
         QVERIFY2(btn->property("indicatorGreen").toBool() == c.expectedGreen,
@@ -335,14 +352,12 @@ void VehicleConfigUITestBase::runAPMFullAccelCal()
 {
     // APM requires accel cal before compass can be run.
     // Click Accelerometer button → orientation dialog opens → accept (full cal, not simple).
-    QVERIFY2(clickButton(QStringLiteral("sensorsSetup_calibrateAccel")),
-             "Failed to click Accelerometer button");
+    QVERIFY2(clickButton(QStringLiteral("sensorsSetup_calibrateAccel")), "Failed to click Accelerometer button");
 
     // Accept the orientation/pre-cal dialog (do NOT check the Simple checkbox)
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 5000),
              "Pre-accel-cal dialog accept button not found");
-    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
-             "Failed to accept pre-accel-cal dialog");
+    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")), "Failed to accept pre-accel-cal dialog");
 
     // MockLink will now drive the 6-pose ACCELCAL_VEHICLE_POS handshake.
     // For each pose the orientation cal area becomes visible with the relevant
@@ -351,38 +366,35 @@ void VehicleConfigUITestBase::runAPMFullAccelCal()
     // Poses in the order MockLink sends them:
     // LEVEL→downSide, LEFT→leftSide, RIGHT→rightSide,
     // NOSEDOWN→noseDownSide, NOSEUP→tailDownSide, BACK→upsideDownSide
-    struct PoseInfo {
-        const char *sideObjectName;
-    };
-    static constexpr PoseInfo kPoses[] = {
-        { "sensorsCal_downSide"      },
-        { "sensorsCal_leftSide"      },
-        { "sensorsCal_rightSide"     },
-        { "sensorsCal_noseDownSide"  },
-        { "sensorsCal_tailDownSide"  },
-        { "sensorsCal_upsideDownSide" },
+    struct PoseInfo
+    {
+        const char* sideObjectName;
     };
 
-    for (const PoseInfo &pose : kPoses) {
+    static constexpr PoseInfo kPoses[] = {
+        {"sensorsCal_downSide"},     {"sensorsCal_leftSide"},     {"sensorsCal_rightSide"},
+        {"sensorsCal_noseDownSide"}, {"sensorsCal_tailDownSide"}, {"sensorsCal_upsideDownSide"},
+    };
+
+    for (const PoseInfo& pose : kPoses) {
         // Wait for the orientation cal area to show (controller.showOrientationCalArea = true)
         // and this side to be InProgress (calState == VehicleRotationCal.CalState.InProgress == 2)
         QPointer<QQuickItem> sideItem = findVisibleItem(_rootItem, QLatin1String(pose.sideObjectName), 10000);
-        QVERIFY2(sideItem, qPrintable(QStringLiteral("Side indicator not visible: %1")
-                                          .arg(QLatin1String(pose.sideObjectName))));
+        QVERIFY2(sideItem,
+                 qPrintable(QStringLiteral("Side indicator not visible: %1").arg(QLatin1String(pose.sideObjectName))));
 
         // calState InProgress == 2 (VehicleRotationCal.CalState enum)
         QVERIFY2(QTest::qWaitFor([&] { return sideItem && (sideItem->property("calState").toInt() == 2); }, 10000),
-                 qPrintable(QStringLiteral("Side never went InProgress: %1")
-                                .arg(QLatin1String(pose.sideObjectName))));
+                 qPrintable(QStringLiteral("Side never went InProgress: %1").arg(QLatin1String(pose.sideObjectName))));
 
         // Click Next — sends COMMAND_ACK back to MockLink to advance to next pose.
         // The controller enables the Next button when it receives the ACCELCAL_VEHICLE_POS message,
         // which happens on the same tick as the side going InProgress, so wait briefly for it.
         QPointer<QQuickItem> nextBtn = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_nextButton"), 3000);
         QVERIFY2(nextBtn, "Next button not found");
-        QVERIFY2(QTest::qWaitFor([&] { return nextBtn && nextBtn->property("enabled").toBool(); }, 3000),
-                 qPrintable(QStringLiteral("Next button not enabled for side: %1")
-                                .arg(QLatin1String(pose.sideObjectName))));
+        QVERIFY2(
+            QTest::qWaitFor([&] { return nextBtn && nextBtn->property("enabled").toBool(); }, 3000),
+            qPrintable(QStringLiteral("Next button not enabled for side: %1").arg(QLatin1String(pose.sideObjectName))));
         QVERIFY2(clickButton(QStringLiteral("sensorsSetup_nextButton")), "Failed to click Next button");
     }
 
@@ -390,7 +402,8 @@ void VehicleConfigUITestBase::runAPMFullAccelCal()
     // Progress bar goes to 1.0 and the cal area closes
     QPointer<QQuickItem> progressBar = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_progressBar"), 2000);
     QVERIFY2(progressBar, "Progress bar not found during accel cal");
-    QVERIFY2(QTest::qWaitFor([&] { return progressBar && qFuzzyCompare(progressBar->property("value").toDouble(), 1.0); }, 10000),
+    QVERIFY2(QTest::qWaitFor(
+                 [&] { return progressBar && qFuzzyCompare(progressBar->property("value").toDouble(), 1.0); }, 10000),
              "Progress bar never reached 1.0 after accel cal success");
 
     // Accel cal completion must show the generic post-calibration dialog
@@ -401,20 +414,17 @@ void VehicleConfigUITestBase::runAPMFullAccelCal()
              "Post-accel-cal dialog not shown");
     QVERIFY2(!_rootItem->findChild<QQuickItem*>(QStringLiteral("postOnboardCompassCalibrationDialog")),
              "Compass results dialog incorrectly shown after accel cal");
-    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
-             "Failed to dismiss post-accel-cal dialog");
+    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")), "Failed to dismiss post-accel-cal dialog");
 }
 
 void VehicleConfigUITestBase::runAPMCompassCal()
 {
-    QVERIFY2(clickButton(QStringLiteral("sensorsSetup_calibrateCompass")),
-             "Failed to click Compass button");
+    QVERIFY2(clickButton(QStringLiteral("sensorsSetup_calibrateCompass")), "Failed to click Compass button");
 
     // Orientation dialog opens → accept to start MAV_CMD_DO_START_MAG_CAL
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 5000),
              "Pre-compass-cal dialog accept button not found");
-    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
-             "Failed to accept pre-compass-cal dialog");
+    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")), "Failed to accept pre-compass-cal dialog");
 
     // MockLink sends MAG_CAL_PROGRESS 0→100 at ~10Hz
     QPointer<QQuickItem> progressBar = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_progressBar"), 2000);
@@ -429,6 +439,5 @@ void VehicleConfigUITestBase::runAPMCompassCal()
     // the post-cal dialog directly rather than waiting for progress == 1.0.
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("postOnboardCompassCalibrationDialog"), 25000),
              "Post-compass-cal dialog not shown");
-    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
-             "Failed to dismiss post-compass-cal dialog");
+    QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")), "Failed to dismiss post-compass-cal dialog");
 }

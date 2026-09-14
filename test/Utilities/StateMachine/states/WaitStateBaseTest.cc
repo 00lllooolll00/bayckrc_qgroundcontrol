@@ -1,18 +1,19 @@
 #include "WaitStateBaseTest.h"
-#include "StateTestCommon.h"
 
 #include <QtCore/QCoreApplication>
 
+#include "StateTestCommon.h"
 
 /// Concrete implementation for testing WaitStateBase
 class TestWaitState : public WaitStateBase
 {
     Q_OBJECT
 public:
-    TestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
+    TestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0) : WaitStateBase(name, parent, timeoutMsecs)
+    {}
 
     void triggerComplete() { waitComplete(); }
+
     void triggerFailed() { waitFailed(); }
 
     bool connectCalled = false;
@@ -20,9 +21,9 @@ public:
 
 protected:
     void connectWaitSignal() override { connectCalled = true; }
+
     void disconnectWaitSignal() override { disconnectCalled = true; }
 };
-
 
 void WaitStateBaseTest::_testTimeoutEmission()
 {
@@ -203,9 +204,7 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Complete before timeout
-    QTimer::singleShot(50, waitState, [waitState]() {
-        waitState->triggerComplete();
-    });
+    QTimer::singleShot(50, waitState, [waitState]() { waitState->triggerComplete(); });
 
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(completedSpy.count(), 1);

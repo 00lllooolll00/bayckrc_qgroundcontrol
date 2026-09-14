@@ -1,6 +1,6 @@
 #include "SkippableAsyncStateTest.h"
-#include "StateTestCommon.h"
 
+#include "StateTestCommon.h"
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
 {
@@ -10,8 +10,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
     SkippableAsyncState* capturedState = nullptr;
 
     auto* skippableState = new SkippableAsyncState(
-        QStringLiteral("TestSkippableAsync"),
-        &machine,
+        QStringLiteral("TestSkippableAsync"), &machine,
         [&skipPredicateCalled]() {
             skipPredicateCalled = true;
             return false;  // Don't skip
@@ -19,11 +18,8 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
         [&setupCalled, &capturedState](SkippableAsyncState* state) {
             setupCalled = true;
             capturedState = state;
-            QTimer::singleShot(50, state, [state]() {
-                state->complete();
-            });
-        }
-    );
+            QTimer::singleShot(50, state, [state]() { state->complete(); });
+        });
     auto* finalState = addFinalState(&machine);
 
     skippableState->addTransition(skippableState, &QGCState::advance, finalState);
@@ -51,8 +47,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
     bool skipHandled = false;
 
     auto* skippableState = new SkippableAsyncState(
-        QStringLiteral("TestSkippableAsyncSkip"),
-        &machine,
+        QStringLiteral("TestSkippableAsyncSkip"), &machine,
         [&skipPredicateCalled]() {
             skipPredicateCalled = true;
             return true;  // Skip
@@ -60,11 +55,9 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
         [&setupCalled](SkippableAsyncState* state) {
             Q_UNUSED(state);
             setupCalled = true;  // Should NOT be called
-        }
-    );
-    auto* skipState = new FunctionState(QStringLiteral("SkipHandler"), &machine, [&skipHandled]() {
-        skipHandled = true;
-    });
+        });
+    auto* skipState =
+        new FunctionState(QStringLiteral("SkipHandler"), &machine, [&skipHandled]() { skipHandled = true; });
     auto* finalState = addFinalState(&machine);
 
     skippableState->addTransition(skippableState, &QGCState::advance, finalState);
@@ -93,19 +86,14 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
     const int timeoutMs = 100;
 
     auto* skippableState = new SkippableAsyncState(
-        QStringLiteral("TestSkippableAsyncTimeout"),
-        &machine,
-        []() { return false; },  // Don't skip
+        QStringLiteral("TestSkippableAsyncTimeout"), &machine, []() { return false; },  // Don't skip
         [](SkippableAsyncState* state) {
             Q_UNUSED(state);
             // Don't call complete() - let it timeout
         },
-        nullptr,
-        timeoutMs
-    );
-    auto* timeoutState = new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() {
-        timeoutReached = true;
-    });
+        nullptr, timeoutMs);
+    auto* timeoutState =
+        new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() { timeoutReached = true; });
     auto* finalState = addFinalState(&machine);
 
     skippableState->addTransition(skippableState, &QGCState::advance, finalState);
@@ -133,17 +121,14 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateWithSkipAction()
     bool setupCalled = false;
 
     auto* skippableState = new SkippableAsyncState(
-        QStringLiteral("TestSkippableAsyncWithSkipAction"),
-        &machine,
-        []() { return true; },  // Skip
+        QStringLiteral("TestSkippableAsyncWithSkipAction"), &machine, []() { return true; },  // Skip
         [&setupCalled](SkippableAsyncState* state) {
             Q_UNUSED(state);
             setupCalled = true;  // Should NOT be called
         },
         [&skipActionCalled]() {
             skipActionCalled = true;  // Should be called
-        }
-    );
+        });
     auto* finalState = addFinalState(&machine);
 
     skippableState->addTransition(skippableState, &QGCState::advance, finalState);

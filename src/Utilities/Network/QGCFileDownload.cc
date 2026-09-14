@@ -1,19 +1,19 @@
 #include "QGCFileDownload.h"
-#include "QGCCompression.h"
-#include "QGCCompressionJob.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
 
+#include "QGCCompression.h"
+#include "QGCCompressionJob.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
+
 QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
 
-QGCFileDownload::QGCFileDownload(QObject *parent)
-    : QObject(parent)
-    , _networkManager(QGCNetworkHelper::createNetworkManager(this))
+QGCFileDownload::QGCFileDownload(QObject* parent)
+    : QObject(parent), _networkManager(QGCNetworkHelper::createNetworkManager(this))
 {
     qCDebug(QGCFileDownloadLog) << "Created" << this;
 }
@@ -36,7 +36,7 @@ void QGCFileDownload::setAutoDecompress(bool enabled)
     }
 }
 
-void QGCFileDownload::setOutputPath(const QString &path)
+void QGCFileDownload::setOutputPath(const QString& path)
 {
     if (_outputPath != path) {
         _outputPath = path;
@@ -44,7 +44,7 @@ void QGCFileDownload::setOutputPath(const QString &path)
     }
 }
 
-void QGCFileDownload::setExpectedHash(const QString &hash)
+void QGCFileDownload::setExpectedHash(const QString& hash)
 {
     if (_expectedHash != hash) {
         _expectedHash = hash;
@@ -52,7 +52,7 @@ void QGCFileDownload::setExpectedHash(const QString &hash)
     }
 }
 
-void QGCFileDownload::setCache(QAbstractNetworkCache *cache)
+void QGCFileDownload::setCache(QAbstractNetworkCache* cache)
 {
     _networkManager->setCache(cache);
 }
@@ -66,7 +66,7 @@ void QGCFileDownload::setTimeout(int timeoutMs)
 // Public Slots
 // ============================================================================
 
-bool QGCFileDownload::start(const QString &remoteUrl)
+bool QGCFileDownload::start(const QString& remoteUrl)
 {
     QGCNetworkHelper::RequestConfig config;
     config.timeoutMs = _timeoutMs;
@@ -74,7 +74,7 @@ bool QGCFileDownload::start(const QString &remoteUrl)
     return start(remoteUrl, config);
 }
 
-bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::RequestConfig &config)
+bool QGCFileDownload::start(const QString& remoteUrl, const QGCNetworkHelper::RequestConfig& config)
 {
     if (isRunning()) {
         qCWarning(QGCFileDownloadLog) << "Download already in progress";
@@ -161,14 +161,10 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     QGCNetworkHelper::ignoreSslErrorsIfNeeded(_currentReply);
 
     // Connect signals for streaming download
-    connect(_currentReply, &QNetworkReply::downloadProgress,
-            this, &QGCFileDownload::_onDownloadProgress);
-    connect(_currentReply, &QNetworkReply::readyRead,
-            this, &QGCFileDownload::_onReadyRead);
-    connect(_currentReply, &QNetworkReply::finished,
-            this, &QGCFileDownload::_onDownloadFinished);
-    connect(_currentReply, &QNetworkReply::errorOccurred,
-            this, &QGCFileDownload::_onDownloadError);
+    connect(_currentReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::_onDownloadProgress);
+    connect(_currentReply, &QNetworkReply::readyRead, this, &QGCFileDownload::_onReadyRead);
+    connect(_currentReply, &QNetworkReply::finished, this, &QGCFileDownload::_onDownloadFinished);
+    connect(_currentReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_onDownloadError);
 
     _setState(State::Downloading);
     return true;
@@ -176,8 +172,8 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
 
 void QGCFileDownload::cancel()
 {
-    const bool shouldEmitCancel = (_state != State::Idle && _state != State::Completed
-                                   && _state != State::Failed && _state != State::Cancelled);
+    const bool shouldEmitCancel =
+        (_state != State::Idle && _state != State::Completed && _state != State::Failed && _state != State::Cancelled);
 
     if (shouldEmitCancel) {
         _setState(State::Cancelled);
@@ -233,7 +229,7 @@ void QGCFileDownload::_onReadyRead()
 
 void QGCFileDownload::_onDownloadFinished()
 {
-    QNetworkReply *reply = _currentReply;
+    QNetworkReply* reply = _currentReply;
     _currentReply = nullptr;
 
     if (reply == nullptr) {
@@ -278,9 +274,8 @@ void QGCFileDownload::_onDownloadFinished()
     if (!reply->url().isLocalFile()) {
         const int statusCode = QGCNetworkHelper::httpStatusCode(reply);
         if (!QGCNetworkHelper::isHttpSuccess(statusCode)) {
-            const QString error = tr("HTTP error %1: %2")
-                .arg(statusCode)
-                .arg(QGCNetworkHelper::httpStatusText(statusCode));
+            const QString error =
+                tr("HTTP error %1: %2").arg(statusCode).arg(QGCNetworkHelper::httpStatusText(statusCode));
             _setErrorString(error);
             _setState(State::Failed);
             _emitFinished(false, QString(), error);
@@ -288,8 +283,7 @@ void QGCFileDownload::_onDownloadFinished()
         }
     }
 
-    qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath
-                                 << "size:" << QFileInfo(_localPath).size();
+    qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath << "size:" << QFileInfo(_localPath).size();
 
     // Verify hash if expected
     if (!_expectedHash.isEmpty()) {
@@ -321,35 +315,36 @@ void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
 
     switch (code) {
-    case QNetworkReply::OperationCanceledError:
-        errorMsg = tr("Download cancelled");
-        break;
-    case QNetworkReply::ContentNotFoundError:
-        errorMsg = tr("File not found (404)");
-        break;
-    case QNetworkReply::TimeoutError:
-        errorMsg = tr("Connection timed out");
-        break;
-    case QNetworkReply::HostNotFoundError:
-        errorMsg = tr("Host not found");
-        break;
-    case QNetworkReply::ConnectionRefusedError:
-        errorMsg = tr("Connection refused");
-        break;
-    case QNetworkReply::SslHandshakeFailedError:
-        errorMsg = tr("SSL handshake failed");
-        break;
-    default:
-        if (_currentReply != nullptr) {
-            errorMsg = QGCNetworkHelper::errorMessage(_currentReply);
-        } else {
-            errorMsg = tr("Network error: %1").arg(code);
-        }
-        break;
+        case QNetworkReply::OperationCanceledError:
+            errorMsg = tr("Download cancelled");
+            break;
+        case QNetworkReply::ContentNotFoundError:
+            errorMsg = tr("File not found (404)");
+            break;
+        case QNetworkReply::TimeoutError:
+            errorMsg = tr("Connection timed out");
+            break;
+        case QNetworkReply::HostNotFoundError:
+            errorMsg = tr("Host not found");
+            break;
+        case QNetworkReply::ConnectionRefusedError:
+            errorMsg = tr("Connection refused");
+            break;
+        case QNetworkReply::SslHandshakeFailedError:
+            errorMsg = tr("SSL handshake failed");
+            break;
+        default:
+            if (_currentReply != nullptr) {
+                errorMsg = QGCNetworkHelper::errorMessage(_currentReply);
+            } else {
+                errorMsg = tr("Network error: %1").arg(code);
+            }
+            break;
     }
 
     qCWarning(QGCFileDownloadLog) << "Download error:" << errorMsg << "url:"
-                                  << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
+                                  << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery |
+                                                          QUrl::RemoveFragment);
     _setErrorString(errorMsg);
 }
 
@@ -412,7 +407,7 @@ void QGCFileDownload::_setProgress(qreal progress)
     }
 }
 
-void QGCFileDownload::_setErrorString(const QString &error)
+void QGCFileDownload::_setErrorString(const QString& error)
 {
     if (_errorString != error) {
         _errorString = error;
@@ -437,7 +432,7 @@ void QGCFileDownload::_cleanup()
     }
 }
 
-void QGCFileDownload::_emitFinished(bool success, const QString &localPath, const QString &errorMessage)
+void QGCFileDownload::_emitFinished(bool success, const QString& localPath, const QString& errorMessage)
 {
     if (_finishEmitted) {
         return;
@@ -446,7 +441,7 @@ void QGCFileDownload::_emitFinished(bool success, const QString &localPath, cons
     emit finished(success, localPath, errorMessage);
 }
 
-bool QGCFileDownload::_writeReplyData(const QByteArray &data)
+bool QGCFileDownload::_writeReplyData(const QByteArray& data)
 {
     if (data.isEmpty()) {
         return true;
@@ -459,7 +454,7 @@ bool QGCFileDownload::_writeReplyData(const QByteArray &data)
     return _outputFile->write(data) == data.size();
 }
 
-bool QGCFileDownload::_failForWriteError(const QString &context)
+bool QGCFileDownload::_failForWriteError(const QString& context)
 {
     const QString error = tr("Failed to write downloaded file (%1): %2")
                               .arg(context, _outputFile != nullptr ? _outputFile->errorString() : QString());
@@ -477,7 +472,7 @@ bool QGCFileDownload::_failForWriteError(const QString &context)
     return false;
 }
 
-QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
+QString QGCFileDownload::_generateOutputPath(const QString& remoteUrl) const
 {
     // Use custom output path if set
     if (!_outputPath.isEmpty()) {
@@ -521,8 +516,7 @@ bool QGCFileDownload::_verifyHash()
     }
 
     if (actualHash.compare(_expectedHash, Qt::CaseInsensitive) != 0) {
-        _setErrorString(tr("Hash verification failed. Expected: %1, Got: %2")
-                        .arg(_expectedHash, actualHash));
+        _setErrorString(tr("Hash verification failed. Expected: %1, Got: %2").arg(_expectedHash, actualHash));
         return false;
     }
 
@@ -541,10 +535,8 @@ void QGCFileDownload::_startDecompression()
 
     if (_decompressionJob == nullptr) {
         _decompressionJob = new QGCCompressionJob(this);
-        connect(_decompressionJob, &QGCCompressionJob::progressChanged,
-                this, &QGCFileDownload::decompressionProgress);
-        connect(_decompressionJob, &QGCCompressionJob::finished,
-                this, &QGCFileDownload::_onDecompressionFinished);
+        connect(_decompressionJob, &QGCCompressionJob::progressChanged, this, &QGCFileDownload::decompressionProgress);
+        connect(_decompressionJob, &QGCCompressionJob::finished, this, &QGCFileDownload::_onDecompressionFinished);
     }
 
     _decompressionJob->decompressFile(_localPath, decompressedPath);
