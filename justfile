@@ -144,7 +144,7 @@ desktop:
     Terminal=false
     Categories=Utility;
     Keywords=mavlink;drone;uav;ardupilot;pixhawk;px4;gcs;
-    StartupWMClass=QGroundControl
+    StartupWMClass=org.mavlink.qgroundcontrol
     EOF
 
     chmod +x "$entry"
