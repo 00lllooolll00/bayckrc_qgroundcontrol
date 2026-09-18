@@ -98,6 +98,62 @@ check: lint test
 run:
     ./{{build_dir}}/{{build_type}}/QGroundControl
 
+# 安装桌面快捷方式（把当前构建产物做成桌面应用，重复执行即覆盖；图标取自 bayckrc_image/中文三色.png）
+desktop:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    app="{{ justfile_directory() }}/{{ build_dir }}/{{ build_type }}/QGroundControl"
+    if [ ! -x "$app" ]; then
+        echo "找不到可执行文件：$app（先运行 just build）" >&2
+        exit 1
+    fi
+
+    # 图标：原图是宽幅白底，居中补成正方形后写入 hicolor 主题。
+    # GNOME 只认带 index.theme 的主题目录，缺失时从系统复制一份。
+    icon_src="{{ justfile_directory() }}/bayckrc_image/中文三色.png"
+    icon_root="$HOME/.local/share/icons/hicolor"
+    if command -v convert >/dev/null 2>&1; then
+        icon_name=bayckrc-qgc
+        for size in 512 256 128; do
+            mkdir -p "$icon_root/${size}x${size}/apps"
+            convert "$icon_src" -background white -gravity center \
+                -resize "${size}x${size}" -extent "${size}x${size}" \
+                "$icon_root/${size}x${size}/apps/${icon_name}.png"
+        done
+        [ -f "$icon_root/index.theme" ] || cp /usr/share/icons/hicolor/index.theme "$icon_root/" 2>/dev/null || true
+    else
+        echo "未安装 ImageMagick，图标回退为原图绝对路径（sudo apt install imagemagick 可消除此提示）" >&2
+        icon_name="$icon_src"
+    fi
+
+    # 桌面项：应用菜单写一份，桌面再放一份；桌面那份必须标记 trusted，否则 GNOME 拒绝启动
+    entry="$HOME/.local/share/applications/bayckrc-qgc.desktop"
+    mkdir -p "$(dirname "$entry")"
+    cat > "$entry" <<EOF
+    [Desktop Entry]
+    Type=Application
+    Version=1.0
+    Name=BayckRC QGC
+    Name[zh_CN]=贝壳模型地面站
+    GenericName=Ground Control Station
+    Comment=QGroundControl (BayckRC)
+    Exec=$app
+    Path=$(dirname "$app")
+    Icon=$icon_name
+    Terminal=false
+    Categories=Utility;
+    Keywords=mavlink;drone;uav;ardupilot;pixhawk;px4;gcs;
+    StartupWMClass=QGroundControl
+    EOF
+
+    chmod +x "$entry"
+    cp -f "$entry" "$HOME/Desktop/bayckrc-qgc.desktop"
+    chmod +x "$HOME/Desktop/bayckrc-qgc.desktop"
+    gio set "$HOME/Desktop/bayckrc-qgc.desktop" metadata::trusted true 2>/dev/null || true
+    update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+    echo "已安装桌面快捷方式：$entry（桌面：~/Desktop/bayckrc-qgc.desktop）"
+
 # 构建文档
 docs:
     npm run docs:build
