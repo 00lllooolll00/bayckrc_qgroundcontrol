@@ -9,7 +9,8 @@ qt_version := `python3 ./tools/setup/read_config.py --get qt.version 2>/dev/null
 cmake_min_version := `python3 ./tools/setup/read_config.py --get build.cmake_minimum_version 2>/dev/null || echo "3.25"`
 gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.version.default 2>/dev/null || echo "1.28.4"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
-build_type := env_var_or_default("BUILD_TYPE", "Debug")
+# 构建类型：BUILD_TYPE 环境变量优先；否则跟随 build/CMakeCache.txt 里上次 configure 的类型（just debug / just release 切换后自动跟随），未配置过则默认 Debug
+build_type := env_var_or_default("BUILD_TYPE", `python3 -c 'import pathlib; p=pathlib.Path("build/CMakeCache.txt"); ls=p.read_text(errors="ignore").splitlines() if p.exists() else []; v=[l.split("=",1)[1] for l in ls if l.startswith("CMAKE_BUILD_TYPE:STRING=")]; print(v[0].strip() if v and v[0].strip() else "Debug")' 2>/dev/null || echo Debug`)
 build_dir := "build"
 # 默认使用全部 CPU 核心；可用 JOBS=N 覆盖
 jobs := env_var_or_default("JOBS", `python3 -c "import os; print(os.cpu_count() or 4)" 2>/dev/null || echo 4`)
@@ -36,7 +37,7 @@ submodules:
 # 构建
 # ─────────────────────────────────────────────────────────────────────────────
 
-# 配置 CMake 构建（Debug，并打开单元测试）
+# 配置 CMake 构建（跟随当前 build_type，并打开单元测试）
 configure: submodules
     python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}} -G Ninja
 
@@ -44,7 +45,12 @@ configure: submodules
 build:
     cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}}
 
-# 配置并编译 Release 版
+# 切换并编译 Debug 版（打开单元测试）
+debug:
+    python3 ./tools/configure.py -B {{build_dir}} --debug --testing --qt-root {{qt_dir}} -G Ninja
+    cmake --build {{build_dir}} --config Debug --parallel {{jobs}}
+
+# 切换并编译 Release 版
 release:
     python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}} -G Ninja
     cmake --build {{build_dir}} --config Release --parallel {{jobs}}
