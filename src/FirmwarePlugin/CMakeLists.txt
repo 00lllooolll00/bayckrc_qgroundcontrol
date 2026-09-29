@@ -21,4 +21,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Firmware-Specific Plugins
 # ----------------------------------------------------------------------------
 add_subdirectory(APM)
+add_subdirectory(BayckrcMAPLRS)
 add_subdirectory(PX4)
