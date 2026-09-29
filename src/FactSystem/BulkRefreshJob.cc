@@ -1,6 +1,7 @@
 #include "BulkRefreshJob.h"
 #include "ParameterManager.h"
 
+#include <QtCore/QCoreApplication>
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 
@@ -84,8 +85,8 @@ void BulkRefreshJob::_checkRoundComplete()
                                      << "\u2014" << _failed.count() << "params still failed";
         if (_notifyFailure) {
             const QStringList failedList(_failed.cbegin(), _failed.cend());
-            QGC::showAppMessage(_mgr->tr("Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))),
-                                _mgr->tr("Parameter Bulk Refresh"));
+            QGC::showAppMessage(QCoreApplication::translate("ParameterManager", "Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))),
+                                QCoreApplication::translate("ParameterManager", "Parameter Bulk Refresh"));
         }
         deleteLater();
     }
