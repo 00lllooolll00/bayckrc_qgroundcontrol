@@ -38,7 +38,7 @@ submodules:
 
 # 配置 CMake 构建（Debug，并打开单元测试）
 configure: submodules
-    python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}}
+    python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}} -G Ninja
 
 # 编译项目（对已配置的构建目录做增量编译）
 build:
@@ -46,7 +46,7 @@ build:
 
 # 配置并编译 Release 版
 release:
-    python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}}
+    python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}} -G Ninja
     cmake --build {{build_dir}} --config Release --parallel {{jobs}}
 
 # 清理构建目录（转发给 tools/clean.py，可传 --cache、--all、--dry-run）
