@@ -362,7 +362,10 @@ if(QGC_BUILD_TESTING)
     # Exclude test directory from translation scanning
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
     # Pure-CMake unit tests for cmake/GStreamer helpers (no project build needed).
-    add_subdirectory(cmake/GStreamer/tests)
+    # 内部用例引用视频后端符号，后端关闭时(如 QtMultimedia 回退)必须一并裁剪，否则链接失败。
+    if(QGC_ENABLE_GST_VIDEOSTREAMING)
+        add_subdirectory(cmake/GStreamer/tests)
+    endif()
 endif()
 
 # ----------------------------------------------------------------------------
