@@ -4,7 +4,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
 
 // 编队设计面板：队形模板/间距/槽位分配/下发/实时编队误差。
 // 协议见 FORMATION_DESIGN.md：v1 走标准 mission 路径（单点 LOITER 任务）。
@@ -36,7 +35,7 @@ ColumnLayout {
         }
 
         QGCLabel { text: qsTr("间距(米)") }
-        QGCSpinBox {
+        SpinBox {
             Layout.fillWidth: true
             from:             1
             to:               200
@@ -45,7 +44,7 @@ ColumnLayout {
         }
 
         QGCLabel { text: qsTr("成员数") }
-        QGCSpinBox {
+        SpinBox {
             Layout.fillWidth: true
             from:             1
             to:               20
