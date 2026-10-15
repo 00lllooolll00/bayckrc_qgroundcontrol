@@ -22,8 +22,29 @@ void BayckrcMAPLRSFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
 
 QString BayckrcMAPLRSFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
-    // The bridge does not implement SET_MODE; fall back to the generic base-mode
-    // flag naming (Manual/Guided/Auto/...) which is display-only and harmless.
+    // custom_mode 是飞控真实模式号：INAV 把自己的模式映射成 ArduPilot 编号回填
+    // （inav `mavlink_modes.c` 的 inavToArduCopterMap），这里翻回显示名。
+    // 机型按多旋翼编号解释（GND 合成心跳固定回 QUADROTOR）；将来支持固定翼要按机型分表，
+    // 但 flightMode() 拿不到机型，得先改 Vehicle 侧接口。
+    if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
+        switch (custom_mode) {
+        case 0:  return QStringLiteral("STABILIZE");
+        case 1:  return QStringLiteral("ACRO");
+        case 2:  return QStringLiteral("ALT HOLD");
+        case 3:  return QStringLiteral("AUTO");
+        case 4:  return QStringLiteral("GUIDED");
+        case 5:  return QStringLiteral("LOITER");
+        case 6:  return QStringLiteral("RTL");
+        case 9:  return QStringLiteral("LAND");
+        case 16: return QStringLiteral("POSHOLD");
+        case 17: return QStringLiteral("BRAKE");
+        case 18: return QStringLiteral("THROW");
+        default: break;
+        }
+        return tr("Mode %1").arg(custom_mode);
+    }
+
+    // 飞控还没上报过模式（custom_mode 位未置）时退回基类的通用命名。
     return FirmwarePlugin::flightMode(base_mode, custom_mode);
 }
 
