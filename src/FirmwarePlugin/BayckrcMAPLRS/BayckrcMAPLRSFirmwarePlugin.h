@@ -23,4 +23,8 @@ public:
     void startMission(Vehicle *vehicle) const override;
     void guidedModeRTL(Vehicle *vehicle, bool smartRTL) const override;
     void pauseVehicle(Vehicle *vehicle) const override;
+    bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const override;
+    void guidedModeLand(Vehicle *vehicle) const override;
+    void guidedModeChangeAltitude(Vehicle *vehicle, double altitudeChange, bool pauseVehicle) override;
+    void guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const override;
 };
