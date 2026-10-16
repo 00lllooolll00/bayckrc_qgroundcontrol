@@ -4192,72 +4192,6 @@
       <source>Calibrate</source>
       <translation>校准</translation>
     </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].title</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>UAVCAN Bus Configuration</source>
-      <translation>UAVCAN 总线配置</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].keywords[0]</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>uavcan</source>
-      <translation>uavcan</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].keywords[1]</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>can bus</source>
-      <translation>CAN 总线</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].keywords[2]</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>dronecan</source>
-      <translation>dronecan</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].keywords[4]</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>node</source>
-      <translation>节点</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[0].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>UAVCAN</source>
-      <translation>UAVCAN</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[1].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</source>
-      <translation>警告：执行 UAVCAN 电调配置前必须先卸下载具上的螺旋桨。</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[2].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>ESC parameters will only be accessible in the editor after assignment.</source>
-      <translation>只有在分配之后，才能在编辑器中访问电调参数。</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[3].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>Start the process, then turn each motor into its turn direction, in the order of their motor indices.</source>
-      <translation>启动流程后，按电机编号顺序依次将每个电机转向其旋转方向。</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[4].actionButton.text</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>Start Assignment</source>
-      <translation>开始分配</translation>
-    </message>
-    <message>
-      <extracomment>.sections[UAVCAN Bus Configuration].controls[5].actionButton.text</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
-      <source>Stop Assignment</source>
-      <translation>停止分配</translation>
-    </message>
   </context>
   <context>
     <name>APM-MavCmdInfoCommon.json</name>
@@ -4455,12 +4389,6 @@
       <translation>osm,openstreetmap,3d 数据</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json"/>
-      <source>Average floor-to-floor height in meters used for 3D building visualization.</source>
-      <translation>用于 3D 建筑物可视化的平均层高（米）。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>Average Height for each level of the buildings</source>
@@ -4472,12 +4400,6 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>building height,3d data</source>
       <translation>建筑物高度,3d 数据</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[altitudeBias].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json"/>
-      <source>Vertical offset in meters for vehicle rendering in the 3D viewer.</source>
-      <translation>3D 视图中载具渲染的垂直偏移（米）。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeBias].label</extracomment>
@@ -4510,6 +4432,18 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>3d view,memory,scene,alive</source>
       <translation>3d 视图,内存,场景,驻留</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+      <source>Average floor-to-floor height used for 3D building visualization.</source>
+      <translation>用于 3D 建筑可视化的平均层高。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[altitudeBias].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+      <source>Vertical offset for vehicle rendering in the 3D viewer.</source>
+      <translation>3D 视图中载具渲染的垂直偏移。</translation>
     </message>
   </context>
   <context>
@@ -5199,18 +5133,6 @@
       <translation>载具上锁时禁用视频流以节省带宽。</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>Disable Video Stream when disarmed.</source>
-      <translation>载具上锁时禁用视频流。</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>Stop recording when disarmed</source>
-      <translation>上锁时停止录制</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
@@ -5350,29 +5272,66 @@
       <translation>像素宽高比,capsfilter,v4l2,变通办法,高级</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[frameSmoothingEnabled].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>Buffer up to 3 decoded frames and pace delivery to the display refresh rate.</source>
-      <translation>最多缓冲 3 个已解码帧，并按显示器刷新率控制送显节奏。</translation>
+      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>Disables the video stream when the vehicle is disarmed.</source>
+      <translation>载具上锁时禁用视频流。</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[frameSmoothingEnabled].longDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>Off by default — appsink frames are delivered to the renderer immediately. When enabled, the adapter holds a 3-frame ring and a display-rate timer picks the frame closest to the expected presentation time (PTS-anchored, 70 ms tolerance). Smooths out jitter from bursty decoders or variable network at the cost of up to one frame of added latency. Frozen sources keep the last good frame on screen. Takes effect on next stream restart.</source>
-      <translation>默认关闭——appsink 帧会立即交付给渲染器。启用后，适配器保留一个 3 帧环形缓冲，由显示刷新率定时器选出最接近预期显示时间（以 PTS 为基准，容差 70 ms）的那一帧。可平滑突发解码器或可变网络带来的抖动，代价是最多增加一帧延迟。源冻结时，屏幕上保留最后一帧正常画面。下次流重启后生效。</translation>
+      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>Disable Video Stream When Disarmed</source>
+      <translation>上锁时禁用视频流</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[frameSmoothingEnabled].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>Smooth frame pacing (experimental)</source>
-      <translation>平滑帧节奏（实验性）</translation>
+      <extracomment>.QGC.MetaData.Facts[rtpJitterLatencyMs].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>RTP jitter-buffer playout latency (ms).</source>
+      <translation>RTP 抖动缓冲播放延迟（毫秒）。</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[frameSmoothingEnabled].keywords</extracomment>
+      <extracomment>.QGC.MetaData.Facts[rtpJitterLatencyMs].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values &lt;40 ms effectively disable retransmission. Ignored when Low Latency Mode is enabled.</source>
+      <translation>RTP 抖动缓冲的延迟预算（rtspsrc.latency / rtpjitterbuffer.latency）。数值越低 = 端到端延迟越小；数值越高 = 留给数据包重排序和重传的余量越大。默认值 80 毫秒允许 RFC 4588 重传在播放截止时间前恢复丢失的数据包；&lt;40 ms 的值实际上会禁用重传。启用低延迟模式时忽略此项。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtpJitterLatencyMs].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>RTP jitter latency</source>
+      <translation>RTP 抖动延迟</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtpJitterLatencyMs].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json"/>
-      <source>smoothing,jitter,pacing,latency,obs</source>
-      <translation>平滑,抖动,帧节奏,延迟,OBS</translation>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>rtp,jitter,latency,rtsp,rtx,retransmission,advanced</source>
+      <translation>rtp,jitter,latency,rtsp,rtx,retransmission,advanced</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtspAutoReconnect].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>Automatically restart the pipeline on watchdog timeout or pipeline error.</source>
+      <translation>看门狗超时或管道出错时自动重启管道。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtspAutoReconnect].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>When enabled, the receiver reconnects with exponential backoff (1s → 30s) after a stream timeout or a fatal pipeline error. Disable to fall back to the legacy behaviour of giving up after one failure.</source>
+      <translation>启用后，接收端在流超时或发生致命管道错误后，会以指数退避（1 秒 → 30 秒）重连。禁用则回退到旧行为：失败一次后即放弃。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtspAutoReconnect].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>Auto-reconnect on stream loss</source>
+      <translation>流中断时自动重连</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rtspAutoReconnect].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Video.SettingsGroup.json" />
+      <source>rtsp,reconnect,watchdog,recovery,advanced</source>
+      <translation>rtsp,reconnect,watchdog,recovery,advanced</translation>
     </message>
   </context>
   <context>
@@ -5503,12 +5462,6 @@
       <translation>自动连接,librepilot</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[autoConnectNmeaPort].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].longDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
-      <source>NMEA GPS device for GCS position</source>
-      <translation>用于 GCS 定位的 NMEA GPS 设备</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectNmeaBaud].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaBaud].longDesc, .QGC.MetaData.Facts[autoConnectNmeaBaud].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>NMEA GPS Baudrate</source>
@@ -5550,6 +5503,25 @@
       <source>Udp port to receive NMEA streams</source>
       <translation>接收 NMEA 数据流的 UDP 端口</translation>
     </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[nmeaSource].shortDesc, .QGC.MetaData.Facts[nmeaSource].longDesc, .QGC.MetaData.Facts[nmeaSource].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json" />
+      <source>NMEA GPS source for GCS position</source>
+      <translation>用于 GCS 位置的 NMEA GPS 来源</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[nmeaSource].enumStrings</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json" />
+      <source>Disabled,UDP Port,Serial Port</source>
+      <translation>禁用,UDP 端口,串口</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[autoConnectNmeaPort].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].longDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json" />
+      <source>NMEA GPS serial device for GCS position</source>
+      <translation>用于 GCS 位置的 NMEA GPS 串口设备</translation>
+    </message>
   </context>
   <context>
     <name>MavlinkActions.SettingsGroup.json</name>
@@ -5581,12 +5553,6 @@
   <context>
     <name>RemoteID.SettingsGroup.json</name>
     <message>
-      <extracomment>.QGC.MetaData.Facts[operatorID].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Pilot registration code or identification number (max 20 characters).</source>
-      <translation>驾驶员注册码或识别编号（最多 20 个字符）。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID. Maximum 20 characters.</source>
@@ -5604,18 +5570,6 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,pilot,registration</source>
       <translation>运营人,驾驶员,注册</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[operatorIDValid].shortDesc, .QGC.MetaData.Facts[operatorIDValid].label</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Operator ID is valid</source>
-      <translation>运营人 ID 有效</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[operatorIDValid].longDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Operator ID has been checked using checksum.</source>
-      <translation>运营人 ID 已通过校验和检查。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].shortDesc</extracomment>
@@ -5737,12 +5691,6 @@
       <translation>扩展状态</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Type of self-ID message to broadcast (flight purpose, emergency, or extended).</source>
-      <translation>要广播的自身标识消息类型（飞行目的、应急或扩展）。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
@@ -5792,12 +5740,6 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id,serial number,drone id</source>
       <translation>基本 ID,序列号,无人机 ID</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Format of the drone ID (CAA registration, serial number, or UTM assigned).</source>
-      <translation>无人机 ID 的格式（CAA 注册、序列号或 UTM 分配）。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings</extracomment>
@@ -5856,12 +5798,6 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id</source>
       <translation>基本 ID</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[region].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Regulatory region for Remote ID compliance (FAA or EU).</source>
-      <translation>Remote ID 合规的监管区域（FAA 或 EU）。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].longDesc</extracomment>
@@ -5997,23 +5933,10 @@
       <translation>高度,固定位置</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[classificationType].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Classification standard to use for Remote ID (undeclared or EU).</source>
-      <translation>用于 Remote ID 的分类标准（未声明或 EU）。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Classification Type of UAS</source>
       <translation>无人机系统分类类型</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings</extracomment>
-      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,EU</source>
-      <translation>未声明,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].label</extracomment>
@@ -6027,12 +5950,6 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>eu,classification</source>
       <translation>EU,分类</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[categoryEU].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>EU classification category for the UAS (Open, Specific, or Certified).</source>
-      <translation>无人机系统的 EU 分类类别（开放类、特定类或认证类）。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].longDesc</extracomment>
@@ -6061,12 +5978,6 @@
       <translation>EU,类别</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[classEU].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>EU equipment class designation (Class 0 through Class 6).</source>
-      <translation>EU 设备等级标识（Class 0 至 Class 6）。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[classEU].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Class of the UAS in the EU region</source>
@@ -6091,6 +6002,61 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>eu,class,ce marking</source>
       <translation>EU,等级,CE 标志</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[operatorIDEU].shortDesc, .QGC.MetaData.Facts[operatorIDFAA].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>Pilot registration code or identification number.</source>
+      <translation>飞手注册码或识别号。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[operatorIDEU].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>EU Operator ID. Enter the full 19 or 20 character ID including the 3 secret characters; only the 16 character public part is stored and broadcast.</source>
+      <translation>欧盟操作员识别码。请输入包含 3 个保密字符在内的完整 19 或 20 位识别码；仅存储并广播其中 16 位的公开部分。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>Type of self-ID message to broadcast.</source>
+      <translation>要广播的自识别消息类型。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>Format of the drone ID.</source>
+      <translation>无人机 ID 的格式。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[region].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>Regulatory region for Remote ID compliance.</source>
+      <translation>用于满足远程识别合规要求的监管区域。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[classificationType].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>Classification standard to use for Remote ID.</source>
+      <translation>远程识别所使用的分类标准。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>None,EU</source>
+      <translation>无,欧盟</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[categoryEU].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>EU classification category for the UAS.</source>
+      <translation>无人机的欧盟分类类别。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[classEU].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json" />
+      <source>EU equipment class designation.</source>
+      <translation>欧盟设备等级标识。</translation>
     </message>
   </context>
   <context>
@@ -6505,6 +6471,55 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json"/>
       <source>Enable validation of incoming data as RTCM and drop garbage (improves security).</source>
       <translation>启用将传入数据校验为 RTCM 并丢弃无效数据（提高安全性）。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripAllowSelfSignedCerts].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>Accept self-signed TLS certificates</source>
+      <translation>接受自签名 TLS 证书</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripAllowSelfSignedCerts].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>Allow connections to NTRIP casters with self-signed TLS certificates. Disabling this rejects self-signed certificates to prevent man-in-the-middle attacks.</source>
+      <translation>允许连接到使用自签名 TLS 证书的 NTRIP Caster。禁用此选项将拒绝自签名证书，以防中间人攻击。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripAllowSelfSignedCerts].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>Accept self-signed certificates</source>
+      <translation>接受自签名证书</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripGgaPositionSource].shortDesc, .QGC.MetaData.Facts[ntripGgaPositionSource].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>GGA Position Source</source>
+      <translation>GGA 位置来源</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripGgaPositionSource].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.</source>
+      <translation>发送到 NTRIP Caster 的 NMEA GGA 语句所用的位置来源。自动会选择最佳可用来源。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripGgaPositionSource].enumStrings</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>Auto,Vehicle GPS,Vehicle EKF,RTK Base Station,GCS Position</source>
+      <translation>自动,载具 GPS,载具 EKF,RTK 基准站,GCS 位置</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripGgaIntervalSec].shortDesc, .QGC.MetaData.Facts[ntripGgaIntervalSec].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>GGA Send Interval</source>
+      <translation>GGA 发送间隔</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ntripGgaIntervalSec].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+      <source>How often to send NMEA GGA sentences upstream to the NTRIP caster. VRS mountpoints typically require 1-10s; set lower for tighter VRS tracking, higher to reduce bandwidth.</source>
+      <translation>向上游 NTRIP Caster 发送 NMEA GGA 语句的频率。VRS 挂载点通常需要 1-10 秒；设置得更低可获得更紧密的 VRS 跟踪，更高则可减少带宽占用。</translation>
     </message>
   </context>
   <context>
@@ -7539,6 +7554,31 @@
       <source>log,time,elapsed,timestamp,console</source>
       <translation>日志,时间,已用时间,时间戳,控制台</translation>
     </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[androidUsePosixSerial].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json" />
+      <source>Use the device's built-in serial ports instead of USB serial devices.</source>
+      <translation>使用设备内置串口而非 USB 串口设备。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[androidUsePosixSerial].longDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json" />
+      <source>If this option is enabled, the built-in serial ports (/dev/tty*) are used instead of USB serial devices. This requires a device which allows access to the serial ports.</source>
+      <translation>启用此选项后，将使用内置串口（/dev/tty*）而非 USB 串口设备。这要求设备允许访问这些串口。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[androidUsePosixSerial].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json" />
+      <source>Use built-in serial ports</source>
+      <translation>使用内置串口</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[androidUsePosixSerial].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json" />
+      <source>serial,posix,uart,tty,android</source>
+      <translation>serial,posix,uart,tty,android</translation>
+    </message>
   </context>
   <context>
     <name>FlyView.SettingsGroup.json</name>
@@ -7701,12 +7741,6 @@
       <translation>前往,前往位置</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
-      <source>Loiter radius when circling a go-to destination during fixed-wing flight.</source>
-      <translation>固定翼飞行时围绕前往目标盘旋的悬停半径。</translation>
-    </message>
-    <message>
       <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Loiter Radius in Forward Flight Guided Mode</source>
@@ -7813,6 +7847,12 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>mission popup</source>
       <translation>任务弹窗</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json" />
+      <source>Loiter radius when circling a go-to destination during fixed-wing flight. (ArduPilot only)</source>
+      <translation>固定翼飞行时在前往目标点上空盘旋的盘旋半径。（仅 ArduPilot）</translation>
     </message>
   </context>
   <context>
@@ -9813,6 +9853,36 @@
       <source>add link</source>
       <translation>添加链路</translation>
     </message>
+    <message>
+      <extracomment>.groups[Android Serial].heading</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json" />
+      <source>Android Serial</source>
+      <translation>Android 串口</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Android Serial].keywords[1]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json" />
+      <source>posix</source>
+      <translation>posix</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Android Serial].keywords[2]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json" />
+      <source>uart</source>
+      <translation>uart</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Android Serial].keywords[3]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json" />
+      <source>tty</source>
+      <translation>tty</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Android Serial].keywords[4]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json" />
+      <source>android</source>
+      <translation>android</translation>
+    </message>
   </context>
   <context>
     <name>Maps.SettingsUI.json</name>
@@ -10564,12 +10634,6 @@
   <context>
     <name>NTRIP.SettingsUI.json</name>
     <message>
-      <extracomment>.groups[Connection Status].sectionName</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json"/>
-      <source>Connection Status</source>
-      <translation>连接状态</translation>
-    </message>
-    <message>
       <extracomment>.groups[Connection Status].keywords[0], .groups[Options].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>ntrip</source>
@@ -10724,6 +10788,48 @@
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>udp rtcm</source>
       <translation>UDP RTCM</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].sectionName</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>Connection</source>
+      <translation>连接</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].heading</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>GGA Position Reporting</source>
+      <translation>GGA 位置上报</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].keywords[0]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>gga</source>
+      <translation>gga</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].keywords[1]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>vrs</source>
+      <translation>vrs</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].keywords[2]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>nmea</source>
+      <translation>nmea</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].keywords[3]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>position</source>
+      <translation>position</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GGA Position Reporting].keywords[4]</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
+      <source>network rtk</source>
+      <translation>network rtk</translation>
     </message>
   </context>
   <context>

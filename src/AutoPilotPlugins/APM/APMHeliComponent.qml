@@ -406,7 +406,7 @@ SetupPage {
                     columns: 2
 
                     QGCLabel { text: qsTr("* Stabilize Collective Curve *") }
-                    QGCLabel { text: qsTr("") }
+                    QGCLabel { text: "" }
 
                     QGCLabel { text: _imStbCol1.shortDescription }
                     FactTextField { fact: _imStbCol1 }
@@ -421,7 +421,7 @@ SetupPage {
                     FactTextField { fact: _imStbCol4 }
 
                     QGCLabel { text: qsTr("* Tail & Gyros *") }
-                    QGCLabel { text: qsTr("") }
+                    QGCLabel { text: "" }
 
                     QGCLabel { text: _hTailType.shortDescription }
                     FactComboBox {

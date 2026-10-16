@@ -2451,12 +2451,6 @@
             <translation>[* Ŝṫȧƀıĺıżė Ċǒĺĺėċṫıv̇ė Ċũŕv̇ė *________]</translation>
         </message>
         <message>
-            <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="409" />
-            <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="424" />
-            <source />
-            <translation />
-        </message>
-        <message>
             <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="423" />
             <source>* Tail &amp; Gyros *</source>
             <translation>[* Ṫȧıĺ &amp; Ġẏŕǒŝ *___]</translation>
@@ -4646,9 +4640,24 @@ ________________________________________________________________________________
     <context>
         <name>BayckrcMAPLRSFirmwarePlugin</name>
         <message>
-            <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="69" />
+            <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="82" />
+            <source>Mode %1</source>
+            <translation>[M̃ǒḋė %1_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="130" />
+            <source>Unable to start takeoff: Vehicle failed to arm.</source>
+            <translation>[Ũńȧƀĺė ṫǒ ŝṫȧŕṫ ṫȧķėǒƒƒ: V̇ėħıċĺė ƒȧıĺėḋ ṫǒ ȧŕm̃._____________]</translation>
+        </message>
+        <message>
+            <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="147" />
             <source>Unable to start mission: Vehicle failed to arm.</source>
             <translation>[Ũńȧƀĺė ṫǒ ŝṫȧŕṫ m̃ıŝŝıǒń: V̇ėħıċĺė ƒȧıĺėḋ ṫǒ ȧŕm̃._____________]</translation>
+        </message>
+        <message>
+            <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="199" />
+            <source>Unable to change altitude, vehicle altitude not known.</source>
+            <translation>[Ũńȧƀĺė ṫǒ ċħȧńġė ȧĺṫıṫũḋė, v̇ėħıċĺė ȧĺṫıṫũḋė ńǒṫ ķńǒẇń.________________]</translation>
         </message>
     </context>
     <context>
@@ -7750,6 +7759,127 @@ V̇ṪǑĹ__]</translation>
             <location filename="../src/FlyView/FlyViewVideo.qml" line="51" />
             <source>Double-click to exit full screen</source>
             <translation>[Ḋǒũƀĺė-ċĺıċķ ṫǒ ėẋıṫ ƒũĺĺ ŝċŕėėń_________]</translation>
+        </message>
+    </context>
+    <context>
+        <name>FormationPanel</name>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="15" />
+            <source>横队</source>
+            <translation>[横队_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="15" />
+            <source>人字</source>
+            <translation>[人字_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="15" />
+            <source>纵队</source>
+            <translation>[纵队_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="15" />
+            <source>环形</source>
+            <translation>[环形_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="20" />
+            <source>编队</source>
+            <translation>[编队_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="29" />
+            <source>队形</source>
+            <translation>[队形_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="37" />
+            <source>间距(米)</source>
+            <translation>[间距(米)_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="46" />
+            <source>成员数</source>
+            <translation>[成员数_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="57" />
+            <source>槽位分配（槽 0 = 领航机，不接收任务改写）</source>
+            <translation>[槽位分配（槽 0 = 领航机，不接收任务改写）_____]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="79" />
+            <source>槽</source>
+            <translation>[槽_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="79" />
+            <source> (领航)</source>
+            <translation>[ (领航)_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="86" />
+            <source>(空)</source>
+            <translation>[(空)_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="107" />
+            <source>未分配</source>
+            <translation>[未分配_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="108" />
+            <source>离线</source>
+            <translation>[离线_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="109" />
+            <source>偏差 %1m</source>
+            <translation>[偏差 %1m̃_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="116" />
+            <source>自动分配</source>
+            <translation>[自动分配_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="122" />
+            <source>下发中…</source>
+            <translation>[下发中…_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="122" />
+            <source>下发编队</source>
+            <translation>[下发编队_]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="129" />
+            <source>正在下发，请勿操作载具…</source>
+            <translation>[正在下发，请勿操作载具…____]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="135" />
+            <source>无在线 AIR 节点（MAPLRS 集群未连接）</source>
+            <translation>[无在线 ȦİŔ 节点（M̃ȦṖĹŔŜ 集群未连接）_______]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="157" />
+            <source>编队已下发</source>
+            <translation>[编队已下发__]</translation>
+        </message>
+        <message>
+            <location filename="../src/FlyView/FormationPanel.qml" line="157" />
+            <source>编队下发失败</source>
+            <translation>[编队下发失败__]</translation>
+        </message>
+    </context>
+    <context>
+        <name>FormationToolStripAction</name>
+        <message>
+            <location filename="../src/FlyView/FormationToolStripAction.qml" line="7" />
+            <source>编队</source>
+            <translation>[编队_]</translation>
         </message>
     </context>
     <context>
@@ -17764,58 +17894,58 @@ Click 'Ok' to upload the Plan anyway.</source>
     <context>
         <name>QGroundControlQmlGlobal</name>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="303" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="309" />
             <source>32 bit</source>
             <translation>[32 ƀıṫ_]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="305" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="311" />
             <source>64 bit</source>
             <translation>[64 ƀıṫ_]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="316" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="322" />
             <source>Rel</source>
             <translation>[Ŕėĺ_]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="320" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="326" />
             <source>AGLC</source>
             <translation>[ȦĠĹĊ_]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="322" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="328" />
             <source>AGL</source>
             <translation>[ȦĠĹ_]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="324" />
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="345" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="330" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="351" />
             <source>Mixed</source>
             <translation>[M̃ıẋėḋ__]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="337" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="343" />
             <source>Relative (%1)</source>
             <translation>[Ŕėĺȧṫıv̇ė (%1)___]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="339" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="345" />
             <source>Absolute (%1)</source>
             <translation>[Ȧƀŝǒĺũṫė (%1)___]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="341" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="347" />
             <source>Above Terrain Calced (%1)</source>
             <translation>[Ȧƀǒv̇ė Ṫėŕŕȧıń Ċȧĺċėḋ (%1)______]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="343" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="349" />
             <source>Above Terrain (%1)</source>
             <translation>[Ȧƀǒv̇ė Ṫėŕŕȧıń (%1)____]</translation>
         </message>
         <message>
-            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="318" />
+            <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="324" />
             <source>AMSL</source>
             <translation>[ȦM̃ŜĹ_]</translation>
         </message>
