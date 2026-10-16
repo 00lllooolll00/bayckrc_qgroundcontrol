@@ -7740,112 +7740,112 @@ VTOL</source>
     <name>FormationPanel</name>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>横队</source>
+        <source>Line Abreast</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>人字</source>
+        <source>Wedge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>纵队</source>
+        <source>Column</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>环形</source>
+        <source>Circle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="20"/>
-        <source>编队</source>
+        <source>Formation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="29"/>
-        <source>队形</source>
+        <source>Shape</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="37"/>
-        <source>间距(米)</source>
+        <source>Spacing (m)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="46"/>
-        <source>成员数</source>
+        <source>Members</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="57"/>
-        <source>槽位分配（槽 0 = 领航机，不接收任务改写）</source>
+        <source>Slot assignment (slot 0 = leader, not rewritten by mission upload)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source>槽</source>
+        <source>Slot </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source> (领航)</source>
+        <source> (Leader)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="86"/>
-        <source>(空)</source>
+        <source>(Empty)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="107"/>
-        <source>未分配</source>
+        <source>Unassigned</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="108"/>
-        <source>离线</source>
+        <source>Offline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="109"/>
-        <source>偏差 %1m</source>
+        <source>Error %1 m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="116"/>
-        <source>自动分配</source>
+        <source>Auto Assign</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>下发中…</source>
+        <source>Sending…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>下发编队</source>
+        <source>Send Formation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="129"/>
-        <source>正在下发，请勿操作载具…</source>
+        <source>Sending formation — do not operate the vehicle…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="135"/>
-        <source>无在线 AIR 节点（MAPLRS 集群未连接）</source>
+        <source>No online AIR nodes (MAPLRS cluster not connected)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>编队已下发</source>
+        <source>Formation sent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>编队下发失败</source>
+        <source>Formation send failed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7853,7 +7853,7 @@ VTOL</source>
     <name>FormationToolStripAction</name>
     <message>
         <location filename="../src/FlyView/FormationToolStripAction.qml" line="7"/>
-        <source>编队</source>
+        <source>Formation</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

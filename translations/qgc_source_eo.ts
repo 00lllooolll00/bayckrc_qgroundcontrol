@@ -7765,121 +7765,121 @@ V̇ṪǑĹ__]</translation>
         <name>FormationPanel</name>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="15" />
-            <source>横队</source>
-            <translation>[横队_]</translation>
+            <source>Line Abreast</source>
+            <translation>[Ĺıńė Ȧƀŕėȧŝṫ____]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="15" />
-            <source>人字</source>
-            <translation>[人字_]</translation>
+            <source>Wedge</source>
+            <translation>[Ẇėḋġė__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="15" />
-            <source>纵队</source>
-            <translation>[纵队_]</translation>
+            <source>Column</source>
+            <translation>[Ċǒĺũm̃ń__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="15" />
-            <source>环形</source>
-            <translation>[环形_]</translation>
+            <source>Circle</source>
+            <translation>[Ċıŕċĺė__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="20" />
-            <source>编队</source>
-            <translation>[编队_]</translation>
+            <source>Formation</source>
+            <translation>[Ƒǒŕm̃ȧṫıǒń___]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="29" />
-            <source>队形</source>
-            <translation>[队形_]</translation>
+            <source>Shape</source>
+            <translation>[Ŝħȧṗė__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="37" />
-            <source>间距(米)</source>
-            <translation>[间距(米)_]</translation>
+            <source>Spacing (m)</source>
+            <translation>[Ŝṗȧċıńġ (m̃)___]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="46" />
-            <source>成员数</source>
-            <translation>[成员数_]</translation>
+            <source>Members</source>
+            <translation>[M̃ėm̃ƀėŕŝ__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="57" />
-            <source>槽位分配（槽 0 = 领航机，不接收任务改写）</source>
-            <translation>[槽位分配（槽 0 = 领航机，不接收任务改写）_____]</translation>
+            <source>Slot assignment (slot 0 = leader, not rewritten by mission upload)</source>
+            <translation>[Ŝĺǒṫ ȧŝŝıġńm̃ėńṫ (ŝĺǒṫ 0 = ĺėȧḋėŕ, ńǒṫ ŕėẇŕıṫṫėń ƀẏ m̃ıŝŝıǒń ũṗĺǒȧḋ)__________________]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="79" />
-            <source>槽</source>
-            <translation>[槽_]</translation>
+            <source>Slot </source>
+            <translation>[Ŝĺǒṫ _]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="79" />
-            <source> (领航)</source>
-            <translation>[ (领航)_]</translation>
+            <source> (Leader)</source>
+            <translation>[ (Ĺėȧḋėŕ)__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="86" />
-            <source>(空)</source>
-            <translation>[(空)_]</translation>
+            <source>(Empty)</source>
+            <translation>[(Ėm̃ṗṫẏ)__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="107" />
-            <source>未分配</source>
-            <translation>[未分配_]</translation>
+            <source>Unassigned</source>
+            <translation>[Ũńȧŝŝıġńėḋ____]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="108" />
-            <source>离线</source>
-            <translation>[离线_]</translation>
+            <source>Offline</source>
+            <translation>[Ǒƒƒĺıńė__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="109" />
-            <source>偏差 %1m</source>
-            <translation>[偏差 %1m̃_]</translation>
+            <source>Error %1 m</source>
+            <translation>[Ėŕŕǒŕ %1 m̃__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="116" />
-            <source>自动分配</source>
-            <translation>[自动分配_]</translation>
+            <source>Auto Assign</source>
+            <translation>[Ȧũṫǒ Ȧŝŝıġń____]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="122" />
-            <source>下发中…</source>
-            <translation>[下发中…_]</translation>
+            <source>Sending…</source>
+            <translation>[Ŝėńḋıńġ…__]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="122" />
-            <source>下发编队</source>
-            <translation>[下发编队_]</translation>
+            <source>Send Formation</source>
+            <translation>[Ŝėńḋ Ƒǒŕm̃ȧṫıǒń_____]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="129" />
-            <source>正在下发，请勿操作载具…</source>
-            <translation>[正在下发，请勿操作载具…____]</translation>
+            <source>Sending formation — do not operate the vehicle…</source>
+            <translation>[Ŝėńḋıńġ ƒǒŕm̃ȧṫıǒń — ḋǒ ńǒṫ ǒṗėŕȧṫė ṫħė v̇ėħıċĺė…_____________]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="135" />
-            <source>无在线 AIR 节点（MAPLRS 集群未连接）</source>
-            <translation>[无在线 ȦİŔ 节点（M̃ȦṖĹŔŜ 集群未连接）_______]</translation>
+            <source>No online AIR nodes (MAPLRS cluster not connected)</source>
+            <translation>[Ńǒ ǒńĺıńė ȦİŔ ńǒḋėŝ (M̃ȦṖĹŔŜ ċĺũŝṫėŕ ńǒṫ ċǒńńėċṫėḋ)______________]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="157" />
-            <source>编队已下发</source>
-            <translation>[编队已下发__]</translation>
+            <source>Formation sent</source>
+            <translation>[Ƒǒŕm̃ȧṫıǒń ŝėńṫ_____]</translation>
         </message>
         <message>
             <location filename="../src/FlyView/FormationPanel.qml" line="157" />
-            <source>编队下发失败</source>
-            <translation>[编队下发失败__]</translation>
+            <source>Formation send failed</source>
+            <translation>[Ƒǒŕm̃ȧṫıǒń ŝėńḋ ƒȧıĺėḋ_______]</translation>
         </message>
     </context>
     <context>
         <name>FormationToolStripAction</name>
         <message>
             <location filename="../src/FlyView/FormationToolStripAction.qml" line="7" />
-            <source>编队</source>
-            <translation>[编队_]</translation>
+            <source>Formation</source>
+            <translation>[Ƒǒŕm̃ȧṫıǒń___]</translation>
         </message>
     </context>
     <context>

@@ -12,12 +12,12 @@ ColumnLayout {
 
     property var _formation:    QGroundControl.formationManager
     property var _vehicles:     QGroundControl.multiVehicleManager.vehicles
-    property var _shapeNames:   [qsTr("横队"), qsTr("人字"), qsTr("纵队"), qsTr("环形")]
+    property var _shapeNames:   [qsTr("Line Abreast"), qsTr("Wedge"), qsTr("Column"), qsTr("Circle")]
     property bool _anyMaplrs:   _formation.maplrsVehicleIds(_vehicles).length > 0
     property int  _tick:        0   // 每秒自增，驱动误差绑定重算
 
     QGCLabel {
-        text:           qsTr("编队")
+        text:           qsTr("Formation")
         font.pointSize: ScreenTools.largeFontPointSize
         font.bold:      true
     }
@@ -26,7 +26,7 @@ ColumnLayout {
         columns:       2
         columnSpacing: ScreenTools.defaultFontHeight
 
-        QGCLabel { text: qsTr("队形") }
+        QGCLabel { text: qsTr("Shape") }
         QGCComboBox {
             Layout.fillWidth: true
             model:            _shapeNames
@@ -34,7 +34,7 @@ ColumnLayout {
             onActivated: (index) => _formation.shapeIndex = index
         }
 
-        QGCLabel { text: qsTr("间距(米)") }
+        QGCLabel { text: qsTr("Spacing (m)") }
         SpinBox {
             Layout.fillWidth: true
             from:             1
@@ -43,7 +43,7 @@ ColumnLayout {
             onValueModified:  _formation.spacing = value
         }
 
-        QGCLabel { text: qsTr("成员数") }
+        QGCLabel { text: qsTr("Members") }
         SpinBox {
             Layout.fillWidth: true
             from:             1
@@ -54,7 +54,7 @@ ColumnLayout {
     }
 
     QGCLabel {
-        text:     qsTr("槽位分配（槽 0 = 领航机，不接收任务改写）")
+        text:     qsTr("Slot assignment (slot 0 = leader, not rewritten by mission upload)")
         font.bold: true
         visible:  _anyMaplrs
     }
@@ -76,14 +76,14 @@ ColumnLayout {
                 return list[slotIndex]
             }
 
-            QGCLabel { text: qsTr("槽") + slotIndex + (slotIndex === 0 ? qsTr(" (领航)") : "") }
+            QGCLabel { text: qsTr("Slot ") + slotIndex + (slotIndex === 0 ? qsTr(" (Leader)") : "") }
 
             QGCComboBox {
                 Layout.fillWidth: true
                 textRole: "text"
                 valueRole: "value"
                 model: {
-                    var options = [{ "text": qsTr("(空)"), "value": 0 }]
+                    var options = [{ "text": qsTr("(Empty)"), "value": 0 }]
                     var ids = _formation.maplrsVehicleIds(_vehicles)
                     for (var i = 0; i < ids.length; i++) {
                         options.push({ "text": "AIR 0x" + ids[i].toString(16), "value": ids[i] })
@@ -104,35 +104,35 @@ ColumnLayout {
             QGCLabel {
                 text: {
                     if (!_status) return ""
-                    if (_status.vehicleId === 0) return qsTr("未分配")
-                    if (_status.errorM < 0) return qsTr("离线")
-                    return qsTr("偏差 %1m").arg(_status.errorM.toFixed(1))
+                    if (_status.vehicleId === 0) return qsTr("Unassigned")
+                    if (_status.errorM < 0) return qsTr("Offline")
+                    return qsTr("Error %1 m").arg(_status.errorM.toFixed(1))
                 }
             }
         }
     }
 
     QGCButton {
-        text:      qsTr("自动分配")
+        text:      qsTr("Auto Assign")
         visible:   _anyMaplrs
         onClicked: _formation.autoAssign(_vehicles)
     }
 
     QGCButton {
-        text:    _formation.busy ? qsTr("下发中…") : qsTr("下发编队")
+        text:    _formation.busy ? qsTr("Sending…") : qsTr("Send Formation")
         enabled: !_formation.busy && _anyMaplrs
         onClicked: _formation.dispatch(_vehicles)
     }
 
     QGCLabel {
         visible: _formation.busy
-        text:    qsTr("正在下发，请勿操作载具…")
+        text:    qsTr("Sending formation — do not operate the vehicle…")
         color:   "orange"
     }
 
     QGCLabel {
         visible: !_anyMaplrs
-        text:    qsTr("无在线 AIR 节点（MAPLRS 集群未连接）")
+        text:    qsTr("No online AIR nodes (MAPLRS cluster not connected)")
         color:   "orange"
     }
 
@@ -154,7 +154,7 @@ ColumnLayout {
     Connections {
         target: _formation
         function onDispatchFinished(success) {
-            _result._text = success ? qsTr("编队已下发") : qsTr("编队下发失败")
+            _result._text = success ? qsTr("Formation sent") : qsTr("Formation send failed")
             _resultTimer.restart()
         }
     }
