@@ -21,6 +21,7 @@ public:
     QList<MAV_CMD> supportedMissionCommands(QGCMAVLinkTypes::VehicleClass_t vehicleClass) const override;
     bool sendHomePositionToVehicle() const override { return false; }
     void startMission(Vehicle *vehicle) const override;
+    void startTakeoff(Vehicle *vehicle) const override;
     void guidedModeRTL(Vehicle *vehicle, bool smartRTL) const override;
     void pauseVehicle(Vehicle *vehicle) const override;
     bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const override;

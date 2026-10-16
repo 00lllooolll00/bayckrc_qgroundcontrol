@@ -1,21 +1,47 @@
-#include "BayckrcMAPLRSFirmwarePlugin.h"
+#include <QtCore/QCoreApplication>
+#include <QtCore/QThread>
 
 #include "AppMessages.h"
+#include "BayckrcMAPLRSFirmwarePlugin.h"
 #include "Vehicle.h"
 
-bool BayckrcMAPLRSFirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const
+// 解锁态到 QGC 要多绕三跳：AIR 从飞控心跳摘 SAFETY_ARMED → 无线遥测回传 → GND 的 1Hz
+// 心跳才转发给 QGC，最坏约 2 秒。基类 _armVehicleAndValidate 只等 1.5 秒（按原生数传
+// 时序定的），会误报 "failed to arm" —— 命令其实已生效，只是 QGC 还没看到回报。
+static bool _armAndWait(Vehicle* vehicle, int timeoutMs)
+{
+    if (vehicle->armed()) {
+        return true;
+    }
+
+    // 只尝试解锁一次：带延迟重试解锁会有安全风险（与基类保持一致）。
+    vehicle->setArmed(true, false /* showError */);
+
+    for (int elapsed = 0; elapsed < timeoutMs; elapsed += 100) {
+        if (vehicle->armed()) {
+            return true;
+        }
+        QThread::msleep(100);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
+    return vehicle->armed();
+}
+
+bool BayckrcMAPLRSFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities) const
 {
     switch (capabilities) {
-    case FirmwarePlugin::GuidedModeCapability:
-    case FirmwarePlugin::PauseVehicleCapability:
-    case FirmwarePlugin::ChangeHeadingCapability:
-        return true;
-    default:
-        return FirmwarePlugin::isCapable(vehicle, capabilities);
+        case FirmwarePlugin::GuidedModeCapability:
+        case FirmwarePlugin::PauseVehicleCapability:
+        case FirmwarePlugin::ChangeHeadingCapability:
+        case FirmwarePlugin::TakeoffVehicleCapability:
+            return true;
+        default:
+            return FirmwarePlugin::isCapable(vehicle, capabilities);
     }
 }
 
-void BayckrcMAPLRSFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
+void BayckrcMAPLRSFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
 }
@@ -28,18 +54,30 @@ QString BayckrcMAPLRSFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t cust
     // 但 flightMode() 拿不到机型，得先改 Vehicle 侧接口。
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         switch (custom_mode) {
-        case 0:  return QStringLiteral("STABILIZE");
-        case 1:  return QStringLiteral("ACRO");
-        case 2:  return QStringLiteral("ALT HOLD");
-        case 3:  return QStringLiteral("AUTO");
-        case 4:  return QStringLiteral("GUIDED");
-        case 5:  return QStringLiteral("LOITER");
-        case 6:  return QStringLiteral("RTL");
-        case 9:  return QStringLiteral("LAND");
-        case 16: return QStringLiteral("POSHOLD");
-        case 17: return QStringLiteral("BRAKE");
-        case 18: return QStringLiteral("THROW");
-        default: break;
+            case 0:
+                return QStringLiteral("STABILIZE");
+            case 1:
+                return QStringLiteral("ACRO");
+            case 2:
+                return QStringLiteral("ALT HOLD");
+            case 3:
+                return QStringLiteral("AUTO");
+            case 4:
+                return QStringLiteral("GUIDED");
+            case 5:
+                return QStringLiteral("LOITER");
+            case 6:
+                return QStringLiteral("RTL");
+            case 9:
+                return QStringLiteral("LAND");
+            case 16:
+                return QStringLiteral("POSHOLD");
+            case 17:
+                return QStringLiteral("BRAKE");
+            case 18:
+                return QStringLiteral("THROW");
+            default:
+                break;
         }
         return tr("Mode %1").arg(custom_mode);
     }
@@ -48,7 +86,8 @@ QString BayckrcMAPLRSFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t cust
     return FirmwarePlugin::flightMode(base_mode, custom_mode);
 }
 
-bool BayckrcMAPLRSFirmwarePlugin::setFlightMode(const QString &flightMode, uint8_t *base_mode, uint32_t *custom_mode) const
+bool BayckrcMAPLRSFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode,
+                                                uint32_t* custom_mode) const
 {
     Q_UNUSED(flightMode);
     Q_UNUSED(base_mode);
@@ -59,7 +98,8 @@ bool BayckrcMAPLRSFirmwarePlugin::setFlightMode(const QString &flightMode, uint8
     return false;
 }
 
-QList<MAV_CMD> BayckrcMAPLRSFirmwarePlugin::supportedMissionCommands(QGCMAVLinkTypes::VehicleClass_t /*vehicleClass*/) const
+QList<MAV_CMD> BayckrcMAPLRSFirmwarePlugin::supportedMissionCommands(
+    QGCMAVLinkTypes::VehicleClass_t /*vehicleClass*/) const
 {
     // Commands forwarded by the GND bridge: NAV_WAYPOINT(16), NAV_LOITER_UNLIM(17),
     // NAV_LOITER_TURNS(18), NAV_LOITER_TIME(19), NAV_RETURN_TO_LAUNCH(20),
@@ -80,14 +120,30 @@ QList<MAV_CMD> BayckrcMAPLRSFirmwarePlugin::supportedMissionCommands(QGCMAVLinkT
     return commands;
 }
 
-void BayckrcMAPLRSFirmwarePlugin::startMission(Vehicle *vehicle) const
+void BayckrcMAPLRSFirmwarePlugin::startTakeoff(Vehicle* vehicle) const
+{
+    // Same command order as startMission: arm (and wait for the armed heartbeat) first, then
+    // MAV_CMD_NAV_TAKEOFF — INAV refuses to arm while the throttle channel is high, and the GND
+    // command slot is single-slot (a later COMMAND_LONG overwrites an earlier one), so the two
+    // commands must never be sent back-to-back.
+    if (!vehicle->armed() && !_armAndWait(vehicle, 3000)) {
+        QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to arm."));
+        return;
+    }
+
+    // AIR 把起飞翻译成油门档位，参数不参与执行，回执由 AIR 自造 ACCEPTED。
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, true /* showError */, 0.0f /* pitch */,
+                            0.0f, 0.0f, 0.0f /* yaw */, 0.0, 0.0, 0.0 /* lat/lon/alt 未使用 */);
+}
+
+void BayckrcMAPLRSFirmwarePlugin::startMission(Vehicle* vehicle) const
 {
     // Same command order as APMFirmwarePlugin::startMission for multirotors on the
     // ground: arm (and wait for the armed heartbeat) first, then MAV_CMD_MISSION_START,
     // minus the DO_SET_MODE/Guided switch which the MAPLRS bridge does not forward.
     // The GND command slot is single-slot (a later COMMAND_LONG overwrites an earlier
     // one), so ARM_DISARM and MISSION_START must never be sent back-to-back.
-    if (!vehicle->armed() && !_armVehicleAndValidate(vehicle)) {
+    if (!vehicle->armed() && !_armAndWait(vehicle, 5000)) {
         QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to arm."));
         return;
     }
@@ -95,19 +151,21 @@ void BayckrcMAPLRSFirmwarePlugin::startMission(Vehicle *vehicle) const
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
 }
 
-void BayckrcMAPLRSFirmwarePlugin::guidedModeRTL(Vehicle *vehicle, bool smartRTL) const
+void BayckrcMAPLRSFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
 {
     Q_UNUSED(smartRTL);
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_RETURN_TO_LAUNCH, true /* showError */);
 }
 
-void BayckrcMAPLRSFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
+void BayckrcMAPLRSFirmwarePlugin::pauseVehicle(Vehicle* vehicle) const
 {
-    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_DO_PAUSE_CONTINUE, true /* showError */, 0.0f /* pause */);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_DO_PAUSE_CONTINUE, true /* showError */,
+                            0.0f /* pause */);
 }
 
-bool BayckrcMAPLRSFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
+bool BayckrcMAPLRSFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord,
+                                                         double forwardFlightLoiterRadius) const
 {
     // COMMAND_LONG 没有 frame 字段，INAV 按 MAV_FRAME_GLOBAL 解释 param7：绝对高度（MSL）。
     // 高度给 0 时 INAV 保持当前高度（navigation.c 的 wp255 分支），不会下潜。
@@ -115,24 +173,23 @@ bool BayckrcMAPLRSFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const
     const float loiterRadius = (forwardFlightLoiterRadius > 0.0) ? static_cast<float>(forwardFlightLoiterRadius) : 0.0f;
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_DO_REPOSITION, true /* showError */,
-                            0.0f,                                   // param1 速度，0 = 默认
-                            0.0f,                                   // param2 flags
-                            loiterRadius,                           // param3 盘旋半径，必须 >= 0
-                            0.0f,                                   // param4 yaw，0 = 不指定朝向
-                            static_cast<float>(gotoCoord.latitude()),
-                            static_cast<float>(gotoCoord.longitude()),
+                            0.0f,          // param1 速度，0 = 默认
+                            0.0f,          // param2 flags
+                            loiterRadius,  // param3 盘旋半径，必须 >= 0
+                            0.0f,          // param4 yaw，0 = 不指定朝向
+                            static_cast<float>(gotoCoord.latitude()), static_cast<float>(gotoCoord.longitude()),
                             static_cast<float>(gotoCoord.altitude()));
     return true;
 }
 
-void BayckrcMAPLRSFirmwarePlugin::guidedModeLand(Vehicle *vehicle) const
+void BayckrcMAPLRSFirmwarePlugin::guidedModeLand(Vehicle* vehicle) const
 {
     // INAV 收到 NAV_LAND 走 activateForcedLanding()，不经过 GCS NAV 闸门；
     // 只要求已解锁且位置/高度/航向估计可用。GND 白名单已放行该命令（gcs_link.c:104-112）。
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_LAND, true /* showError */);
 }
 
-void BayckrcMAPLRSFirmwarePlugin::guidedModeChangeAltitude(Vehicle *vehicle, double altitudeChange, bool pauseVehicle)
+void BayckrcMAPLRSFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
 {
     // QGC 传进来的是"相对当前高度的增量"，INAV 的 DO_CHANGE_ALTITUDE 收的是目标高度本身；
     // param2 给 MAV_FRAME_GLOBAL_RELATIVE_ALT，让它按"相对起飞点"解释，不依赖 MSL/gpsOrigin。
@@ -145,27 +202,29 @@ void BayckrcMAPLRSFirmwarePlugin::guidedModeChangeAltitude(Vehicle *vehicle, dou
 
     // 滑条没动就只做暂停（QGC 的 Pause 动作也走这个入口），避免发无意义的改高命令。
     if (qAbs(altitudeChange) < 0.01) {
-        if (pauseVehicle) this->pauseVehicle(vehicle);
+        if (pauseVehicle)
+            this->pauseVehicle(vehicle);
         return;
     }
 
     // 先悬停再改高：QGC 的发送队列逐条等 ACK，两条命令不会互相覆盖。
-    if (pauseVehicle) this->pauseVehicle(vehicle);
+    if (pauseVehicle)
+        this->pauseVehicle(vehicle);
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_DO_CHANGE_ALTITUDE, true /* showError */,
                             static_cast<float>(currentAltitude + altitudeChange),  // param1 目标高度
-                            static_cast<float>(MAV_FRAME_GLOBAL_RELATIVE_ALT));   // param2 参考系：相对起飞点
+                            static_cast<float>(MAV_FRAME_GLOBAL_RELATIVE_ALT));    // param2 参考系：相对起飞点
 }
 
-void BayckrcMAPLRSFirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const
+void BayckrcMAPLRSFirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoordinate& headingCoord) const
 {
     // INAV 的 CONDITION_YAW：param1 是目标航向角（度），param4=0 表示绝对角而非增量。
     // 不经过 GCS NAV 闸门，但要求当前导航状态具备航向控制（POSHOLD/CRUISE 等），否则回 DENIED。
     const double heading = vehicle->coordinate().azimuthTo(headingCoord);
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_CONDITION_YAW, true /* showError */,
-                            static_cast<float>(heading), // param1 目标航向角
-                            0.0f,                        // param2 角速度，INAV 未使用
-                            1.0f,                        // param3 旋转方向，仅相对模式使用
-                            0.0f);                       // param4 0 = 绝对航向
+                            static_cast<float>(heading),  // param1 目标航向角
+                            0.0f,                         // param2 角速度，INAV 未使用
+                            1.0f,                         // param3 旋转方向，仅相对模式使用
+                            0.0f);                        // param4 0 = 绝对航向
 }
