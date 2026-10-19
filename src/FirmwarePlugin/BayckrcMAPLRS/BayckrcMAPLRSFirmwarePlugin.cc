@@ -1,31 +1,55 @@
-#include <QtCore/QCoreApplication>
-#include <QtCore/QThread>
+#include "BayckrcMAPLRSFirmwarePlugin.h"
+
+#include <QtCore/QSet>
+#include <QtCore/QTimer>
+#include <functional>
 
 #include "AppMessages.h"
-#include "BayckrcMAPLRSFirmwarePlugin.h"
 #include "Vehicle.h"
+
+// 在途解锁等待（按机地址区分）：连点时不重复解锁，也避免同一台机并发两个等待。
+static QSet<const Vehicle*> s_arming;
 
 // 解锁态到 QGC 要多绕三跳：AIR 从飞控心跳摘 SAFETY_ARMED → 无线遥测回传 → GND 的 1Hz
 // 心跳才转发给 QGC，最坏约 2 秒。基类 _armVehicleAndValidate 只等 1.5 秒（按原生数传
 // 时序定的），会误报 "failed to arm" —— 命令其实已生效，只是 QGC 还没看到回报。
-static bool _armAndWait(Vehicle* vehicle, int timeoutMs)
+// 等待由 armedChanged 信号 + 超时定时器驱动，不阻塞 UI 线程；结果通过 done 回调返回。
+static void _armAndWait(Vehicle* vehicle, int timeoutMs, std::function<void(bool)> done)
 {
     if (vehicle->armed()) {
-        return true;
+        done(true);
+        return;
     }
+    if (s_arming.contains(vehicle)) {
+        return;  // 已有一个解锁等待在途中，忽略重复请求。
+    }
+    s_arming.insert(vehicle);
+    QObject::connect(vehicle, &QObject::destroyed, vehicle, [vehicle]() { s_arming.remove(vehicle); });
 
     // 只尝试解锁一次：带延迟重试解锁会有安全风险（与基类保持一致）。
     vehicle->setArmed(true, false /* showError */);
 
-    for (int elapsed = 0; elapsed < timeoutMs; elapsed += 100) {
-        if (vehicle->armed()) {
-            return true;
-        }
-        QThread::msleep(100);
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-    }
+    auto* timer = new QTimer(vehicle);
+    timer->setSingleShot(true);
+    timer->setInterval(timeoutMs);
 
-    return vehicle->armed();
+    // 连接以 timer 为 context：timer 销毁时连接自动断开；isActive() 兼作"等待未结束"判据。
+    QObject::connect(vehicle, &Vehicle::armedChanged, timer, [vehicle, timer, done](bool armed) {
+        if (!armed || !timer->isActive()) {
+            return;  // 上锁事件或等待已结束（成功/超时）都不重复回调。
+        }
+        timer->stop();
+        timer->deleteLater();
+        s_arming.remove(vehicle);
+        done(true);
+    });
+    QObject::connect(timer, &QTimer::timeout, timer, [vehicle, timer, done]() {
+        timer->deleteLater();
+        s_arming.remove(vehicle);
+        done(vehicle->armed());
+    });
+
+    timer->start();
 }
 
 bool BayckrcMAPLRSFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities) const
@@ -126,14 +150,15 @@ void BayckrcMAPLRSFirmwarePlugin::startTakeoff(Vehicle* vehicle) const
     // MAV_CMD_NAV_TAKEOFF — INAV refuses to arm while the throttle channel is high, and the GND
     // command slot is single-slot (a later COMMAND_LONG overwrites an earlier one), so the two
     // commands must never be sent back-to-back.
-    if (!vehicle->armed() && !_armAndWait(vehicle, 3000)) {
-        QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to arm."));
-        return;
-    }
-
-    // AIR 把起飞翻译成油门档位，参数不参与执行，回执由 AIR 自造 ACCEPTED。
-    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, true /* showError */, 0.0f /* pitch */,
-                            0.0f, 0.0f, 0.0f /* yaw */, 0.0, 0.0, 0.0 /* lat/lon/alt 未使用 */);
+    _armAndWait(vehicle, 3000, [vehicle](bool armedOk) {
+        if (!armedOk) {
+            QGC::showAppMessage(BayckrcMAPLRSFirmwarePlugin::tr("Unable to start takeoff: Vehicle failed to arm."));
+            return;
+        }
+        // AIR 把起飞翻译成油门档位，参数不参与执行，回执由 AIR 自造 ACCEPTED。
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, true /* showError */,
+                                0.0f /* pitch */, 0.0f, 0.0f, 0.0f /* yaw */, 0.0, 0.0, 0.0 /* lat/lon/alt 未使用 */);
+    });
 }
 
 void BayckrcMAPLRSFirmwarePlugin::startMission(Vehicle* vehicle) const
@@ -143,12 +168,13 @@ void BayckrcMAPLRSFirmwarePlugin::startMission(Vehicle* vehicle) const
     // minus the DO_SET_MODE/Guided switch which the MAPLRS bridge does not forward.
     // The GND command slot is single-slot (a later COMMAND_LONG overwrites an earlier
     // one), so ARM_DISARM and MISSION_START must never be sent back-to-back.
-    if (!vehicle->armed() && !_armAndWait(vehicle, 5000)) {
-        QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to arm."));
-        return;
-    }
-
-    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+    _armAndWait(vehicle, 5000, [vehicle](bool armedOk) {
+        if (!armedOk) {
+            QGC::showAppMessage(BayckrcMAPLRSFirmwarePlugin::tr("Unable to start mission: Vehicle failed to arm."));
+            return;
+        }
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+    });
 }
 
 void BayckrcMAPLRSFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
