@@ -30,6 +30,7 @@ Q_APPLICATION_STATIC(MultiVehicleManager, _multiVehicleManagerInstance);
 MultiVehicleManager::MultiVehicleManager(QObject* parent)
     : QObject(parent),
       _gcsHeartbeatTimer(new QTimer(this)),
+      _vehicleConnectNotifTimer(new QTimer(this)),
       _vehicles(new QmlObjectListModel(this)),
       _selectedVehicles(new QmlObjectListModel(this))
 {
@@ -61,6 +62,13 @@ void MultiVehicleManager::init()
     _gcsHeartbeatTimer->setSingleShot(false);
     (void) connect(_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
     _gcsHeartbeatTimer->start();
+
+    // 多机批量上线（MAPLRS 链路逐台入网、SITL 多实例同时连接）时汇总成一条提示：
+    // 每来一台就重启窗口，窗口内不再有新载具才弹一次，避免每个载具弹一个。
+    _vehicleConnectNotifTimer->setInterval(kVehicleConnectNotifDelayMSecs);
+    _vehicleConnectNotifTimer->setSingleShot(true);
+    (void) connect(_vehicleConnectNotifTimer, &QTimer::timeout, this,
+                   &MultiVehicleManager::_vehicleConnectNotifTimeout);
 
     _initialized = true;
 }
@@ -129,7 +137,8 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     emit vehicleAdded(vehicle);
 
     if (_vehicles->count() > 1) {
-        QGC::showAppMessage(tr("Connected to Vehicle %1").arg(vehicleId));
+        // 不逐台弹窗：重启汇总窗口，批量连接结束后由 _vehicleConnectNotifTimeout 播报一次总数。
+        _vehicleConnectNotifTimer->start();
     } else {
         setActiveVehicle(vehicle);
     }
@@ -285,6 +294,13 @@ void MultiVehicleManager::_sendGCSHeartbeat()
 
         link->sendMessageThreadSafe(message);
     }
+}
+
+// 多机连接汇总提示：窗口期（kVehicleConnectNotifDelayMSecs）内没有新载具再加入才播报一次，
+// 报的是当前在册载具总数，替代此前"每连接一台弹一条"的逐台提示。
+void MultiVehicleManager::_vehicleConnectNotifTimeout()
+{
+    QGC::showAppMessage(tr("Connected to %1 vehicles").arg(_vehicles->count()));
 }
 
 void MultiVehicleManager::selectVehicle(int vehicleId)
