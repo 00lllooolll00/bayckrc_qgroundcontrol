@@ -93,6 +93,9 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
 #endif
     }
     setApplicationName(applicationName);
+    // 窗口标题走显示名：不动 applicationName（它决定 ini/配置目录与单实例锁的名字，
+    // 改了会让既有设置与连接失联）。显示名只影响 UI 标题，与内部应用名解耦。
+    setApplicationDisplayName(QStringLiteral("BayckRC MapLRS GroundControl"));
     setDesktopFileName(QGC_PACKAGE_NAME);
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
