@@ -194,7 +194,9 @@ int MavCommandQueue::_responseCheckIntervalMSecs()
 int MavCommandQueue::_ackTimeoutMSecs()
 {
     // Use shorter ack timeout during unit tests for faster test execution
-    return QGC::runningUnitTests() ? kTestAckTimeoutMs : 1200;
+    // 3000 是给本仓 MAPLRS 链路留的余量：命令往返约 2 个超级帧，10 机稳健档实测
+    // 1.22~1.36s/帧，默认 1.2s 会在 ACK 回来之前就判超时（表现为"命令无响应"）。
+    return QGC::runningUnitTests() ? kTestAckTimeoutMs : 3000;
 }
 
 bool MavCommandQueue::_shouldRetry(MAV_CMD command)
