@@ -7727,7 +7727,12 @@ VTOL</translation>
       <source>Pause</source>
       <translation>暂停</translation>
     </message>
-  </context>
+      <message>
+      <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="171"/>
+      <source>Takeoff</source>
+      <translation>起飞</translation>
+    </message>
+</context>
   <context>
     <name>FlyViewVideo</name>
     <message>
@@ -9169,7 +9174,17 @@ VTOL</translation>
       <source>Internal error: unknown actionCode</source>
       <translation>内部错误：未知的动作代码</translation>
     </message>
-  </context>
+      <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="35"/>
+      <source>Takeoff (MV)</source>
+      <translation>起飞（多机）</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
+      <source>Arm and takeoff selected vehicles</source>
+      <translation>解锁并起飞所选载具</translation>
+    </message>
+</context>
   <context>
     <name>HeightIndicator</name>
     <message>
