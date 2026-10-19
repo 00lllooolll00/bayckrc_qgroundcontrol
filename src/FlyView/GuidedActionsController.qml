@@ -32,6 +32,7 @@ Item {
     readonly property string landTitle:                     qsTr("Land")
     readonly property string startMissionTitle:             qsTr("Start Mission")
     readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
+    readonly property string mvTakeoffTitle:                qsTr("Takeoff (MV)")
     readonly property string continueMissionTitle:          qsTr("Continue Mission")
     readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
     readonly property string pauseTitle:                    qsTr("Pause")
@@ -57,6 +58,7 @@ Item {
     readonly property string mvDisarmMessage:                   qsTr("Disarm selected vehicles.")
     readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
     readonly property string takeoffMessage:                    qsTr("Takeoff and hold position")
+    readonly property string mvTakeoffMessage:                  qsTr("Arm and takeoff selected vehicles")
     readonly property string startMissionMessage:               qsTr("Takeoff and start the current mission")
     readonly property string mvStartMissionMessage:             qsTr("Takeoff and start the current mission for selected vehicles")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint")
@@ -108,6 +110,7 @@ Item {
     readonly property int actionMVArm:                      28
     readonly property int actionMVDisarm:                   29
     readonly property int actionChangeLoiterRadius:         30
+    readonly property int actionMVTakeoff:                  31
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -400,7 +403,11 @@ Item {
         case actionMVArm:
             confirmDialog.title = mvArmTitle
             confirmDialog.message = mvArmMessage
-            break;
+            break
+        case actionMVTakeoff:
+            confirmDialog.title = mvTakeoffTitle
+            confirmDialog.message = mvTakeoffMessage
+            break
         case actionForceArm:
             confirmDialog.title = forceArmTitle
             confirmDialog.message = forceArmMessage
@@ -580,6 +587,17 @@ Item {
                 var vehicle = selectedVehicles.get(i)
                 if (vehicle.armed === true){
                     vehicle.startMission()
+                }
+            }
+            break
+        case actionMVTakeoff:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                var takeoffVehicle = selectedVehicles.get(i)
+                // 插件 startTakeoff 内部先 arm 并阻塞等 armed 心跳，循环即按选中次序逐台起飞，
+                // 不会把 N 条命令同时挤进单槽命令链路。
+                if (!takeoffVehicle.flying) {
+                    takeoffVehicle.startTakeoff()
                 }
             }
             break

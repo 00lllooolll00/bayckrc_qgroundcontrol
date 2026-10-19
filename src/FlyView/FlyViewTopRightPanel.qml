@@ -168,6 +168,15 @@ Rectangle {
                             }
 
                             QGCButton {
+                                text:                  qsTr("Takeoff")
+                                enabled:               multiVehicleList.takeoffAvailable()
+                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVTakeoff)
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
+                                leftPadding:           0
+                                rightPadding:          0
+                            }
+
+                            QGCButton {
                                 text:                  qsTr("Start")
                                 enabled:               multiVehicleList.startAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVStartMission)

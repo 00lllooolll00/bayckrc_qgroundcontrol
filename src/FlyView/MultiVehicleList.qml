@@ -48,6 +48,16 @@ Item {
         return false
     }
 
+    function takeoffAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (!vehicle.flying) {
+                return true
+            }
+        }
+        return false
+    }
+
     function pauseAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
@@ -125,7 +135,16 @@ Item {
 
             QGCMouseArea {
                 anchors.fill:       parent
-                onClicked:          toggleSelect(_vehicle.id)
+                acceptedButtons:    Qt.LeftButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton) {
+                        // 右键：多选/取消，作为批量操作（Arm/Disarm/Takeoff 等）的对象集合
+                        toggleSelect(_vehicle.id)
+                    } else {
+                        // 左键：只把主界面（activeVehicle）切到它，不动多选集合
+                        QGroundControl.multiVehicleManager.activeVehicle = _vehicle
+                    }
+                }
             }
 
             Column {
