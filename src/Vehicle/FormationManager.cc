@@ -1,24 +1,23 @@
 #include "FormationManager.h"
 
-#include <QtCore/QTimer>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QSettings>
 
+#include "FormationProtocol.h"
 #include "FormationShape.h"
-#include "MissionItem.h"
-#include "MissionManager.h"
-#include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
-#include "VehicleFactGroup.h"
 
 namespace {
 constexpr int kLeaderSlot = 0;
-constexpr int kPauseGraceMSecs = 1000;
+constexpr const char* kPresetsGroup = "Formation/Presets";
 
-/// Vehicle::vehicleFactGroup() 返回基类指针；编队需要的 heading/altitudeRelative 在 VehicleFactGroup 上
-VehicleFactGroup* _vehicleFacts(Vehicle* vehicle)
+bool _isMaplrs(Vehicle* vehicle)
 {
-    return qobject_cast<VehicleFactGroup*>(vehicle->vehicleFactGroup());
+    return vehicle && vehicle->firmwareType() == MAV_AUTOPILOT_SMARTAP;
 }
 }  // namespace
 
@@ -30,8 +29,6 @@ FormationManager* FormationManager::instance()
 
 FormationManager::FormationManager(QObject* parent) : QObject(parent)
 {
-    connect(&_timeoutTimer, &QTimer::timeout, this, [this]() { _startAll(false); });
-    _timeoutTimer.setSingleShot(true);
     _regenSlots();
 }
 
@@ -55,6 +52,16 @@ void FormationManager::setSpacing(double spacing)
     _regenSlots();
 }
 
+void FormationManager::setHeadingDeg(double headingDeg)
+{
+    if (headingDeg == _headingDeg) {
+        return;
+    }
+    _headingDeg = headingDeg;
+    emit headingDegChanged();
+    _regenSlots();
+}
+
 void FormationManager::setSlotCount(int slotCount)
 {
     if (slotCount == _slotCount) {
@@ -67,18 +74,25 @@ void FormationManager::setSlotCount(int slotCount)
 
 void FormationManager::_regenSlots()
 {
-    const QList<QPointF> offsets =
-        FormationShape::slotOffsets(static_cast<FormationShape::Shape>(_shapeIndex), _slotCount, _spacing, 0.0);
+    // 队形/间距/朝向变化时保留已有分配：按槽位序号沿用
+    QList<int> oldVehicleIds;
+    oldVehicleIds.reserve(_slotEntries.count());
+    for (const SlotEntry& entry : std::as_const(_slotEntries)) {
+        oldVehicleIds.append(entry.vehicleId);
+    }
+
+    const QList<QPointF> offsets = FormationShape::slotOffsets(static_cast<FormationShape::Shape>(_shapeIndex),
+                                                               _slotCount, _spacing, _headingDeg);
     _slotEntries.clear();
     _slots.clear();
-    for (const QPointF& offset : offsets) {
+    for (int i = 0; i < offsets.count(); ++i) {
         SlotEntry entry;
-        entry.vehicleId = 0;
-        entry.offset = offset;
+        entry.vehicleId = i < oldVehicleIds.count() ? oldVehicleIds[i] : 0;
+        entry.offset = offsets[i];
         QVariantMap map;
-        map["x"] = offset.x();
-        map["y"] = offset.y();
-        map["vehicleId"] = 0;
+        map["x"] = entry.offset.x();
+        map["y"] = entry.offset.y();
+        map["vehicleId"] = entry.vehicleId;
         _slotEntries.append(entry);
         _slots.append(map);
     }
@@ -124,7 +138,7 @@ QVariantList FormationManager::maplrsVehicleIds(QmlObjectListModel* vehicles) co
     }
     for (int i = 0; i < vehicles->count(); ++i) {
         auto* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
-        if (vehicle && vehicle->firmwareType() == MAV_AUTOPILOT_SMARTAP) {
+        if (_isMaplrs(vehicle)) {
             out.append(vehicle->id());
         }
     }
@@ -165,7 +179,7 @@ void FormationManager::autoAssign(QmlObjectListModel* vehicles)
     assignSlot(kLeaderSlot, leader->id());
 
     const QGeoCoordinate anchor = leader->coordinate();
-    const double altRel = _vehicleFacts(leader)->altitudeRelative()->rawValue().toDouble();
+    const double alt = anchor.altitude();
 
     QList<Vehicle*> unassigned;
     for (const QVariant& idVar : ids) {
@@ -179,7 +193,7 @@ void FormationManager::autoAssign(QmlObjectListModel* vehicles)
         if (unassigned.isEmpty()) {
             break;
         }
-        const QGeoCoordinate slotCoord = _slotCoordinate(anchor, _slotEntries[slotIndex].offset, altRel);
+        const QGeoCoordinate slotCoord = _slotCoordinate(anchor, _slotEntries[slotIndex].offset, alt);
         int nearest = -1;
         double nearestDist = 0.0;
         for (int i = 0; i < unassigned.count(); ++i) {
@@ -196,8 +210,13 @@ void FormationManager::autoAssign(QmlObjectListModel* vehicles)
     }
 }
 
+void FormationManager::matchOnline(QmlObjectListModel* vehicles)
+{
+    setSlotCount(qMax(1, maplrsVehicleIds(vehicles).count()));
+}
+
 QGeoCoordinate FormationManager::_slotCoordinate(const QGeoCoordinate& anchor, const QPointF& offset,
-                                                 double altRel) const
+                                                 double alt) const
 {
     const double dist = qHypot(offset.x(), offset.y());
     double azimuth = qRadiansToDegrees(qAtan2(offset.x(), offset.y()));  // 罗盘角：北基准顺时针
@@ -205,176 +224,152 @@ QGeoCoordinate FormationManager::_slotCoordinate(const QGeoCoordinate& anchor, c
         azimuth += 360.0;
     }
     QGeoCoordinate coord = anchor.atDistanceAndAzimuth(dist, azimuth);
-    coord.setAltitude(altRel);
+    coord.setAltitude(alt);
     return coord;
 }
 
-QList<MissionItem*> FormationManager::_makeItems(const QGeoCoordinate& coord) const
+void FormationManager::applyFormation(QmlObjectListModel* vehicles)
 {
-    QList<MissionItem*> items;
-    // 所有权归 PlanManager（它会 delete 载入列表，见 PlanManager.cc:_clearMissionItems）
-    items.append(new MissionItem(1, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, coord.latitude(),
-                                 coord.longitude(), coord.altitude(), true /* autoContinue */,
-                                 false /* isCurrentItem */, nullptr));
-    items.append(new MissionItem(2, MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0,
-                                 coord.latitude(), coord.longitude(), coord.altitude(), true, false, nullptr));
-    return items;
-}
-
-void FormationManager::dispatch(QmlObjectListModel* vehicles)
-{
-    if (_busy || vehicles == nullptr) {
+    if (!vehicles || _slotEntries.count() <= kLeaderSlot) {
+        emit dispatchFinished(false);
         return;
     }
-    // 领航机只认槽 0；槽 0 未分配或不能定位则直接失败
-    Vehicle* leader = nullptr;
-    if (_slotEntries.count() > kLeaderSlot && _slotEntries[kLeaderSlot].vehicleId > 0) {
-        leader = _findVehicle(vehicles, _slotEntries[kLeaderSlot].vehicleId);
-    }
-    if (!leader || !leader->coordinate().isValid()) {
+    // 槽 0 是领航机：必须在线且是 MAPLRS；它只做锚点，不收 FORM_ASSIGN
+    Vehicle* leader = _findVehicle(vehicles, _slotEntries[kLeaderSlot].vehicleId);
+    if (!_isMaplrs(leader)) {
         emit dispatchFinished(false);
         return;
     }
 
-    const QGeoCoordinate anchor = leader->coordinate();
-    const double headingDeg = _vehicleFacts(leader)->heading()->rawValue().toDouble();
-    const double altRel = _vehicleFacts(leader)->altitudeRelative()->rawValue().toDouble();
-
-    _queue.clear();
-    _uploaded.clear();
-    for (int slotIndex = kLeaderSlot + 1; slotIndex < _slotEntries.count(); ++slotIndex) {
-        const int vehicleId = _slotEntries[slotIndex].vehicleId;
-        if (vehicleId <= 0) {
-            continue;
-        }
-        Vehicle* vehicle = _findVehicle(vehicles, vehicleId);
-        if (!vehicle) {
-            continue;
-        }
-        // 槽位偏移按领航机实时航向从本体系旋到地理系（东/北）
-        const double rad = qDegreesToRadians(headingDeg);
-        const double c = qCos(rad);
-        const double s = qSin(rad);
-        const QPointF& rel = _slotEntries[slotIndex].offset;
-        const QPointF offset(rel.x() * c + rel.y() * s, -rel.x() * s + rel.y() * c);
-        DispatchStep step;
-        step.vehicle = vehicle;
-        step.items = _makeItems(_slotCoordinate(anchor, offset, altRel));
-        _queue.append(step);
-    }
-    if (_queue.isEmpty()) {
-        emit dispatchFinished(false);
-        return;
-    }
-
+    _formationId = FormationProtocol::nextFormationId(_formationId);
     _setBusy(true);
-    // 空中跟随者先暂停（POSHOLD），避免上传期间飘移
-    for (const DispatchStep& step : std::as_const(_queue)) {
-        if (step.vehicle && step.vehicle->flying()) {
-            step.vehicle->sendMavCommand(step.vehicle->defaultComponentId(), MAV_CMD_DO_PAUSE_CONTINUE,
-                                         false /* showError */, 0.0f /* pause */);
+    int sent = 0;
+    for (int slotIndex = kLeaderSlot + 1; slotIndex < _slotEntries.count(); ++slotIndex) {
+        const SlotEntry& entry = _slotEntries[slotIndex];
+        if (entry.vehicleId <= 0) {
+            continue;
         }
-    }
-    QTimer::singleShot(kPauseGraceMSecs, this, &FormationManager::_uploadNext);
-}
-
-void FormationManager::_uploadNext()
-{
-    if (!_busy) {
-        return;
-    }
-    // 半路掉线的车直接跳过
-    while (!_queue.isEmpty() && _queue.first().vehicle == nullptr) {
-        _queue.takeFirst();
-    }
-    if (_queue.isEmpty()) {
-        _startAll(true);
-        return;
-    }
-
-    const DispatchStep step = _queue.takeFirst();
-    QPointer<Vehicle> vehicle = step.vehicle;
-    MissionManager* missionManager = vehicle ? vehicle->missionManager() : nullptr;
-    if (!vehicle || !missionManager || missionManager->inProgress()) {
-        _startAll(false);
-        return;
-    }
-
-    if (_sendCompleteConn) {
-        disconnect(_sendCompleteConn);
-        _sendCompleteConn = QMetaObject::Connection();
-    }
-    _sendCompleteConn = connect(missionManager, &MissionManager::sendComplete, this, [this, vehicle](bool error) {
-        if (_sendCompleteConn) {
-            disconnect(_sendCompleteConn);
-            _sendCompleteConn = QMetaObject::Connection();
+        Vehicle* vehicle = _findVehicle(vehicles, entry.vehicleId);
+        if (!_isMaplrs(vehicle)) {
+            continue;
         }
-        if (error) {
-            _startAll(false);
-            return;
-        }
-        _uploaded.append(vehicle);
-        QTimer::singleShot(0, this, &FormationManager::_uploadNext);
-    });
-    _timeoutTimer.start(kUploadTimeoutMSecs);
-
-    missionManager->writeMissionItems(step.items);
-}
-
-void FormationManager::_startAll(bool success)
-{
-    if (_sendCompleteConn) {
-        disconnect(_sendCompleteConn);
-        _sendCompleteConn = QMetaObject::Connection();
+        FormationProtocol::FormationAssign assign;
+        assign.formationId = _formationId;
+        assign.slot = static_cast<uint8_t>(slotIndex);
+        assign.leaderId = static_cast<uint8_t>(leader->id());
+        assign.dxEast = static_cast<float>(entry.offset.x());
+        assign.dyNorth = static_cast<float>(entry.offset.y());
+        const FormationProtocol::CommandParams params = FormationProtocol::formAssignParams(assign);
+        vehicle->sendMavCommand(vehicle->defaultComponentId(),
+                                static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormAssign), true,
+                                params.param1, params.param2, params.param3, params.param4, params.param5,
+                                params.param6, params.param7);
+        ++sent;
     }
-    _timeoutTimer.stop();
-    // 上传有任何一个失败都不能放开编队；全部成功后逐台 MISSION_START（单帧，快）
-    const bool started = success && !_uploaded.isEmpty();
-    if (started) {
-        for (const QPointer<Vehicle>& vehicle : std::as_const(_uploaded)) {
-            if (vehicle) {
-                vehicle->startMission();
-            }
-        }
-    }
-    _queue.clear();
-    _uploaded.clear();
     _setBusy(false);
-    emit dispatchFinished(started);
+    emit dispatchFinished(sent > 0);
+}
+
+QString FormationManager::_presetKey(const QString& name)
+{
+    return QString(kPresetsGroup) + '/' + name;
+}
+
+QStringList FormationManager::presetNames() const
+{
+    QSettings settings;
+    settings.beginGroup(kPresetsGroup);
+    QStringList names = settings.childKeys();
+    names.sort();
+    return names;
+}
+
+bool FormationManager::savePreset(const QString& name)
+{
+    if (name.trimmed().isEmpty() || name.contains('/')) {
+        return false;
+    }
+
+    QJsonArray assignments;
+    for (int i = 0; i < _slotEntries.count(); ++i) {
+        if (_slotEntries[i].vehicleId > 0) {
+            QJsonObject item;
+            item["slot"] = i;
+            item["vehicleId"] = _slotEntries[i].vehicleId;
+            assignments.append(item);
+        }
+    }
+    QJsonObject preset;
+    preset["shapeIndex"] = _shapeIndex;
+    preset["spacing"] = _spacing;
+    preset["headingDeg"] = _headingDeg;
+    preset["slotCount"] = _slotCount;
+    preset["assignments"] = assignments;
+
+    QSettings settings;
+    settings.setValue(_presetKey(name), QJsonDocument(preset).toJson(QJsonDocument::Compact));
+    return settings.status() == QSettings::NoError;
+}
+
+bool FormationManager::loadPreset(const QString& name)
+{
+    QSettings settings;
+    const QByteArray raw = settings.value(_presetKey(name)).toByteArray();
+    QJsonParseError error;
+    const QJsonDocument doc = QJsonDocument::fromJson(raw, &error);
+    if (raw.isEmpty() || error.error != QJsonParseError::NoError || !doc.isObject()) {
+        return false;
+    }
+
+    const QJsonObject preset = doc.object();
+    setShapeIndex(preset.value("shapeIndex").toInt(_shapeIndex));
+    setSpacing(preset.value("spacing").toDouble(_spacing));
+    setSlotCount(preset.value("slotCount").toInt(_slotCount));
+    setHeadingDeg(preset.value("headingDeg").toDouble(_headingDeg));
+
+    clearAssignment();
+    const QJsonArray assignments = preset.value("assignments").toArray();
+    for (const QJsonValue& value : assignments) {
+        const QJsonObject item = value.toObject();
+        assignSlot(item.value("slot").toInt(-1), item.value("vehicleId").toInt());
+    }
+    return true;
+}
+
+bool FormationManager::deletePreset(const QString& name)
+{
+    QSettings settings;
+    const QString key = _presetKey(name);
+    const bool existed = settings.contains(key);
+    settings.remove(key);
+    return existed;
 }
 
 QVariantList FormationManager::formationStatus(QmlObjectListModel* vehicles) const
 {
     QVariantList out;
+
+    // 目标 = 领航机实时坐标 + 已旋转槽位偏移；领航机离线时全部无法定位
+    Vehicle* leader = nullptr;
+    if (_slotEntries.count() > kLeaderSlot) {
+        leader = _findVehicle(vehicles, _slotEntries[kLeaderSlot].vehicleId);
+    }
+    const bool leaderReady = _isMaplrs(leader) && leader->coordinate().isValid();
+
     for (int slotIndex = 0; slotIndex < _slotEntries.count(); ++slotIndex) {
         const SlotEntry& entry = _slotEntries[slotIndex];
         QVariantMap map;
         map["slotIndex"] = slotIndex;
         map["vehicleId"] = entry.vehicleId;
         double errorM = -1.0;
-        if (entry.vehicleId > 0) {
+        if (entry.vehicleId > 0 && leaderReady) {
             Vehicle* vehicle = _findVehicle(vehicles, entry.vehicleId);
             if (vehicle && vehicle->coordinate().isValid()) {
-                // 领航机为锚：误差 = 本机当前位置到其槽位绝对坐标
-                Vehicle* leader = vehicle;
-                if (slotIndex != kLeaderSlot) {
-                    if (_slotEntries[kLeaderSlot].vehicleId > 0) {
-                        leader = _findVehicle(vehicles, _slotEntries[kLeaderSlot].vehicleId);
-                    } else {
-                        leader = nullptr;
-                    }
-                }
-                if (leader && leader->coordinate().isValid()) {
-                    const double headingDeg = _vehicleFacts(leader)->heading()->rawValue().toDouble();
-                    const double rad = qDegreesToRadians(headingDeg);
-                    const double c = qCos(rad);
-                    const double s = qSin(rad);
-                    const QPointF offset(entry.offset.x() * c + entry.offset.y() * s,
-                                         -entry.offset.x() * s + entry.offset.y() * c);
-                    const QGeoCoordinate slotCoord = _slotCoordinate(
-                        leader->coordinate(), offset, _vehicleFacts(leader)->altitudeRelative()->rawValue().toDouble());
-                    errorM = vehicle->coordinate().distanceTo(slotCoord);
-                }
+                const QGeoCoordinate anchor = leader->coordinate();
+                const QGeoCoordinate slotCoord = _slotCoordinate(anchor, entry.offset, anchor.altitude());
+                QGeoCoordinate vehicleCoord = vehicle->coordinate();
+                vehicleCoord.setAltitude(slotCoord.altitude());  // 只比较水平误差
+                errorM = vehicleCoord.distanceTo(slotCoord);
             }
         }
         map["errorM"] = errorM;

@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FTPManagerTest.h
         FTPControllerTest.cc
         FTPControllerTest.h
+        FormationProtocolTest.cc
+        FormationProtocolTest.h
         FormationShapeTest.cc
         FormationShapeTest.h
         FirmwareUpgradeControllerTest.cc
@@ -58,6 +60,7 @@ add_subdirectory(ComponentInformation)
 
 add_qgc_test(APMAirframeComponentControllerTest LABELS Integration Vehicle)
 add_qgc_test(APMStartMissionTest LABELS Integration Vehicle)
+add_qgc_test(FormationProtocolTest LABELS Unit)
 add_qgc_test(FormationShapeTest LABELS Unit)
 add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)

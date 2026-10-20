@@ -1,83 +1,121 @@
 # BayckRC 编队协议系统设计（Formation Protocol）
 
-> 状态：v1 已实现（QGC 侧，本分支）；v2 为固件侧预留协议。本文档是协议真源。
+> 状态：v2 设计定稿（QGC 侧 + 固件侧待实现）。本文档是协议真源。
+> v1（mission 上传）已废弃，代码保留在 git 历史（`786056e6`）。
 
-## 1. 目标与复用原则
+## 0. 决策记录（2026-10）
 
-在 QGC 内完成：**读取当前在线的 AIR 节点 → 动态设计编队队形 → 下发到集群**。
-高度复用 = 不发明新空口协议，全部踩在两端已验证的通路上：
-
-| 复用点 | 说明 |
+| 决策 | 结论 |
 |---|---|
-| 在线检测 | 固件 gcs_link 离线成员停发心跳（gcs_link.c:589），QGC `MultiVehicleManager::vehicles()` 天然就是在线 AIR 列表，零固件改动 |
-| 命令通路 | `COMMAND_LONG` 改写转发（gcs_link.c:95-163）+ AIR 本地导航映射（radio_link.c:1031-1091），MAPLRS 插件（`src/FirmwarePlugin/BayckrcMAPLRS/`）已契约化 |
-| 位置通路 | 任务上传（mission 8 类消息，gcs_link.c:258-368 整帧转发）双向可用；QGC 侧 `Vehicle::missionManager()->writeMissionItems()` 直接驱动 |
-| 遥测反馈 | `GLOBAL_POSITION_INT` 已周期上报，编队误差由 QGC 计算对比，固件零遥测新增 |
+| 控制拓扑 | **分布式**：每台 AIR 自己算槽位目标，5Hz 喂自己的飞控 |
+| 传输载体 | `MAV_CMD_USER_1/2/3`（`COMMAND_LONG`），GND 白名单 + 逐机转发；不改方言 |
+| 锚点 | **跟随领航机实时位置**（相对偏移，持续保持） |
+| 编辑器 | v2.0 模板 + 间距/朝向；自由拖拽排 v2.1 |
+| 持久化 | QGC 命名预设（QSettings JSON）；AIR 只保留运行态 |
+
+## 1. 目标
+
+QGC 面板读取当前在线的 AIR 节点 → 编辑队形 → 通过 MAVLink 下发到 GND → GND 按成员转发
+→ 每台 AIR 自主计算自己的槽位目标，并用 GUIDED（CH10 GCS NAV）持续控制本机飞控。
 
 ## 2. 硬约束（取证结论）
 
-- QGC 看到的 SYSID = AIR 成员 node_id（0x10 起），compid = `MAV_COMP_ID_AUTOPILOT1`，`MAV_AUTOPILOT_SMARTAP(18)`（gcs_link.c:597-605）。**GND 自身不出现**。
-- 空口任务帧 ≤ 50B（`FC_BRIDGE_FRAME_MAX`，fc_wrapper.h:19），超长整帧丢弃。
-- GND 命令白名单仅 7 类（MISSION_START / DO_PAUSE_CONTINUE / PREFLIGHT_REBOOT_SHUTDOWN / NAV_RETURN_TO_LAUNCH / COMPONENT_ARM_DISARM / DO_SET_MODE / NAV_LAND），其余回 `MAV_RESULT_UNSUPPORTED`；**不支持 target_system=0 广播**（查表未中即丢，gcs_link.c:95-101）。
-- AIR 本地分流：MISSION_START→WP 模式、DO_PAUSE_CONTINUE→POSHOLD、NAV_RETURN_TO_LAUNCH→RTH（`cmd_wrapper_nav_set`，RC 开关映射）；ARM_DISARM→RC CH5 映射。
-- 两端 MAVLink 方言（QGC CPM pin c409cf690 + fastmavlink 2026-02）均**无** FORMATION 消息/命令。
-- INAV 为任务唯一真源；飞行中不支持实时位置 setpoint。
+- QGC 看到的 sysid = AIR 成员 node_id（0x10 起），compid = `MAV_COMP_ID_AUTOPILOT1`。
+- GND 命令白名单 + **不支持 `target_system=0` 广播**（v2.0 由 QGC 逐机单播）。
+- 空口单帧 ≤ **56B**（`FC_BRIDGE_FRAME_MAX`，2026-10 由 50 放宽）；`COMMAND_LONG` 线帧 45B，装得下。
+- GND 每成员命令槽单槽、每超级帧一帧：N 台 × 1 条命令 ≈ 1 个超级帧（10 机 1.2~1.4s）。
+- **AIR→FC 是直连 UART，不受 GND 白名单约束**。
+- INAV GUIDED 门槛 `isGCSValid()`：已解锁 + `estPosStatus>=EST_TRUSTED` + `gpsOrigin.valid`
+  + **CH10 GCS NAV** + `navState == NAV_STATE_POSHOLD_3D_IN_PROGRESS`。
+- INAV 的 `SET_POSITION_TARGET_GLOBAL_INT` **完整位置分支已实现**（`mavlink_guided.c:126-165`）：
+  x/y 不忽略时写 `setWaypoint(255)`，lat/lon/alt/yaw 全部生效；相对帧 `p3=0`。
+- `air_info` 带 lat/lon/alt/relative_alt，**不含航向**；`neighbor_table` 提供
+  `nt_relative_ned()` 与 leader/follower 角色。
 
-## 3. 协议 v1（已实现，纯 QGC 侧）
+## 3. 协议 v2
 
-**载体：标准 MAVLink mission。编队 = 每个跟随机一条"单点任务"。**
+### 3.1 命令参数（`COMMAND_LONG`，`target_system` = 成员 node_id）
 
-```
-QGC 设计队形（FormationShape 模板 → 槽位表）
-  → 锚点 = 领航机(槽0)当前 coordinate + 实时航向 + 高度
-  → 槽位偏移(东/北, m) 旋转到航向 → 绝对经纬度
-  → 每个跟随机 mini-mission：[NAV_WAYPOINT(slot), NAV_LOITER_UNLIM(slot)]
-  → 串行下发：先对所有空中机 DO_PAUSE_CONTINUE(暂停→POSHOLD)
-     → 逐台 writeMissionItems（等 sendComplete 再下一台，串行避免挤爆信箱）
-     → 全部上传完成后逐台 startMission（MISSION_START）
-```
+| 命令 | 值 | p1 | p2 | p3 | p4 | p5 | p6 | p7 |
+|---|---|---|---|---|---|---|---|---|
+| `FORM_ASSIGN`（USER_1） | 31010 | formation_id | slot_index | leader_id | dx_east_m | dy_north_m | dz_m | yaw_deg |
+| `FORM_STOP`（USER_2） | 31011 | formation_id | 0=本机 / 1=全队 | — | — | — | — | — |
+| `FORM_QUERY`（USER_3，预留） | 31012 | formation_id | mask | — | — | — | — | — |
 
-- 领航机（槽 0）不接收任务改写，保持现状（地面待命或悬停）。
-- 编队误差 = QGC 每秒对比各机 coordinate 与槽位绝对坐标（面板实时显示）。
-- 已知限制：改队形 = 重新设计 → 下发（自动暂停+上传+启动）；无实时跟随领航机的动态保持——这是 INAV 不暴露实时 setpoint 的固有限制，见 §4 v2。
+- `dx/dy` 是**已按队形朝向旋转到东/北**的偏移（QGC 负责旋转），AIR 不再旋转。
+- `dz` 相对领航机相对高度；`yaw_deg`：0 = 保持当前机头，1..359 = 目标机头（INAV 只认 1..359）。
+- `formation_id` 单调递增（QGC 每次 Apply +1，跳过 0）；AIR 丢弃比当前小的 id。
+- `leader_id=0` 视为停止本机编队。
+- 速率/死区是固件常量：**5Hz / 0.3m**（v2.0 不下发）。
+- 领航机（slot 0）**不接收** `FORM_ASSIGN`：它保持当前模式作为锚点，跟随者用它的 mesh 位置。
 
-## 4. 协议 v2（固件侧预留，未实现）
-
-载体：`MAV_CMD_USER_1..4`（common.xml 31010-31013，**现成私有命令段，零方言改动**）。
-固件改动点（两侧都是小改，50B 内装得下 COMMAND_LONG=36B）：
-
-| 命令 | 值 | 参数（param1..7） | 方向 |
-|---|---|---|---|
-| `MAPLRS_FORM_ASSIGN` | `MAV_CMD_USER_1` 31010 | p1=formation_id, p2=slot_index, p3=leader_sysid(0=无), p4=dx_east, p5=dy_north, p6=dz, p7=flags | QGC→单机/广播 |
-| `MAPLRS_FORM_START` | `MAV_CMD_USER_2` 31011 | p1=1 启动/0 停止, p2=重传轮数 | 广播 |
-| `MAPLRS_FORM_QUERY` | `MAV_CMD_USER_3` 31012 | p1=查询掩码 | QGC→单机 |
-
-固件侧需要的三处小改：
-1. `gcs_link.c::_dispatch_command_long`：白名单加 3 个命令；`target_system==0` 时扇出循环全员（每成员一次改写转发）。
-2. `radio_link.c` 本地分流：`FORM_ASSIGN` 拦截进 `algorithm/formation.c`（读 `g_nvs_data.node_id` 认领槽位），不进 FC 桥。
-3. 领航位实时跟随：领航机经 ESP-NOW 广播位置（neighbor_table 已有），各机算误差后经 **MSP 命令**微调（INAV 实时 setpoint 通道缺失 → 需与飞控侧约定，见"开放问题"）。
-
-## 5. 模块划分与扩展点（QGC）
+### 3.2 时序
 
 ```
-src/Vehicle/FormationShape.{h,cc}     纯几何：模板→槽位偏移（无 Qt 对象，可单测）
-src/Vehicle/FormationManager.{h,cc}   服务：槽位分配 + 串行下发状态机（单例，QML_ELEMENT）
-src/FlyView/FormationToolStripAction.qml  FlyView 工具条入口
-src/FlyView/FormationPanel.qml        编队面板（设计/分配/下发/误差显示）
-src/QmlControls/QGroundControlQmlGlobal  暴露 formationManager 给 QML
+QGC                     GND                     AIR（每台跟随机）            INAV
+ |-- USER_1 (逐机) ----->|-- COMMAND_LONG ------>|                            |
+ |   formation_id/slot   |   (per member slot)   |-- formation_set()           |
+ |                       |                       |-- CH7=POSHOLD ------------->|
+ |                       |                       |-- CH10=1500 ---------------->|
+ |                       |                       |<-- heartbeat custom_mode=16-|
+ |                       |                       |-- SET_POSITION_TARGET ------>
+ |                       |                       |   GLOBAL_INT (5Hz)          |-- isGCSValid()
+ |                       |                       |<-- GLOBAL_POSITION_INT -----|   setWaypoint(255)
+ |<-- 心跳/GPI ----------|<-- air_info ----------|                            |
 ```
 
-- **新队形**：`FormationShape` 加一个分支（槽位生成纯函数），UI 自动出现选项。
-- **新成员类型过滤**：`FormationManager::isMaplrsVehicle`（现按 `MAV_AUTOPILOT_SMARTAP`）。
-- **换队形锚点策略/分配策略**：只动 FormationManager，UI 不变。
+### 3.3 目标计算（AIR）
+
+- 领航机相对向量：`nt_relative_ned(leader_id, &rel)`（x=北，y=东，z=下，米）。
+- 本机 GPI：`g_snapshot.gpi`（lat/lon 1e7，relative_alt 毫米）。
+- 目标北 = 本机北 + `rel.x` + `dy_north`；目标东 = 本机东 + `rel.y` + `dx_east`。
+- 目标相对高度 = 本机 relative_alt − `rel.z` + `dz`。
+- 经纬度换算：`dlat = north / 111320`；`dlon = east / (111320 * cos(lat))`。
+- 领航数据龄期 > **1s** → 冻结目标（不再更新），FC 保持最后一点。
+
+### 3.4 启动 / 停止 / 失败
+
+- **启动前提**：已解锁、FC 位置/高度估计可用、已进入 POSHOLD。条件不满足时只存参数，
+  不流目标，等条件满足再流。
+- **停止**：`FORM_STOP` 或上锁 → 停止流目标，`CH10=false`，**保持 POSHOLD 悬停**，不自动 RTL。
+- **领航失联**：冻结最后目标；QGC 面板标红，不自动重排。
+- **编队 id 过期**：丢弃。
+- **碰撞**：v2.0 由 QGC 在 Apply 前校验最小间距（默认 ≥3m）；**不把 APF/CPA 混进 GUIDED 目标**
+  （避免与飞控打架）。
+
+## 4. 模块改动
+
+### QGC（`feat/formation`）
+
+| 文件 | 改动 |
+|---|---|
+| `src/Vehicle/FormationShape.{h,cc}` | 复用；补 Grid |
+| `src/Vehicle/FormationProtocol.{h,cc}`（新） | 纯函数：命令参数打包、formation_id 生成 |
+| `src/Vehicle/FormationManager.{h,cc}` | `dispatch()` → `applyFormation()`；命名预设；`matchOnline()`；保留槽位/误差 |
+| `src/FlyView/FormationPanel.qml` | 2D 预览画布、朝向、在线数、预设、Apply |
+| `test/Vehicle/FormationShapeTest.cc` | 补 Grid/旋转用例 |
+| `test/Vehicle/FormationProtocolTest.cc`（新） | 参数打包/边界 |
+
+### 固件（maplrs `feat/formation`）
+
+| 文件 | 改动 |
+|---|---|
+| `src/components/wrapper/src/cmd_wrapper.c` | 白名单加 `USER_1/2/3`（`local=true`） |
+| `src/main/app/air/radio_link_air.c` | 拦截 `USER_*` → `formation_*`；本地 ACK；置 CH7/CH10 |
+| `src/main/app/air/formation.{h,c}`（新） | 状态 + 目标计算 + 5Hz tick |
+| `src/main/app/air/fc_link.c` | 暴露 GUIDED 发送接口；workqueue 挂 5Hz tick；上锁/失锁停编队 |
+| `README.md`、`doc/config/how_to_config_inav.md` | 命令表 / 前置条件 / 频率 |
+
+## 5. 非目标（v2.0）
+
+- 自由拖拽任意槽位（v2.1）。
+- 队形朝向跟随领航机航向（需要 `air_info` 加航向字段）。
+- GND 广播扇出（QGC 逐机单播）。
+- AIR 侧 NVS 持久化。
+- 编队中混用 APF/CPA。
 
 ## 6. 测试
 
-`test/Vehicle/FormationShapeTest.{h,cc}`：槽位数、对称性（横队/人字左右镜像）、朝向旋转正确性（纯逻辑，无 MockLink）。
-
-## 7. 开放问题（后续会话决策）
-
-1. **实时跟随的控制通路**：INAV 不接受飞行中 setpoint；候选 = INAV 固件侧新增 MSP 命令 / 改用位置容差大的"慢队形"（周期性重发任务点）/ 联系 INAV 社区 follow 能力。v2 立项前必须定。
-2. **广播语义**：v2 依赖 GND fan-out 改动，固件两侧需同步发版（老固件收不到新命令）。
-3. **地图上的槽位预览圈**：v1 面板只有文字槽位表，地图 overlay 排期在面板可用之后。
-4. `MISSION_ITEM` 与 `MISSION_ITEM_INT` 的选择：INAV 经纬度 1e5 精度足够，v1 走 PlanManager 默认路径。
+- QGC：`FormationShape` / `FormationProtocol` 纯函数单测；Manager 预设序列化单测。
+- 固件：目标计算纯函数单测（给定本机 GPI + 领航相对 NED + 偏移 → 目标 lat/lon/alt）。
+- 联调（2 机）：Apply 后进入 POSHOLD+GUIDED 且误差收敛；停止后悬停；领航失联冻结。
