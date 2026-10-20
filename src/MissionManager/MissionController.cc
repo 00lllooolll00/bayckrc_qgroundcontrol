@@ -2212,7 +2212,13 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 
         // Nothing can be inserted until the home position has been set
         const bool homePosSet = homePositionSet();
-        _isInsertTakeoffValid = _isInsertTakeoffValid && homePosSet;
+        // 固件插件白名单不含起飞时（INAV 只把起飞当 COMMAND_LONG 实时命令），禁用插入。
+        // 白名单为空表示还在用通用插件（离线规划/未连机），此时保持原行为不禁用。
+        const QList<MAV_CMD> takeoffCommands = _controllerVehicle->firmwarePlugin()
+            ->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric);
+        const bool takeoffSupported = takeoffCommands.isEmpty() ||
+            takeoffCommands.contains(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF);
+        _isInsertTakeoffValid = _isInsertTakeoffValid && homePosSet && takeoffSupported;
         _isInsertLandValid = _isInsertLandValid && homePosSet;
         _flyThroughCommandsAllowed = _flyThroughCommandsAllowed && homePosSet;
         _isInsertROIValid = homePosSet && !onlyInsertTakeoffValid;

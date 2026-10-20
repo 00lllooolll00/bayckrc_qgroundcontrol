@@ -125,20 +125,21 @@ bool BayckrcMAPLRSFirmwarePlugin::setFlightMode(const QString& flightMode, uint8
 QList<MAV_CMD> BayckrcMAPLRSFirmwarePlugin::supportedMissionCommands(
     QGCMAVLinkTypes::VehicleClass_t /*vehicleClass*/) const
 {
-    // Commands forwarded by the GND bridge: NAV_WAYPOINT(16), NAV_LOITER_UNLIM(17),
-    // NAV_LOITER_TURNS(18), NAV_LOITER_TIME(19), NAV_RETURN_TO_LAUNCH(20),
-    // NAV_LAND(21), NAV_TAKEOFF(22), NAV_DELAY(93), DO_JUMP(177).
-    // Anything else is filtered out of the Plan command selector.
+    // INAV mavlink_mission.c 实际支持、且 QGC 命令表里有 UI 定义的任务项。
+    // NAV_TAKEOFF(22) 由 GND 侧 gcs_link 改写成同序号航点后再转发，所以任务规划里
+    // 可以保留起飞项；VTOL 起降和样条航点没有改写，INAV 会拒，不列出。
     static const QList<MAV_CMD> commands = {
         MAV_CMD_NAV_WAYPOINT,
-        MAV_CMD_NAV_LOITER_UNLIM,
-        MAV_CMD_NAV_LOITER_TURNS,
         MAV_CMD_NAV_LOITER_TIME,
         MAV_CMD_NAV_RETURN_TO_LAUNCH,
         MAV_CMD_NAV_LAND,
         MAV_CMD_NAV_TAKEOFF,
-        MAV_CMD_NAV_DELAY,
+        MAV_CMD_CONDITION_DELAY,
+        MAV_CMD_CONDITION_CHANGE_ALT,
+        MAV_CMD_CONDITION_YAW,
         MAV_CMD_DO_JUMP,
+        MAV_CMD_DO_CHANGE_SPEED,
+        MAV_CMD_DO_SET_ROI,
     };
 
     return commands;
