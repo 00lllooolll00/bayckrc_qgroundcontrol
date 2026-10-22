@@ -7732,6 +7732,11 @@ VTOL</translation>
       <source>Takeoff</source>
       <translation>起飞</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="180"/>
+      <source>Land</source>
+      <translation>降落</translation>
+    </message>
 </context>
   <context>
     <name>FlyViewVideo</name>
@@ -9183,6 +9188,16 @@ VTOL</translation>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
       <source>Arm and takeoff selected vehicles</source>
       <translation>解锁并起飞所选载具</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="36"/>
+      <source>Land (MV)</source>
+      <translation>降落（多机）</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="63"/>
+      <source>Land selected vehicles at their current positions</source>
+      <translation>所选载具原地降落</translation>
     </message>
 </context>
   <context>

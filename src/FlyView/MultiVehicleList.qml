@@ -58,6 +58,15 @@ Item {
         return false
     }
 
+    function landAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            if (selectedVehicles.get(i).armed === true) {
+                return true
+            }
+        }
+        return false
+    }
+
     function pauseAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
