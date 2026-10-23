@@ -5,7 +5,7 @@
 #include "AudioOutput.h"
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
-#include "FormationManager.h"
+#include "FormationController.h"
 #include "LinkManager.h"
 #include "LoggingCategoryModel.h"
 #include "MAVLinkProtocol.h"
@@ -35,9 +35,9 @@
 
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
-FormationManager* QGroundControlQmlGlobal::formationManager()
+FormationController* QGroundControlQmlGlobal::formationController()
 {
-    return FormationManager::instance();
+    return FormationController::instance();
 }
 
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0, 0.0);

@@ -11,8 +11,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         FTPController.h
         FTPManager.cc
         FTPManager.h
-        FormationManager.cc
-        FormationManager.h
+        FormationController.cc
+        FormationController.h
+        FormationModel.cc
+        FormationModel.h
         FormationProtocol.cc
         FormationProtocol.h
         FormationShape.cc

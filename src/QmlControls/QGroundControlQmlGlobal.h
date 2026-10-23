@@ -15,7 +15,7 @@ class LinkManager;
 class MAVLinkSigningKeys;
 class MissionCommandTree;
 class MultiVehicleManager;
-class FormationManager;
+#include "FormationController.h"
 class QGCCorePlugin;
 class QGCMapEngineManager;
 class NTRIPManager;
@@ -32,7 +32,7 @@ Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
-Q_MOC_INCLUDE("FormationManager.h")
+Q_MOC_INCLUDE("FormationController.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
 Q_MOC_INCLUDE("QGCMapEngineManager.h")
 Q_MOC_INCLUDE("QGCPalette.h")
@@ -66,7 +66,7 @@ public:
     Q_PROPERTY(QString appName READ appName CONSTANT)
     Q_PROPERTY(LinkManager* linkManager READ linkManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager CONSTANT)
-    Q_PROPERTY(FormationManager* formationManager READ formationManager CONSTANT)
+    Q_PROPERTY(FormationController* formationController READ formationController CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager READ mapEngineManager CONSTANT)
     Q_PROPERTY(QGCPositionManager* qgcPositionManger READ qgcPositionManger CONSTANT)
     Q_PROPERTY(VideoManager* videoManager READ videoManager CONSTANT)
@@ -173,7 +173,7 @@ public:
 
     MultiVehicleManager* multiVehicleManager() { return _multiVehicleManager; }
 
-    FormationManager* formationManager();
+    FormationController* formationController();
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 

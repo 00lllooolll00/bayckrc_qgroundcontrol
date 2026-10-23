@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-// 纯协议单测：FormationProtocol 参数打包与 formation_id 生成（详见 FORMATION_DESIGN.md §3.1）
+// 纯协议单测：FormationProtocol 参数打包、越界校验、formation_id 生成（详见 FORMATION_DESIGN.md）
 class FormationProtocolTest : public UnitTest
 {
     Q_OBJECT
@@ -12,9 +12,11 @@ public:
 
 private slots:
     void _constants();               // 命令号与协议版本
-    void _assignFieldOrder();        // param1..param7 逐字段对应
-    void _zeroAndNegativeOffsets();  // 0 / 负偏移原样透传
-    void _yawZero();                 // yaw=0 表示保持机头
+    void _configFieldOrder();        // FORM_CONFIG param1..param7
+    void _memberFieldOrder();        // FORM_MEMBER param1..param7
+    void _stopFieldOrder();          // FORM_STOP param1..param7
+    void _validateAccepts();         // 合法参数通过
+    void _validateRejects();         // 越界/非法参数被拒
     void _formationIdSequence();     // 从 1 递增、跳过 0
-    void _formationIdWrap();         // 2^24 回绕且 float 可精确表示
+    void _formationIdWrap();         // 0xFFFF 回绕
 };

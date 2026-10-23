@@ -39,6 +39,7 @@ qt_add_qml_module(FlyViewModule
         FlyViewTopRightPanel.qml
         FlyViewVideo.qml
         FlyViewWidgetLayer.qml
+        FormationCanvas.qml
         FormationPanel.qml
         FormationToolStripAction.qml
         GuidedActionConfirm.qml

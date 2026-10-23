@@ -1,86 +1,98 @@
 #include "FormationShapeTest.h"
 
-#include <QtGui/QVector2D>
+#include <QtMath>
+
+#include <QPair>
 
 #include "FormationShape.h"
 
-using namespace FormationShape;
+UT_REGISTER_TEST(FormationShapeTest)
+
+using FormationShape::Shape;
+using FormationShape::SlotPolar;
 
 namespace {
-constexpr double kEpsilon = 1e-6;
+
+// 极坐标 -> (forward, right)，用于和固件 NED 位置直接对比。
+QPair<double, double> _forwardRight(const SlotPolar& slot)
+{
+    const double rad = qDegreesToRadians(slot.angleDeg);
+    return { slot.distanceM * qCos(rad), slot.distanceM * qSin(rad) };
 }
+
+}  // namespace
 
 void FormationShapeTest::_leaderSlotAtOrigin()
 {
-    for (int shape = 0; shape < 4; ++shape) {
-        const QList<QPointF> s = slotOffsets(static_cast<Shape>(shape), 5, 10.0, 0.0);
-        QCOMPARE(s.count(), 5);
-        QVERIFY(qFuzzyIsNull(s[0].x()));
-        QVERIFY(qFuzzyIsNull(s[0].y()));
+    for (Shape shape : { Shape::Line, Shape::Vee, Shape::Column, Shape::Grid }) {
+        const QList<SlotPolar> polar = FormationShape::slotPolar(shape, 5, 10.0);
+        QCOMPARE(polar.count(), 5);
+        QCOMPARE(polar[0].distanceM, 0.0);
+        QCOMPARE(polar[0].angleDeg, 0.0);
     }
 }
 
 void FormationShapeTest::_lineSymmetry()
 {
-    const QList<QPointF> s = slotOffsets(Shape::Line, 5, 10.0, 0.0);
-    QCOMPARE(s.count(), 5);
-    // 左右镜像：x 成对相反，y 全为 0（与领航机同一连线）
-    for (int i = 1; i < 5; ++i) {
-        QVERIFY(qFuzzyIsNull(s[i].y()));
-    }
-    QVERIFY(qFuzzyCompare(s[1].x(), -s[2].x()));
-    QVERIFY(qFuzzyCompare(s[3].x(), -s[4].x()));
-    QVERIFY(qFuzzyCompare(s[1].x(), 10.0));
+    const QList<SlotPolar> polar = FormationShape::slotPolar(Shape::Line, 5, 10.0);
+    QCOMPARE(polar.count(), 5);
+    QCOMPARE(polar[1].angleDeg, 90.0);
+    QCOMPARE(polar[2].angleDeg, 270.0);
+    QCOMPARE(polar[1].distanceM, polar[2].distanceM);
+    QCOMPARE(polar[3].distanceM, 20.0);
+    QCOMPARE(polar[4].distanceM, 20.0);
 }
 
-void FormationShapeTest::_veeSymmetryAndRearward()
+void FormationShapeTest::_veeSymmetry()
 {
-    const QList<QPointF> s = slotOffsets(Shape::Vee, 5, 10.0, 0.0);
-    QCOMPARE(s.count(), 5);
-    // 人字两翼镜像对称
-    QVERIFY(qFuzzyCompare(s[1].x(), -s[2].x()));
-    QVERIFY(qFuzzyCompare(s[3].x(), -s[4].x()));
-    // 全部在领航机后方（y < 0）
-    for (int i = 1; i < 5; ++i) {
-        QVERIFY(s[i].y() < 0.0);
-    }
+    const QList<SlotPolar> polar = FormationShape::slotPolar(Shape::Vee, 5, 10.0, 45.0);
+    QCOMPARE(polar.count(), 5);
+    QCOMPARE(polar[1].angleDeg, 22.5);
+    QCOMPARE(polar[2].angleDeg, 337.5);
+    QCOMPARE(polar[1].distanceM, polar[2].distanceM);
+    QVERIFY(polar[1].distanceM > 10.0);  // 斜边大于同侧间距
 }
 
 void FormationShapeTest::_columnRearwardSpaced()
 {
-    const QList<QPointF> s = slotOffsets(Shape::Column, 4, 10.0, 0.0);
-    QCOMPARE(s.count(), 4);
-    for (int i = 1; i < 4; ++i) {
-        QVERIFY(qFuzzyIsNull(s[i].x()));
-        QVERIFY(qFuzzyCompare(s[i].y(), -i * 10.0));
+    const QList<SlotPolar> polar = FormationShape::slotPolar(Shape::Column, 4, 10.0);
+    QCOMPARE(polar.count(), 4);
+    QCOMPARE(polar[1].angleDeg, 180.0);
+    QCOMPARE(polar[1].distanceM, 10.0);
+    QCOMPARE(polar[3].distanceM, 30.0);
+}
+
+void FormationShapeTest::_gridCount()
+{
+    const QList<SlotPolar> polar = FormationShape::slotPolar(Shape::Grid, 4, 10.0);
+    QCOMPARE(polar.count(), 4);
+    // 槽位按 (forward, right) 校验，与固件 formation_shape_positions 一致。
+    const QList<QPair<double, double>> expected = {
+        { 0.0, 0.0 }, { 0.0, -5.0 }, { 0.0, 5.0 }, { -10.0, -5.0 }
+    };
+    for (int i = 0; i < expected.count(); ++i) {
+        const QPair<double, double> fr = _forwardRight(polar[i]);
+        QVERIFY(qAbs(fr.first - expected[i].first) < 1e-9);
+        QVERIFY(qAbs(fr.second - expected[i].second) < 1e-9);
     }
 }
 
-void FormationShapeTest::_circleRadiusUniform()
+void FormationShapeTest::_gridNoLeaderOverlap()
 {
-    const double radius = 10.0;
-    const QList<QPointF> s = slotOffsets(Shape::Circle, 6, radius, 0.0);
-    QCOMPARE(s.count(), 6);
-    for (int i = 1; i < 6; ++i) {
-        const double r = qSqrt(s[i].x() * s[i].x() + s[i].y() * s[i].y());
-        QVERIFY(qAbs(r - radius) < kEpsilon);
+    // 奇数 cols 的 row 0 中心格就是领机，跟随槽不得落在 (0,0)。
+    for (int count : { 5, 6, 9, 10 }) {
+        const QList<SlotPolar> polar = FormationShape::slotPolar(Shape::Grid, count, 10.0);
+        QCOMPARE(polar.count(), count);
+        for (int i = 1; i < polar.count(); ++i) {
+            const QPair<double, double> fr = _forwardRight(polar[i]);
+            QVERIFY(qAbs(fr.first) > 1e-9 || qAbs(fr.second) > 1e-9);
+        }
     }
-}
-
-void FormationShapeTest::_headingRotation()
-{
-    // 纵队（0°=北）本身在正北后方 (0,-d)；朝向 90°（东）应整体旋转到西南象限，槽 1 变西侧
-    const QPointF slot1 = slotOffsets(Shape::Column, 2, 10.0, 90.0)[1];
-    QVERIFY(slot1.x() < kEpsilon);
-    QVERIFY(qAbs(slot1.x() + 10.0) < kEpsilon);
-    QVERIFY(qAbs(slot1.y()) < kEpsilon);
 }
 
 void FormationShapeTest::_invalidInput()
 {
-    QVERIFY(slotOffsets(Shape::Line, 0, 10.0, 0.0).isEmpty());
-    QVERIFY(slotOffsets(Shape::Line, 5, 0.0, 0.0).isEmpty());
-    QVERIFY(slotOffsets(Shape::Line, -1, -3.0, 0.0).isEmpty());
+    QVERIFY(FormationShape::slotPolar(Shape::Line, 0, 10.0).isEmpty());
+    QVERIFY(FormationShape::slotPolar(Shape::Line, 5, 0.0).isEmpty());
+    QVERIFY(FormationShape::slotPolar(Shape::Line, -1, -3.0).isEmpty());
 }
-
-UT_REGISTER_TEST(FormationShapeTest, TestLabel::Unit)

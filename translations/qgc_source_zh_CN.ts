@@ -22213,6 +22213,146 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <source>Formation send failed</source>
       <translation>编队下发失败</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="26"/>
+      <source>Line</source>
+      <translation>横队</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="26"/>
+      <source>V</source>
+      <translation>人字</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="26"/>
+      <source>Grid</source>
+      <translation>网格</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="28"/>
+      <source>Idle</source>
+      <translation>空闲</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="28"/>
+      <source>Applying</source>
+      <translation>下发中</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="28"/>
+      <source>Active</source>
+      <translation>运行中</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="28"/>
+      <source>Stopping</source>
+      <translation>停止中</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="28"/>
+      <source>Failed</source>
+      <translation>失败</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="46"/>
+      <source>Online: %1</source>
+      <translation>在线：%1</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="99"/>
+      <source>V angle (deg)</source>
+      <translation>V 角(度)</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="140"/>
+      <source>Slot %1 distance (m)</source>
+      <translation>槽 %1 距离(米)</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="184"/>
+      <source>Angle (deg, north-referenced)</source>
+      <translation>角度(度，北基准)</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="155"/>
+      <source>Angle (deg, nose-referenced)</source>
+      <translation>角度(度，机头基准)</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="170"/>
+      <source>Altitude offset (m)</source>
+      <translation>高度差(米)</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="244"/>
+      <source>Slot 0  Leader %1  %2</source>
+      <translation>槽 0  领航 %1  %2</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="245"/>
+      <source>Slot %1  %2  %3  %4</source>
+      <translation>槽 %1  %2  %3  %4</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="303"/>
+      <source>Set leader</source>
+      <translation>设为领机</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="222"/>
+      <source>Slot 0  Leader %1</source>
+      <translation>槽 0  领航 %1</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="222"/>
+      <source>Slot %1  %2  %3</source>
+      <translation>槽 %1  %2  %3</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="225"/>
+      <source>Status %1</source>
+      <translation>状态 %1</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="233"/>
+      <source>Match online</source>
+      <translation>匹配在线</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="237"/>
+      <source>Apply</source>
+      <translation>应用</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="242"/>
+      <source>Stop</source>
+      <translation>停止</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="259"/>
+      <source>Takeoff all</source>
+      <translation>全部起飞</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="264"/>
+      <source>Land all</source>
+      <translation>全部降落</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="275"/>
+      <source>Kick</source>
+      <translation>踢出</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="281"/>
+      <source>Rejoin</source>
+      <translation>重新加入</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="287"/>
+      <source>Leader focus</source>
+      <translation>聚焦领航机</translation>
+    </message>
   </context>
   <context>
     <name>FormationToolStripAction</name>

@@ -183,6 +183,7 @@ public:
     Q_PROPERTY(QString motorDetectionFlightMode READ motorDetectionFlightMode CONSTANT)
     Q_PROPERTY(QString stabilizedFlightMode READ stabilizedFlightMode CONSTANT)
     Q_PROPERTY(QString firmwareTypeString READ firmwareTypeString NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(bool maplrsFirmware READ maplrsFirmware NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString vehicleTypeString READ vehicleTypeString NOTIFY vehicleTypeChanged)
     Q_PROPERTY(QString vehicleImageOpaque READ vehicleImageOpaque CONSTANT)
     Q_PROPERTY(QString vehicleImageOutline READ vehicleImageOutline CONSTANT)
@@ -517,6 +518,9 @@ public:
     bool px4Firmware() const { return _firmwareType == MAV_AUTOPILOT_PX4; }
 
     bool apmFirmware() const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
+
+    /// QML 侧判断编队成员：MAV_AUTOPILOT_SMARTAP 由 AIR 心跳上报。
+    bool maplrsFirmware() const { return _firmwareType == MAV_AUTOPILOT_SMARTAP; }
 
     bool genericFirmware() const { return !px4Firmware() && !apmFirmware(); }
 
