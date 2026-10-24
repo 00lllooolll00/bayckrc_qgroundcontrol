@@ -19,6 +19,9 @@ public:
     QString flightMode(uint8_t base_mode, uint32_t custom_mode) const override;
     bool setFlightMode(const QString &flightMode, uint8_t *base_mode, uint32_t *custom_mode) const override;
     QList<MAV_CMD> supportedMissionCommands(QGCMAVLinkTypes::VehicleClass_t vehicleClass) const override;
+    // 基类默认返回 /json/MavCmdInfoCommon.json，那是个完整命令表；本固件类不是 Generic，
+    // 会被按 override 加载而报错。返回空表示只用 Generic 基础表 + supportedMissionCommands 过滤。
+    QString missionCommandOverrides(QGCMAVLinkTypes::VehicleClass_t vehicleClass) const override;
     bool sendHomePositionToVehicle() const override { return false; }
     void startMission(Vehicle *vehicle) const override;
     void startTakeoff(Vehicle *vehicle) const override;

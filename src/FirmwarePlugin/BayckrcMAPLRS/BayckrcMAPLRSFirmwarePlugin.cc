@@ -145,6 +145,12 @@ QList<MAV_CMD> BayckrcMAPLRSFirmwarePlugin::supportedMissionCommands(
     return commands;
 }
 
+QString BayckrcMAPLRSFirmwarePlugin::missionCommandOverrides(QGCMAVLinkTypes::VehicleClass_t /*vehicleClass*/) const
+{
+    // 空表示不加载固件专属命令表：沿用 Generic 基础表，再按 supportedMissionCommands 过滤。
+    return QString();
+}
+
 void BayckrcMAPLRSFirmwarePlugin::startTakeoff(Vehicle* vehicle) const
 {
     // Same command order as startMission: arm (and wait for the armed heartbeat) first, then

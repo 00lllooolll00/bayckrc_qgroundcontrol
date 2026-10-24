@@ -313,7 +313,80 @@
                 "userMax":          180
             }
         },
+        {
+            "id":                   82,
+            "rawName":              "MAV_CMD_NAV_SPLINE_WAYPOINT",
+            "friendlyName":         "Spline waypoint",
+            "description":          "Travel to a position in 3D space using spline path.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param1": {
+                "label":            "Hold",
+                "units":            "secs",
+                "default":          0,
+                "decimalPlaces":    0,
+                "min":              0,
+                "userMin":          0,
+                "userMax":          600,
+                "advanced":        true
+            }
+        },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
+        {
+            "id":                   84,
+            "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
+            "friendlyName":         "VTOL takeoff",
+            "description":          "Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.",
+            "specifiesCoordinate":  true,
+            "isTakeoffCommand":     true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param2": {
+                "label":            "Transition Heading",
+                "enumStrings":      "Default,Next waypoint,Takeoff,Specified,Any",
+                "enumValues":       "0,1,2,3,4",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param4": {
+                "label":            "Yaw",
+                "units":            "deg",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180,
+                "advanced":        true
+            }
+        },
+        {
+            "id":                   85,
+            "rawName":              "MAV_CMD_NAV_VTOL_LAND",
+            "friendlyName":         "VTOL land",
+            "description":          "Fly to specified location at current altitude, transition to multi-rotor and land.",
+            "specifiesCoordinate":  true,
+            "isLandCommand":        true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param3": {
+                "label":            "Approach Alt",
+                "units":            "vertical m",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2,
+                "advanced":        true
+            },
+            "param4": {
+                "label":            "Yaw",
+                "units":            "deg",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180
+            }
+        },
         {
             "id":           92,
             "rawName":      "MAV_CMD_NAV_GUIDED_ENABLE",
