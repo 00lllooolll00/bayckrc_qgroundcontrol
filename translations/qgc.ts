@@ -4617,22 +4617,22 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>BayckrcMAPLRSFirmwarePlugin</name>
     <message>
-        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="82"/>
+        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="106"/>
         <source>Mode %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="130"/>
+        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="156"/>
         <source>Unable to start takeoff: Vehicle failed to arm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="147"/>
+        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="174"/>
         <source>Unable to start mission: Vehicle failed to arm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="199"/>
+        <location filename="../src/FirmwarePlugin/BayckrcMAPLRS/BayckrcMAPLRSFirmwarePlugin.cc" line="226"/>
         <source>Unable to change altitude, vehicle altitude not known.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7719,11 +7719,21 @@ VTOL</source>
     </message>
     <message>
         <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="171"/>
-        <source>Start</source>
+        <source>Takeoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="180"/>
+        <source>Land</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="189"/>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="198"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7739,113 +7749,179 @@ VTOL</source>
 <context>
     <name>FormationPanel</name>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Line Abreast</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Wedge</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="31"/>
         <source>Column</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Circle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="20"/>
-        <source>Formation</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="29"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="32"/>
+        <source>Idle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/FormationPanel.qml" line="29"/>
+        <source>Waiting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="30"/>
+        <source>Streaming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="30"/>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="31"/>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="31"/>
+        <source>V</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="31"/>
+        <source>Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="32"/>
+        <source>Applying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="32"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="33"/>
+        <source>Stopping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="33"/>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="138"/>
+        <source>Formation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="144"/>
+        <source>%1 online</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="187"/>
+        <source>CONFIGURATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="200"/>
         <source>Shape</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="37"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="212"/>
         <source>Spacing (m)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="46"/>
-        <source>Members</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="228"/>
+        <source>V angle (deg)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="57"/>
-        <source>Slot assignment (slot 0 = leader, not rewritten by mission upload)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="246"/>
+        <source>Leader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source>Slot </source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="284"/>
+        <source>FORMATION LAYOUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source> (Leader)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="291"/>
+        <source>Select a dot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="86"/>
-        <source>(Empty)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="337"/>
+        <source>MEMBERS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="107"/>
-        <source>Unassigned</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="344"/>
+        <source>%1 in formation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="108"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="430"/>
+        <source>LEAVING</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="442"/>
+        <source>Slot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="483"/>
+        <source>ACTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="495"/>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="502"/>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="516"/>
+        <source>Match online</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="521"/>
+        <source>Takeoff all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="527"/>
+        <source>Land all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="533"/>
+        <source>Kick</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="540"/>
+        <source>Rejoin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="547"/>
+        <source>Leader focus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="448"/>
         <source>Offline</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="109"/>
-        <source>Error %1 m</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="116"/>
-        <source>Auto Assign</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>Sending…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>Send Formation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="129"/>
-        <source>Sending formation — do not operate the vehicle…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="135"/>
-        <source>No online AIR nodes (MAPLRS cluster not connected)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>Formation sent</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>Formation send failed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9036,151 +9112,171 @@ VTOL</source>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="35"/>
-        <source>Continue Mission</source>
+        <source>Takeoff (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="36"/>
-        <source>Resume FAILED</source>
+        <source>Land (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="37"/>
-        <source>Pause</source>
+        <source>Continue Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="38"/>
-        <source>Pause (MV)</source>
+        <source>Resume FAILED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="39"/>
+        <source>Pause</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="40"/>
+        <source>Pause (MV)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="41"/>
         <source>Change Altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="43"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="45"/>
         <source>Orbit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="44"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="46"/>
         <source>Land Abort</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="45"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="47"/>
         <source>Set Waypoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="46"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="48"/>
         <source>Go To Location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="49"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="51"/>
         <source>Set Estimator Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="59"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
         <source>Takeoff and hold position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="60"/>
-        <source>Takeoff and start the current mission</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
-        <source>Takeoff and start the current mission for selected vehicles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="62"/>
-        <source>Continue the mission from the current waypoint</source>
+        <source>Arm and takeoff selected vehicles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="63"/>
+        <source>Land selected vehicles at their current positions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="64"/>
-        <source>Land the vehicle at the current position</source>
+        <source>Takeoff and start the current mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="65"/>
-        <source>Return to the launch position of the vehicle</source>
+        <source>Takeoff and start the current mission for selected vehicles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="66"/>
-        <source>Change the altitude of the vehicle up or down</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="67"/>
-        <source>Change the forward flight loiter radius</source>
+        <source>Continue the mission from the current waypoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="68"/>
-        <source>Change the maximum horizontal cruise speed</source>
+        <source>Land the vehicle at the current position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="69"/>
-        <source>Change the equivalent airspeed setpoint</source>
+        <source>Return to the launch position of the vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="70"/>
-        <source>Move the vehicle to the specified location</source>
+        <source>Change the altitude of the vehicle up or down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="71"/>
-        <source>Adjust current waypoint to %1</source>
+        <source>Change the forward flight loiter radius</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="72"/>
-        <source>Orbit the vehicle around the specified location</source>
+        <source>Change the maximum horizontal cruise speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="73"/>
-        <source>Abort the landing sequence</source>
+        <source>Change the equivalent airspeed setpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="74"/>
-        <source>Pause at current position</source>
+        <source>Move the vehicle to the specified location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="75"/>
-        <source>Pause selected vehicles at their current position</source>
+        <source>Adjust current waypoint to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="76"/>
-        <source>Make the specified location a Region Of Interest</source>
+        <source>Orbit the vehicle around the specified location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="77"/>
+        <source>Abort the landing sequence</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="78"/>
-        <source>Make the specified location the estimator origin</source>
+        <source>Pause at current position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="79"/>
+        <source>Pause selected vehicles at their current position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="80"/>
+        <source>Make the specified location a Region Of Interest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="82"/>
+        <source>Make the specified location the estimator origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="84"/>
         <source>Set the vehicle heading towards the specified location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="198"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="204"/>
         <source>_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _visualItemsCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9190,112 +9286,112 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="40"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="42"/>
         <source>Change Loiter Radius</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="41"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="43"/>
         <source>Change Max Ground Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="42"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="44"/>
         <source>Change Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="47"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="49"/>
         <source>ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="48"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="50"/>
         <source>Set Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="50"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="52"/>
         <source>Set Flight Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="51"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="53"/>
         <source>Change Heading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="53"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="55"/>
         <source>Arm the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="54"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="56"/>
         <source>Arm selected vehicles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="55"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="57"/>
         <source>WARNING: This will force arming of the vehicle bypassing any safety checks.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="56"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="58"/>
         <source>Disarm the vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="57"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="59"/>
         <source>Disarm selected vehicles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="58"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="60"/>
         <source>WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="63"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="67"/>
         <source>Upload of resume mission failed. Confirm to retry upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="77"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="81"/>
         <source>Set vehicle home as the specified location. This will affect Return to Home position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="79"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="83"/>
         <source>Set the vehicle flight mode to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="209"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="215"/>
         <source>Height (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="217"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="223"/>
         <source>Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="224"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="230"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="234"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="240"/>
         <source>Alt (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="465"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="479"/>
         <source>Smart RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="683"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="718"/>
         <source>Internal error: unknown actionCode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12593,47 +12689,47 @@ VTOL</source>
 <context>
     <name>MavCommandQueue</name>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="289"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="291"/>
         <source>Unable to send command: %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="289"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="291"/>
         <source>Internal error - MAV_COMP_ID_ALL not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="289"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="291"/>
         <source>Waiting on previous response to same command.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="309"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="311"/>
         <source>Unable to send command: Vehicle is not connected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="369"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="371"/>
         <source>Vehicle did not respond to command: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="469"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="471"/>
         <source>%1 command temporarily rejected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="472"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="474"/>
         <source>%1 command denied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="475"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="477"/>
         <source>%1 command not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="478"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="480"/>
         <source>%1 command failed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13534,12 +13630,12 @@ Do you wish to proceed?</source>
 <context>
     <name>MultiVehicleList</name>
     <message>
-        <location filename="../src/FlyView/MultiVehicleList.qml" line="186"/>
+        <location filename="../src/FlyView/MultiVehicleList.qml" line="214"/>
         <source>Armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/MultiVehicleList.qml" line="186"/>
+        <location filename="../src/FlyView/MultiVehicleList.qml" line="214"/>
         <source>Disarmed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13547,13 +13643,13 @@ Do you wish to proceed?</source>
 <context>
     <name>MultiVehicleManager</name>
     <message>
-        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="110"/>
+        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="118"/>
         <source>Warning: A vehicle is using the same system id as %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="132"/>
-        <source>Connected to Vehicle %1</source>
+        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="303"/>
+        <source>Connected to %1 vehicles</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -17200,27 +17296,27 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCApplication</name>
     <message>
-        <location filename="../src/QGCApplication.cc" line="334"/>
+        <location filename="../src/QGCApplication.cc" line="337"/>
         <source>The current user does not have the correct permissions to access serial devices. You should also remove modemmanager since it also interferes.&lt;br/&gt;&lt;br/&gt;If you are using Ubuntu, execute the following commands to fix these issues:&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="359"/>
+        <location filename="../src/QGCApplication.cc" line="362"/>
         <source>The format for %1 saved settings has been modified. Your saved settings have been reset to defaults.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="395"/>
+        <location filename="../src/QGCApplication.cc" line="398"/>
         <source>Parameters are missing from firmware. You may be running a version of firmware which is not fully supported or your firmware has a bug in it. Missing params: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="575"/>
+        <location filename="../src/QGCApplication.cc" line="578"/>
         <source>There is a newer version of %1 available. You can download it from %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="578"/>
+        <location filename="../src/QGCApplication.cc" line="581"/>
         <source>New Version Available</source>
         <translation type="unfinished"></translation>
     </message>
