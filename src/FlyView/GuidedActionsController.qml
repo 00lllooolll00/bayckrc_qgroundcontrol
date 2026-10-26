@@ -206,7 +206,7 @@ Item {
     }
 
     function setupSlider(actionCode) {
-        if (actionCode === actionTakeoff) {
+        if (actionCode === actionTakeoff || actionCode === actionMVTakeoff) {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Takeoff,
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
@@ -410,6 +410,7 @@ Item {
         case actionMVTakeoff:
             confirmDialog.title = mvTakeoffTitle
             confirmDialog.message = mvTakeoffMessage
+            guidedValueSlider.visible = _activeVehicle.supports.guidedTakeoffWithAltitude
             break
         case actionMVLand:
             confirmDialog.title = mvLandTitle
@@ -599,12 +600,17 @@ Item {
             break
         case actionMVTakeoff:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            var takeoffAltitudeMeters = _unitsConversion.appSettingsVerticalDistanceUnitsToMeters(sliderOutputValue)
             for (i = 0; i < selectedVehicles.count; i++) {
                 var takeoffVehicle = selectedVehicles.get(i)
-                // 插件 startTakeoff 内部先 arm 并阻塞等 armed 心跳，循环即按选中次序逐台起飞，
+                // 插件 guidedModeTakeoff 内部先 arm 并阻塞等 armed 心跳，循环即按选中次序逐台起飞，
                 // 不会把 N 条命令同时挤进单槽命令链路。
                 if (!takeoffVehicle.flying) {
-                    takeoffVehicle.startTakeoff()
+                    if (takeoffVehicle.supports.guidedTakeoffWithAltitude) {
+                        takeoffVehicle.guidedModeTakeoff(takeoffAltitudeMeters)
+                    } else {
+                        takeoffVehicle.startTakeoff()
+                    }
                 }
             }
             break
