@@ -61,6 +61,7 @@ public:
     Q_INVOKABLE bool validate() const;
     Q_INVOKABLE QString validationError() const { return _lastError; }
     Q_INVOKABLE int leaderSysid() const;
+    Q_INVOKABLE int formationMemberCount() const;
 
     QVariantList positions() const;
     QVariantList sysids() const;

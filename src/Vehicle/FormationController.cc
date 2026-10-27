@@ -16,9 +16,7 @@ FormationController* FormationController::instance()
     return controller;
 }
 
-FormationController::FormationController(QObject* parent)
-    : QObject(parent)
-    , _model(new FormationModel(this))
+FormationController::FormationController(QObject* parent) : QObject(parent), _model(new FormationModel(this))
 {
     _timeoutTimer.setSingleShot(true);
     connect(&_timeoutTimer, &QTimer::timeout, this, &FormationController::_onTimeout);
@@ -47,8 +45,7 @@ FormationController::FormationController(QObject* parent)
                 Qt::UniqueConnection);
         _model->matchOnline(_vehicles);
     });
-    connect(manager, &MultiVehicleManager::vehicleRemoved, this,
-            [this](Vehicle*) { _model->matchOnline(_vehicles); });
+    connect(manager, &MultiVehicleManager::vehicleRemoved, this, [this](Vehicle*) { _model->matchOnline(_vehicles); });
 
     // 队形参数或成员一改就撤掉上一次 Apply 的红色错误。
     connect(_model, &FormationModel::configChanged, this, [this]() {
@@ -129,6 +126,9 @@ void FormationController::stop(QmlObjectListModel* vehicles, bool allMembers)
 
     _model->setActive(false);
     _setPhase(_pending > 0 ? Stopping : Idle);
+    if (_pending > 0) {
+        _timeoutTimer.start(3000);
+    }
 }
 
 void FormationController::kick(QmlObjectListModel* vehicles, int sysid)
@@ -255,6 +255,13 @@ void FormationController::handleStatustext(const QString& text)
         _timeoutTimer.stop();
         _setPhase(Active);
     }
+
+    // 全员已回 IDLE/formation_id=0（例如 RTL/Land 后）：控制器同步退出 Active。
+    if (phase == 0 && formationId == 0 && _model->formationMemberCount() == 0) {
+        _timeoutTimer.stop();
+        _model->setActive(false);
+        _setPhase(Idle);
+    }
 }
 
 Vehicle* FormationController::_findVehicle(QmlObjectListModel* vehicles, int sysid) const
@@ -279,16 +286,9 @@ void FormationController::_sendConfig(Vehicle* vehicle, uint16_t formationId)
     config.enabled = _model->enabled();
 
     const FormationProtocol::CommandParams params = FormationProtocol::formConfigParams(config);
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormConfig),
-                            true,
-                            params.param1,
-                            params.param2,
-                            params.param3,
-                            params.param4,
-                            params.param5,
-                            params.param6,
-                            params.param7);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormConfig),
+                            true, params.param1, params.param2, params.param3, params.param4, params.param5,
+                            params.param6, params.param7);
 }
 
 void FormationController::_sendMember(Vehicle* vehicle, uint16_t formationId, bool join)
@@ -298,16 +298,9 @@ void FormationController::_sendMember(Vehicle* vehicle, uint16_t formationId, bo
     member.join = join;
 
     const FormationProtocol::CommandParams params = FormationProtocol::formMemberParams(member);
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormMember),
-                            true,
-                            params.param1,
-                            params.param2,
-                            params.param3,
-                            params.param4,
-                            params.param5,
-                            params.param6,
-                            params.param7);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormMember),
+                            true, params.param1, params.param2, params.param3, params.param4, params.param5,
+                            params.param6, params.param7);
 }
 
 void FormationController::_sendStop(Vehicle* vehicle, bool allMembers)
@@ -317,16 +310,9 @@ void FormationController::_sendStop(Vehicle* vehicle, bool allMembers)
     stop.allMembers = allMembers;
 
     const FormationProtocol::CommandParams params = FormationProtocol::formStopParams(stop);
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormStop),
-                            true,
-                            params.param1,
-                            params.param2,
-                            params.param3,
-                            params.param4,
-                            params.param5,
-                            params.param6,
-                            params.param7);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), static_cast<MAV_CMD>(FormationProtocol::kMavCmdFormStop),
+                            true, params.param1, params.param2, params.param3, params.param4, params.param5,
+                            params.param6, params.param7);
 }
 
 void FormationController::_onTimeout()
@@ -338,10 +324,7 @@ void FormationController::_onTimeout()
     }
 }
 
-void FormationController::_onVehicleText(int sysid,
-                                         int componentid,
-                                         int severity,
-                                         const QString& text,
+void FormationController::_onVehicleText(int sysid, int componentid, int severity, const QString& text,
                                          const QString& description)
 {
     Q_UNUSED(sysid)

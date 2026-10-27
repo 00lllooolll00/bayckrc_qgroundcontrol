@@ -11,9 +11,9 @@ import QGroundControl.Controls
 Item {
     id: panel
 
-    width: ScreenTools.defaultFontPixelWidth * 36
+    width: ScreenTools.defaultFontPixelWidth * 44
     implicitWidth: width
-    implicitHeight: Math.min(content.implicitHeight, ScreenTools.defaultFontPixelHeight * 26)
+    implicitHeight: Math.min(content.implicitHeight, ScreenTools.defaultFontPixelHeight * 30)
 
     property var  _controller: QGroundControl.formationController
     property var  _model:      _controller.model
@@ -24,6 +24,9 @@ Item {
     readonly property real _pad: ScreenTools.defaultFontPixelWidth
     readonly property real _rowPad: ScreenTools.defaultFontPixelHeight * 0.28
     readonly property real _radius: ScreenTools.defaultBorderRadius
+    // 动作卡内宽 = content.width - 2*pad，两个按钮中间再留 1 个 pad。
+    readonly property real _actionButtonWidth:
+        Math.max(0, (content.width - _pad * 3) * 0.5)
 
     // 机上 formation_phase_e：Idle / Waiting / Streaming / Frozen
     readonly property var _memberPhaseNames: [qsTr("Idle"), qsTr("Waiting"),
@@ -80,7 +83,8 @@ Item {
     QGCPalette { id: qgcPal }
 
     Timer {
-        interval: 1000
+        // 实时位置点跟随遥测 5Hz 刷新，避免一秒才跳一次。
+        interval: 200
         running: true
         repeat: true
         onTriggered: {
@@ -341,7 +345,7 @@ Item {
                         }
                         Item { Layout.fillWidth: true }
                         QGCLabel {
-                            text: qsTr("%1 in formation").arg(panel._model.sysids.length)
+                            text: qsTr("%1 in formation").arg(panel._model.formationMemberCount())
                             color: qgcPal.text
                             opacity: 0.45
                         }
@@ -359,7 +363,7 @@ Item {
                             required property int formationFlags
 
                             readonly property bool leaving: (formationFlags & 0x01) !== 0
-                            readonly property bool leader: (formationFlags & 0x04) !== 0
+                            readonly property bool leader: online && !leaving && sysid === panel._leaderSysid
                             readonly property bool selected: sysid === panel._selectedMember
 
                             Layout.fillWidth: true
@@ -486,70 +490,93 @@ Item {
                         opacity: 0.6
                     }
 
-                    RowLayout {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: panel._pad
+                        spacing: panel._pad * 0.5
 
-                        QGCButton {
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Apply")
-                            primary: true
-                            enabled: panel._canApply
-                            onClicked: panel._controller.apply(panel._vehicles)
-                        }
-                        QGCButton {
-                            Layout.fillWidth: true
-                            text: qsTr("Stop")
-                            enabled: panel._controller.phase === 2 || panel._controller.phase === 1
-                            onClicked: panel._controller.stop(panel._vehicles, true)
-                        }
-                    }
+                            spacing: panel._pad
 
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: panel._pad
-                        rowSpacing: panel._pad * 0.5
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Apply")
+                                primary: true
+                                enabled: panel._canApply
+                                onClicked: panel._controller.apply(panel._vehicles)
+                            }
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Stop")
+                                enabled: panel._controller.phase === 2 || panel._controller.phase === 1
+                                onClicked: panel._controller.stop(panel._vehicles, true)
+                            }
+                        }
 
-                        QGCButton {
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Match online")
-                            onClicked: panel._model.matchOnline(panel._vehicles)
+                            spacing: panel._pad
+
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Match online")
+                                onClicked: panel._model.matchOnline(panel._vehicles)
+                            }
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Takeoff all")
+                                enabled: panel._controller.phase !== 1 && panel._onlineCount > 0
+                                onClicked: panel._controller.takeoffAll(panel._vehicles)
+                            }
                         }
-                        QGCButton {
+
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Takeoff all")
-                            enabled: panel._controller.phase !== 1 && panel._onlineCount > 0
-                            onClicked: panel._controller.takeoffAll(panel._vehicles)
+                            spacing: panel._pad
+
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Land all")
+                                enabled: panel._onlineCount > 0
+                                onClicked: panel._controller.landAll(panel._vehicles)
+                            }
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Kick")
+                                enabled: panel._selectedMember > 0 && panel._selectedOnline
+                                         && !panel._selectedLeaving && panel._controller.phase !== 1
+                                onClicked: panel._controller.kick(panel._vehicles, panel._selectedMember)
+                            }
                         }
-                        QGCButton {
+
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Land all")
-                            enabled: panel._onlineCount > 0
-                            onClicked: panel._controller.landAll(panel._vehicles)
-                        }
-                        QGCButton {
-                            Layout.fillWidth: true
-                            text: qsTr("Kick")
-                            enabled: panel._selectedMember > 0 && panel._selectedOnline
-                                     && !panel._selectedLeaving && panel._controller.phase !== 1
-                            onClicked: panel._controller.kick(panel._vehicles, panel._selectedMember)
-                        }
-                        QGCButton {
-                            Layout.fillWidth: true
-                            text: qsTr("Rejoin")
-                            enabled: panel._selectedMember > 0 && panel._selectedOnline
-                                     && panel._selectedLeaving
-                            onClicked: panel._controller.rejoin(panel._vehicles, panel._selectedMember)
-                        }
-                        QGCButton {
-                            Layout.fillWidth: true
-                            text: qsTr("Leader focus")
-                            enabled: panel._leaderSysid > 0 && panel._vehicleById(panel._leaderSysid) !== null
-                            onClicked: {
-                                var v = panel._vehicleById(panel._leaderSysid)
-                                if (v) {
-                                    QGroundControl.multiVehicleManager.activeVehicle = v
+                            spacing: panel._pad
+
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Rejoin")
+                                enabled: panel._selectedMember > 0 && panel._selectedOnline
+                                         && panel._selectedLeaving
+                                onClicked: panel._controller.rejoin(panel._vehicles, panel._selectedMember)
+                            }
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Leader focus")
+                                enabled: panel._leaderSysid > 0 && panel._vehicleById(panel._leaderSysid) !== null
+                                onClicked: {
+                                    var v = panel._vehicleById(panel._leaderSysid)
+                                    if (v) {
+                                        QGroundControl.multiVehicleManager.activeVehicle = v
+                                    }
                                 }
                             }
                         }

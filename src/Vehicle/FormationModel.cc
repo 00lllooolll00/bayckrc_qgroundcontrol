@@ -1,37 +1,36 @@
 #include "FormationModel.h"
 
+#include <QVariantMap>
 #include <QtMath>
-
 #include <algorithm>
 #include <cmath>
-
-#include <QVariantMap>
 
 #include "FormationShape.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-FormationModel::FormationModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
-}
+FormationModel::FormationModel(QObject* parent) : QAbstractListModel(parent) {}
 
-int FormationModel::rowCount(const QModelIndex &parent) const
+int FormationModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : _members.count();
 }
 
-QVariant FormationModel::data(const QModelIndex &index, int role) const
+QVariant FormationModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= _members.count()) {
         return {};
     }
 
-    const Member &member = _members[index.row()];
+    const Member& member = _members[index.row()];
     switch (role) {
         case SysidRole:
             return member.sysid;
         case RoleRole:
+            // formation_id 为 0 表示已停止/退出编队；不能再显示成 Follower。
+            if (member.formationId == 0) {
+                return QStringLiteral("Idle");
+            }
             // LEAVING 优先于 LEADER：被踢的领机也不能继续显示为领机。
             if (member.flags & 0x01) {
                 return QStringLiteral("Leaving");
@@ -57,18 +56,12 @@ QVariant FormationModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> FormationModel::roleNames() const
 {
     return {
-        { SysidRole, "sysid" },
-        { RoleRole, "role" },
-        { OnlineRole, "online" },
-        { PositionRole, "position" },
-        { PhaseRole, "phase" },
-        { LeaderIdRole, "leaderId" },
-        { FlagsRole, "formationFlags" },
-        { BatteryRole, "battery" },
+        {SysidRole, "sysid"}, {RoleRole, "role"},         {OnlineRole, "online"},        {PositionRole, "position"},
+        {PhaseRole, "phase"}, {LeaderIdRole, "leaderId"}, {FlagsRole, "formationFlags"}, {BatteryRole, "battery"},
     };
 }
 
-void FormationModel::matchOnline(QmlObjectListModel *vehicles)
+void FormationModel::matchOnline(QmlObjectListModel* vehicles)
 {
     if (!vehicles) {
         return;
@@ -76,7 +69,7 @@ void FormationModel::matchOnline(QmlObjectListModel *vehicles)
 
     QList<int> online;
     for (int i = 0; i < vehicles->count(); ++i) {
-        Vehicle *vehicle = vehicles->value<Vehicle *>(i);
+        Vehicle* vehicle = vehicles->value<Vehicle*>(i);
         if (_isMaplrs(vehicle)) {
             online.append(vehicle->id());
         }
@@ -96,7 +89,7 @@ void FormationModel::matchOnline(QmlObjectListModel *vehicles)
     }
 
     QHash<int, Member> old;
-    for (const Member &member : _members) {
+    for (const Member& member : _members) {
         old.insert(member.sysid, member);
     }
 
@@ -148,8 +141,9 @@ void FormationModel::markLeaving(int sysid)
     if (row < 0) {
         return;
     }
-    Member &member = _members[row];
+    Member& member = _members[row];
     member.flags |= 0x01;
+    member.flags &= ~0x04;
     member.position = -1;
     member.phase = 0;
     member.leaderId = 0;
@@ -163,7 +157,7 @@ void FormationModel::markRejoining(int sysid)
     if (row < 0) {
         return;
     }
-    Member &member = _members[row];
+    Member& member = _members[row];
     member.flags &= ~0x01;
     member.position = -1;
     member.phase = 0;
@@ -190,7 +184,7 @@ void FormationModel::updateStatus(int sysid, int position, int phase, int leader
         return;
     }
 
-    Member &member = _members[row];
+    Member& member = _members[row];
     const bool wasOnline = member.online;
     const bool wasLeaving = (member.flags & 0x01) != 0;
     member.position = position;
@@ -201,7 +195,7 @@ void FormationModel::updateStatus(int sysid, int position, int phase, int leader
     member.online = true;
     // 本机刚执行 Kick 时，机上可能还在回旧的“非 LEAVING”状态；保留本地
     // LEAVING，避免角色/按钮在命令生效前闪回 Follower。Rejoin 会先清本地位。
-    if (wasLeaving && !(flags & 0x01)) {
+    if (formationId != 0 && wasLeaving && !(flags & 0x01)) {
         member.flags |= 0x01;
     }
     _emitRowChanged(row);
@@ -241,9 +235,9 @@ bool FormationModel::validate() const
 int FormationModel::leaderSysid() const
 {
     int leader = 0;
-    for (const Member &member : _members) {
-        if ((member.flags & 0x04) && member.online && !(member.flags & 0x01)
-            && (leader == 0 || member.sysid < leader)) {
+    for (const Member& member : _members) {
+        if ((member.flags & 0x04) && member.online && !(member.flags & 0x01) &&
+            (leader == 0 || member.sysid < leader)) {
             leader = member.sysid;
         }
     }
@@ -252,19 +246,19 @@ int FormationModel::leaderSysid() const
     }
     const int overrideRow = _rowForSysid(_leaderOverride);
     if (_leaderOverride != 0 && overrideRow >= 0) {
-        const Member &override = _members[overrideRow];
+        const Member& override = _members[overrideRow];
         if (override.online && !(override.flags & 0x01)) {
             return _leaderOverride;
         }
     }
     // 有些固件只上报 leaderId 未置 LEADER 位；只要 leaderId 仍是当前在线成员，也能聚焦。
-    for (const Member &member : _members) {
+    for (const Member& member : _members) {
         const int leaderRow = _rowForSysid(member.leaderId);
         if (!member.online || (member.flags & 0x01)) {
             continue;
         }
-        if (member.leaderId > 0 && leaderRow >= 0 && _members[leaderRow].online
-            && !(_members[leaderRow].flags & 0x01)) {
+        if (member.leaderId > 0 && leaderRow >= 0 && _members[leaderRow].online &&
+            !(_members[leaderRow].flags & 0x01)) {
             return member.leaderId;
         }
     }
@@ -278,7 +272,7 @@ QVariantList FormationModel::positions() const
         FormationShape::slotPolar(static_cast<FormationShape::Shape>(_shape), count, _spacingM, _vAngleDeg);
 
     QVariantList out;
-    for (const FormationShape::SlotPolar &slot : polar) {
+    for (const FormationShape::SlotPolar& slot : polar) {
         const double angleRad = qDegreesToRadians(slot.angleDeg);
         QVariantMap map;
         map["distance"] = slot.distanceM;
@@ -293,12 +287,23 @@ QVariantList FormationModel::positions() const
 QVariantList FormationModel::sysids() const
 {
     QVariantList out;
-    for (const Member &member : _members) {
+    for (const Member& member : _members) {
         if (member.sysid > 0) {
             out.append(member.sysid);
         }
     }
     return out;
+}
+
+int FormationModel::formationMemberCount() const
+{
+    int count = 0;
+    for (const Member& member : _members) {
+        if (member.online && !(member.flags & 0x01) && member.formationId != 0) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 void FormationModel::setShape(int shape)
@@ -356,7 +361,7 @@ void FormationModel::setFormationId(int formationId)
     emit configChanged();
 }
 
-bool FormationModel::_isMaplrs(Vehicle *vehicle)
+bool FormationModel::_isMaplrs(Vehicle* vehicle)
 {
     return vehicle != nullptr && vehicle->maplrsFirmware();
 }
@@ -373,7 +378,7 @@ void FormationModel::_emitRowChanged(int row)
 int FormationModel::_activeMemberCount() const
 {
     int count = 0;
-    for (const Member &member : _members) {
+    for (const Member& member : _members) {
         if (member.online && !(member.flags & 0x01)) {
             ++count;
         }
