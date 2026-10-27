@@ -9199,7 +9199,25 @@ VTOL</translation>
       <source>Land selected vehicles at their current positions</source>
       <translation>所选载具原地降落</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="37"/>
+      <source>Return (MV)</source>
+      <translation>返航（多机）</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/GuidedActionsController.qml" line="65"/>
+      <source>Return selected vehicles to home; INAV lands and disarms after RTH</source>
+      <translation>所选载具返航；INAV 在 RTH 后自动降落并上锁</translation>
+    </message>
 </context>
+  <context>
+    <name>FlyViewWidgetLayer</name>
+    <message>
+      <location filename="../src/FlyView/FlyViewWidgetLayer.qml" line="174"/>
+      <source>Trajectory</source>
+      <translation>轨迹</translation>
+    </message>
+  </context>
   <context>
     <name>HeightIndicator</name>
     <message>

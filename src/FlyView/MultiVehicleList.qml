@@ -31,7 +31,8 @@ Item {
     function disarmAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
-            if (vehicle.armed === true) {
+            // 与单机 Disarm 一致：只有地面上的已解锁载具允许上锁。
+            if (vehicle.armed === true && vehicle.flying === false) {
                 return true
             }
         }
@@ -61,6 +62,18 @@ Item {
     function landAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             if (selectedVehicles.get(i).armed === true) {
+                return true
+            }
+        }
+        return false
+    }
+
+    function rtlAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (vehicle.armed === true && vehicle.flying === true && vehicle.supports.guidedMode &&
+                vehicle.flightMode !== vehicle.rtlFlightMode &&
+                vehicle.flightMode !== vehicle.landFlightMode) {
                 return true
             }
         }

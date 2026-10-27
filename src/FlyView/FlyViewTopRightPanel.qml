@@ -186,6 +186,15 @@ Rectangle {
                             }
 
                             QGCButton {
+                                text:                  qsTr("Return")
+                                enabled:               multiVehicleList.rtlAvailable()
+                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVRTL)
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
+                                leftPadding:           0
+                                rightPadding:          0
+                            }
+
+                            QGCButton {
                                 text:                  qsTr("Start")
                                 enabled:               multiVehicleList.startAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVStartMission)

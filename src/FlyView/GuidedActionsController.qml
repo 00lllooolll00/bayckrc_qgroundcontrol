@@ -34,6 +34,7 @@ Item {
     readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
     readonly property string mvTakeoffTitle:                qsTr("Takeoff (MV)")
     readonly property string mvLandTitle:                   qsTr("Land (MV)")
+    readonly property string mvRTLTitle:                    qsTr("Return (MV)")
     readonly property string continueMissionTitle:          qsTr("Continue Mission")
     readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
     readonly property string pauseTitle:                    qsTr("Pause")
@@ -61,6 +62,7 @@ Item {
     readonly property string takeoffMessage:                    qsTr("Takeoff and hold position")
     readonly property string mvTakeoffMessage:                  qsTr("Arm and takeoff selected vehicles")
     readonly property string mvLandMessage:                     qsTr("Land selected vehicles at their current positions")
+    readonly property string mvRTLMessage:                      qsTr("Return selected vehicles to home; INAV lands and disarms after RTH")
     readonly property string startMissionMessage:               qsTr("Takeoff and start the current mission")
     readonly property string mvStartMissionMessage:             qsTr("Takeoff and start the current mission for selected vehicles")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint")
@@ -114,6 +116,7 @@ Item {
     readonly property int actionChangeLoiterRadius:         30
     readonly property int actionMVTakeoff:                  31
     readonly property int actionMVLand:                     32
+    readonly property int actionMVRTL:                      33
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -416,6 +419,10 @@ Item {
             confirmDialog.title = mvLandTitle
             confirmDialog.message = mvLandMessage
             break
+        case actionMVRTL:
+            confirmDialog.title = mvRTLTitle
+            confirmDialog.message = mvRTLMessage
+            break
         case actionForceArm:
             confirmDialog.title = forceArmTitle
             confirmDialog.message = forceArmMessage
@@ -624,6 +631,18 @@ Item {
                 }
             }
             break
+        case actionMVRTL:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                var rtlVehicle = selectedVehicles.get(i)
+                // RTH 默认包含最终降落和落地解锁；AIR 先退出编队。
+                if (rtlVehicle.armed === true && rtlVehicle.flying === true && rtlVehicle.supports.guidedMode &&
+                    rtlVehicle.flightMode !== rtlVehicle.rtlFlightMode &&
+                    rtlVehicle.flightMode !== rtlVehicle.landFlightMode) {
+                    rtlVehicle.guidedModeRTL(false)
+                }
+            }
+            break
         case actionArm:
             _activeVehicle.armed = true
             break
@@ -642,7 +661,11 @@ Item {
         case actionMVDisarm:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
-                selectedVehicles.get(i).armed = false
+                var disarmVehicle = selectedVehicles.get(i)
+                // 多机上锁也只作用于地面载具，避免空中误上锁。
+                if (disarmVehicle.armed === true && disarmVehicle.flying === false) {
+                    disarmVehicle.armed = false
+                }
             }
             break
         case actionEmergencyStop:
