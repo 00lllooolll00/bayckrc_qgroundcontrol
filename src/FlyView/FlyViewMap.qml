@@ -19,9 +19,10 @@ FlightMap {
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
-    property Item   pipView
-    property Item   pipState:                   _pipState
-    property var    rightPanelWidth
+    property Item    pipView
+    property Item    pipState:                 _pipState
+    property bool    showTrajectory:           true
+    property var     rightPanelWidth
     property var    planMasterController
     property bool   pipMode:                    false   // true: map is shown in a small pip mode
     property var    toolInsets                          // Insets for the center viewport area
@@ -242,7 +243,7 @@ FlightMap {
         line.width: 3
         line.color: "red"
         z:          QGroundControl.zOrderTrajectoryLines
-        visible:    !pipMode
+        visible:    !pipMode && _root.showTrajectory
 
         Connections {
             target:                 QGroundControl.multiVehicleManager

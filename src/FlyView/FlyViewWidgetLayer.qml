@@ -171,6 +171,17 @@ Item {
         z:                  QGroundControl.zOrderTopMost
     }
 
+    QGCCheckBox {
+        id:                 trajectoryToggle
+        anchors.left:       parent.left
+        anchors.bottom:     parent.bottom
+        anchors.margins:    _layoutMargin
+        z:                  QGroundControl.zOrderWidgets
+        text:               qsTr("Trajectory")
+        checked:            mapControl ? mapControl.showTrajectory : false
+        onClicked:          if (mapControl) mapControl.showTrajectory = checked
+    }
+
     MapScale {
         id:                 mapScale
         anchors.left:       toolStrip.right
