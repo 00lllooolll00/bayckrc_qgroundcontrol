@@ -6,9 +6,9 @@ UT_REGISTER_TEST(FormationProtocolTest)
 
 void FormationProtocolTest::_constants()
 {
-    QCOMPARE(FormationProtocol::kMavCmdFormStop, 31011);
-    QCOMPARE(FormationProtocol::kMavCmdFormConfig, 31012);
-    QCOMPARE(FormationProtocol::kMavCmdFormMember, 31013);
+    QCOMPARE(FormationProtocol::kMavCmdFormStop, 31022);
+    QCOMPARE(FormationProtocol::kMavCmdFormConfig, 31020);
+    QCOMPARE(FormationProtocol::kMavCmdFormMember, 31021);
     QCOMPARE(FormationProtocol::kProtocolVersion, 2);
     QCOMPARE(FormationProtocol::kMaxShape, static_cast<uint8_t>(3));
     QCOMPARE(FormationProtocol::kMinSpacingM, 3.0f);

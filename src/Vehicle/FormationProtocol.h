@@ -9,10 +9,10 @@
 
 namespace FormationProtocol {
 
-// 与 MAVLink common.xml 的 MAV_CMD_USER_2..4 同值
-constexpr int kMavCmdFormStop = 31011;    // USER_2
-constexpr int kMavCmdFormConfig = 31012;  // USER_3
-constexpr int kMavCmdFormMember = 31013;  // USER_4
+// 与 bayckrc.xml 的 MAV_CMD_FORM_* 同值
+constexpr int kMavCmdFormConfig = 31020;  // MAV_CMD_FORM_CONFIG
+constexpr int kMavCmdFormMember = 31021;  // MAV_CMD_FORM_MEMBER
+constexpr int kMavCmdFormStop = 31022;    // MAV_CMD_FORM_STOP
 
 constexpr int kProtocolVersion = 2;
 
