@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<mavlink>
+  <include>all.xml</include>
+  <dialect>8</dialect>
+
+  <enums>
+    <enum name="MAV_CMD">
+      <entry value="31020" name="MAV_CMD_FORM_CONFIG" hasLocation="false" isDestination="false">
+        <description>Configure formation parameters for this vehicle.</description>
+        <param index="1" label="Formation ID" minValue="1" maxValue="65535" increment="1">Formation id, 0 reserved.</param>
+        <param index="2" label="Shape" minValue="0" maxValue="3" increment="1">0 Line, 1 Vee, 2 Column, 3 Grid.</param>
+        <param index="3" label="Spacing" units="m" minValue="3" maxValue="500">Formation spacing.</param>
+        <param index="4" label="V Angle" units="deg" minValue="0" maxValue="90">V shape angle.</param>
+        <param index="5" label="Leader Override" minValue="0" maxValue="255" increment="1">0 auto, otherwise node id.</param>
+        <param index="6" label="Enabled" minValue="0" maxValue="1" increment="1">0 disable, 1 enable.</param>
+        <param index="7">Reserved.</param>
+      </entry>
+
+      <entry value="31021" name="MAV_CMD_FORM_MEMBER" hasLocation="false" isDestination="false">
+        <description>Join or leave a formation.</description>
+        <param index="1" label="Formation ID" minValue="1" maxValue="65535" increment="1">Formation id.</param>
+        <param index="2" label="Join" minValue="0" maxValue="1" increment="1">0 leave, 1 join.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+
+      <entry value="31022" name="MAV_CMD_FORM_STOP" hasLocation="false" isDestination="false">
+        <description>Stop formation.</description>
+        <param index="1" label="Formation ID" minValue="0" maxValue="65535" increment="1">Formation id.</param>
+        <param index="2" label="All Members" minValue="0" maxValue="1" increment="1">0 match id, 1 all.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+    </enum>
+  </enums>
+
+  <messages>
+  </messages>
+</mavlink>

@@ -46,6 +46,14 @@ CPMAddPackage(
 
 qgc_require_cpm_added(mavlink)
 
+# bayckrc_all includes all.xml and adds the formation MAV_CMD entries.
+# Copy it into the local mavlink submodule before mavgen's custom command runs.
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/bayckrc_all.xml"
+    "${mavlink_SOURCE_DIR}/message_definitions/v1.0/bayckrc_all.xml"
+    COPYONLY
+)
+
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
 target_include_directories(${CMAKE_PROJECT_NAME}
                            PRIVATE ${mavlink_BINARY_DIR}/include/mavlink
