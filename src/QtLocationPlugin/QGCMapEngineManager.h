@@ -63,6 +63,11 @@ public:
     Q_INVOKABLE void startDownload(const QString &name, const QString &mapType);
     Q_INVOKABLE void updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString &mapName);
 
+    /// Localized display name for an internal provider name; unknown values returned unchanged
+    Q_INVOKABLE QString mapProviderDisplayName(const QString &provider) const;
+    /// Localized display name for an internal map type; unknown values returned unchanged
+    Q_INVOKABLE QString mapTypeDisplayName(const QString &type) const;
+
     Q_INVOKABLE static QString loadSetting(const QString &key, const QString &defaultValue);
     Q_INVOKABLE static QStringList mapTypeList(const QString &provider);
     Q_INVOKABLE static void saveSetting(const QString &key, const QString &value);

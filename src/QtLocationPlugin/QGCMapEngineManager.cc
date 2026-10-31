@@ -3,6 +3,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QStorageInfo>
@@ -201,6 +202,64 @@ QStringList QGCMapEngineManager::mapTypeList(const QString &provider)
     (void) mapStringList.removeDuplicates();
 
     return mapStringList;
+}
+
+QString QGCMapEngineManager::mapProviderDisplayName(const QString &provider) const
+{
+    const QHash<QString, QString> displayNames {
+        { u"Bing"_s, tr("Bing") },
+        { u"Google"_s, tr("Google") },
+        { u"Esri"_s, tr("Esri") },
+        { u"Mapbox"_s, tr("Mapbox") },
+        { u"Amap"_s, tr("Amap") },
+        { u"TianDiTu"_s, tr("TianDiTu") },
+        { u"Japan-GSI"_s, tr("Japan-GSI") },
+        { u"LINZ"_s, tr("LINZ") },
+        { u"Statkart"_s, tr("Statkart") },
+        { u"Svalbard"_s, tr("Svalbard") },
+        { u"Eniro"_s, tr("Eniro") },
+        { u"MapQuest"_s, tr("MapQuest") },
+        { u"VWorld"_s, tr("VWorld") },
+        { u"OpenStreetMap"_s, tr("OpenStreetMap") },
+        { u"OpenAIP"_s, tr("OpenAIP") },
+        { u"CustomURL"_s, tr("CustomURL") },
+        { u"Custom"_s, tr("Custom") },
+    };
+    return displayNames.value(provider, provider);
+}
+
+QString QGCMapEngineManager::mapTypeDisplayName(const QString &type) const
+{
+    const QHash<QString, QString> displayNames {
+        { u"Road"_s, tr("Road") },
+        { u"Satellite"_s, tr("Satellite") },
+        { u"Hybrid"_s, tr("Hybrid") },
+        { u"Street Map"_s, tr("Street Map") },
+        { u"Labels"_s, tr("Labels") },
+        { u"Terrain"_s, tr("Terrain") },
+        { u"World Street"_s, tr("World Street") },
+        { u"World Satellite"_s, tr("World Satellite") },
+        { u"Streets"_s, tr("Streets") },
+        { u"StreetsBasic"_s, tr("StreetsBasic") },
+        { u"Light"_s, tr("Light") },
+        { u"Dark"_s, tr("Dark") },
+        { u"Bright"_s, tr("Bright") },
+        { u"Outdoors"_s, tr("Outdoors") },
+        { u"Custom"_s, tr("Custom") },
+        { u"Contour"_s, tr("Contour") },
+        { u"Seamless"_s, tr("Seamless") },
+        { u"Anaglyph"_s, tr("Anaglyph") },
+        { u"Slope"_s, tr("Slope") },
+        { u"Relief"_s, tr("Relief") },
+        { u"Basemap"_s, tr("Basemap") },
+        { u"Topo"_s, tr("Topo") },
+        { u"Map"_s, tr("Map") },
+        { u"Sat"_s, tr("Sat") },
+        { u"Satellite Map"_s, tr("Satellite Map") },
+        { u"OpenStreetMap"_s, tr("OpenStreetMap") },
+        { u"OpenAIP"_s, tr("OpenAIP") },
+    };
+    return displayNames.value(type, type);
 }
 
 void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet *tileSet)

@@ -26,7 +26,7 @@ class AmapRoadProvider : public AmapProvider
 public:
     AmapRoadProvider()
         : AmapProvider(
-            QObject::tr("Amap Road"),
+            QStringLiteral("Amap Road"),
             QStringLiteral("png"),
             AVERAGE_AMAP_STREET_MAP,
             MapProvider::StreetMap,
@@ -38,7 +38,7 @@ class AmapSatelliteProvider : public AmapProvider
 public:
     AmapSatelliteProvider()
         : AmapProvider(
-            QObject::tr("Amap Satellite"),
+            QStringLiteral("Amap Satellite"),
             QStringLiteral("jpg"),
             AVERAGE_AMAP_SAT_MAP,
             MapProvider::SatelliteMapDay,

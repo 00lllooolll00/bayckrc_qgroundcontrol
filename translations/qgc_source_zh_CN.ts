@@ -17298,6 +17298,211 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <source>Failed to start import task</source>
       <translation>启动导入任务失败</translation>
     </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Bing</source>
+      <translation>必应</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Google</source>
+      <translation>谷歌</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Esri</source>
+      <translation>Esri</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Mapbox</source>
+      <translation>Mapbox</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Amap</source>
+      <translation>高德</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>TianDiTu</source>
+      <translation>天地图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Japan-GSI</source>
+      <translation>日本国土地理院</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>LINZ</source>
+      <translation>LINZ</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Statkart</source>
+      <translation>挪威地形图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Svalbard</source>
+      <translation>斯瓦尔巴</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Eniro</source>
+      <translation>Eniro</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>MapQuest</source>
+      <translation>MapQuest</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>VWorld</source>
+      <translation>VWorld</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>OpenStreetMap</source>
+      <translation>开放街图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>OpenAIP</source>
+      <translation>开放航空图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>CustomURL</source>
+      <translation>自定义 URL</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Custom</source>
+      <translation>自定义</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Road</source>
+      <translation>道路</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Satellite</source>
+      <translation>卫星</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Hybrid</source>
+      <translation>混合</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Street Map</source>
+      <translation>街道图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Labels</source>
+      <translation>标注</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Terrain</source>
+      <translation>地形</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>World Street</source>
+      <translation>世界街道</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>World Satellite</source>
+      <translation>世界卫星</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Streets</source>
+      <translation>街道</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>StreetsBasic</source>
+      <translation>基础街道</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Light</source>
+      <translation>浅色</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Dark</source>
+      <translation>深色</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Bright</source>
+      <translation>明亮</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Outdoors</source>
+      <translation>户外</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Contour</source>
+      <translation>等高线</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Seamless</source>
+      <translation>无缝</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Anaglyph</source>
+      <translation>红蓝立体</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Slope</source>
+      <translation>坡度</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Relief</source>
+      <translation>地貌</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Basemap</source>
+      <translation>底图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Topo</source>
+      <translation>地形图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Map</source>
+      <translation>地图</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Sat</source>
+      <translation>卫星</translation>
+    </message>
+    <message>
+      <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc"/>
+      <source>Satellite Map</source>
+      <translation>卫星图</translation>
+    </message>
   </context>
   <context>
     <name>QGCMapPolygon</name>
