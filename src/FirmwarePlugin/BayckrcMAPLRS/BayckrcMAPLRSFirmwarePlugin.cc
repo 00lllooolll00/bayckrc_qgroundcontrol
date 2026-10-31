@@ -176,7 +176,7 @@ void BayckrcMAPLRSFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double tak
     // MAV_CMD_NAV_TAKEOFF — INAV refuses to arm while the throttle channel is high, and the GND
     // command slot is single-slot (a later COMMAND_LONG overwrites an earlier one), so the two
     // commands must never be sent back-to-back.
-    _armAndWait(vehicle, 3000, [vehicle, altitudeRel](bool armedOk) {
+    _armAndWait(vehicle, 5000, [vehicle, altitudeRel](bool armedOk) {
         if (!armedOk) {
             QGC::showAppMessage(BayckrcMAPLRSFirmwarePlugin::tr("Unable to start takeoff: Vehicle failed to arm."));
             return;
