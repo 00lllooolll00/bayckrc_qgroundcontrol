@@ -27,6 +27,13 @@ jobs:
         with:
           persist-credentials: false
 
+      # pseudo_loc.py needs defusedxml (tools/pyproject.toml "scripts" extra);
+      # the runner's system python3 does not have it.
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: scripts
+
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
