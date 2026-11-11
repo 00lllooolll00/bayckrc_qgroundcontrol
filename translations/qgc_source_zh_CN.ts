@@ -7737,6 +7737,11 @@ VTOL</translation>
       <source>Land</source>
       <translation>降落</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="189"/>
+      <source>Return</source>
+      <translation>返航</translation>
+    </message>
 </context>
   <context>
     <name>FlyViewVideo</name>
