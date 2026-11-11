@@ -5,16 +5,16 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-// 编队小地图：以领机为原点、固定方向（北向上、东向右），不随领机机头旋转。
-// 空心圈 = 队形槽位（数字 = 槽位号）；箭头 = 飞机实时位置与机头；
+// 编队小地图：以领机为原点、正北朝上。
+// 空心圈 = 队形预计槽位（数字 = 槽位号）；箭头 = 飞机实时位置与绝对航向；
 // 金色箭头 + 星标 = 领机；槽位到飞机的连线颜色表示偏差大小。
-// 比例尺自动适配全部槽位与飞机，不提供平移/缩放，避免与外层面板滚动冲突。
+// 槽位 forward/right 就是世界系北/东，不随领机实时朝向旋转。
 Item {
     id: root
 
-    // [{north, east}]，下标即槽位号，槽 0 = 领机；已按领机机头旋转到北/东
+    // [{forward, right, distance, angle}]，forward=北、right=东；下标即槽位号，槽 0 = 领机
     property var  slots: []
-    // FormationModel.liveLayout() 的输出：[{sysid, north, east, heading(绝对机头), ...}]
+    // FormationModel.liveLayout() 的输出：[{sysid, north, east, heading(绝对), ...}]
     property var  members: []
     property int  selectedSysid: -1
     property int  leaderSysid: 0
@@ -29,7 +29,7 @@ Item {
     readonly property real _extentM: {
         var extent = _minExtentM
         for (var i = 0; i < slots.length; i++) {
-            extent = Math.max(extent, Math.hypot(slots[i].north, slots[i].east))
+            extent = Math.max(extent, Math.hypot(slots[i].forward, slots[i].right))
         }
         for (var j = 0; j < members.length; j++) {
             extent = Math.max(extent, Math.hypot(members[j].north, members[j].east))
@@ -143,12 +143,12 @@ Item {
                 var mem = root.members[m]
                 var slot = root._slotFor(mem.position)
                 if (!slot || mem.leaving || !mem.online) continue
-                var err = Math.hypot(mem.north - slot.north, mem.east - slot.east)
+                var err = Math.hypot(mem.north - slot.forward, mem.east - slot.right)
                 ctx.strokeStyle = root._errorColor(err)
                 ctx.lineWidth = 1.5
                 ctx.globalAlpha = 0.8
                 ctx.beginPath()
-                ctx.moveTo(root._cx(slot.east), root._cy(slot.north))
+                ctx.moveTo(root._cx(slot.right), root._cy(slot.forward))
                 ctx.lineTo(root._cx(mem.east), root._cy(mem.north))
                 ctx.stroke()
             }
@@ -157,8 +157,8 @@ Item {
             // 槽位
             ctx.textAlign = "center"
             for (var i = 1; i < root.slots.length; i++) {
-                var sx = root._cx(root.slots[i].east)
-                var sy = root._cy(root.slots[i].north)
+                var sx = root._cx(root.slots[i].right)
+                var sy = root._cy(root.slots[i].forward)
                 ctx.beginPath()
                 ctx.arc(sx, sy, ScreenTools.defaultFontPixelHeight * 0.75, 0, Math.PI * 2)
                 ctx.setLineDash([3, 3])

@@ -68,11 +68,9 @@ public:
     Q_INVOKABLE QString validationError() const { return _lastError; }
 
     int leaderSysid() const;
-    /// 在线成员相对领机的实时位置，固定方向（北向上、东向右），供画布绘制。
+    /// 在线成员相对领机的世界系位置（北/东），供小地图绘制。
     /// 每项：sysid/north/east/heading(绝对机头)/isLeader/online/leaving/position。
     Q_INVOKABLE QVariantList liveLayout(QmlObjectListModel* vehicles) const;
-    /// 队形槽位按当前领机机头旋转到北/东，与 liveLayout 同坐标系；每项 north/east。
-    Q_INVOKABLE QVariantList slotLayout(QmlObjectListModel* vehicles) const;
     Q_INVOKABLE int formationMemberCount() const;
 
     QVariantList positions() const;

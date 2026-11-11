@@ -337,25 +337,6 @@ Vehicle* FormationModel::_resolveLeader(QmlObjectListModel* vehicles) const
     return leader;
 }
 
-QVariantList FormationModel::slotLayout(QmlObjectListModel* vehicles) const
-{
-    QVariantList out;
-    Vehicle* leader = _resolveLeader(vehicles);
-    const double leaderHeading = _headingOf(leader);
-
-    for (const QVariant& slot : positions()) {
-        const QVariantMap map = slot.toMap();
-        const FormationShape::NorthEastOffset ne =
-            FormationShape::northEastFromBodyOffset(map.value(QStringLiteral("forward")).toDouble(),
-                                                    map.value(QStringLiteral("right")).toDouble(), leaderHeading);
-        QVariantMap entry;
-        entry[QStringLiteral("north")] = ne.northM;
-        entry[QStringLiteral("east")] = ne.eastM;
-        out.append(entry);
-    }
-    return out;
-}
-
 QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
 {
     QVariantList out;

@@ -68,11 +68,6 @@ Item {
         void panel._tick
         return _model.liveLayout(_vehicles)
     }
-    readonly property var _slots: {
-        void panel._tick
-        void panel._model.positions
-        return _model.slotLayout(_vehicles)
-    }
     readonly property bool _canSetLeader:
         _selectedMember > 0 && _selectedOnline && !_selectedLeaving
         && _selectedMember !== _model.leaderOverride && panel._controller.phase !== 1
@@ -325,7 +320,7 @@ Item {
 
                         FormationCanvas {
                             anchors.fill: parent
-                            slots: panel._slots
+                            slots: panel._model.positions
                             members: panel._live
                             selectedSysid: panel._selectedMember
                             leaderSysid: panel._leaderSysid
