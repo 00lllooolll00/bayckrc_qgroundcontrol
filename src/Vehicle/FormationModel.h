@@ -21,9 +21,9 @@ public:
     enum Roles
     {
         SysidRole = Qt::UserRole + 1,
-        RoleRole,        // "Leader" / "Follower"
+        RoleRole,      // "Leader" / "Follower"
         OnlineRole,
-        PositionRole,    // 上报的位置索引；-1 未分配
+        PositionRole,  // 上报的位置索引；-1 未分配
         PhaseRole,
         LeaderIdRole,
         FlagsRole,
@@ -31,7 +31,7 @@ public:
     };
     Q_ENUM(Roles)
 
-    explicit FormationModel(QObject *parent = nullptr);
+    explicit FormationModel(QObject* parent = nullptr);
 
     Q_PROPERTY(QVariantList positions READ positions NOTIFY configChanged)
     Q_PROPERTY(QVariantList sysids READ sysids NOTIFY configChanged)
@@ -42,14 +42,17 @@ public:
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY configChanged)
     Q_PROPERTY(int formationId READ formationId WRITE setFormationId NOTIFY configChanged)
     Q_PROPERTY(bool formationActive READ formationActive NOTIFY formationActiveChanged)
+    Q_PROPERTY(int leaderSysid READ leaderSysid NOTIFY leaderChanged)
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE void matchOnline(QmlObjectListModel *vehicles);
+    Q_INVOKABLE void matchOnline(QmlObjectListModel* vehicles);
     Q_INVOKABLE void setActive(bool active);
+
     bool formationActive() const { return _active; }
+
     Q_INVOKABLE void markOffline(int sysid);
     /// 本机主动踢出：置 LEAVING 位并清掉位置/领机信息，避免行内残留旧状态。
     Q_INVOKABLE void markLeaving(int sysid);
@@ -61,17 +64,30 @@ public:
     Q_INVOKABLE bool isLeaving(int sysid) const;
     Q_INVOKABLE void updateStatus(int sysid, int position, int phase, int leaderId, int flags, int formationId);
     Q_INVOKABLE bool validate() const;
+
     Q_INVOKABLE QString validationError() const { return _lastError; }
-    Q_INVOKABLE int leaderSysid() const;
+
+    int leaderSysid() const;
+    /// 在线成员相对领机的实时位置，固定方向（北向上、东向右），供画布绘制。
+    /// 每项：sysid/north/east/heading(绝对机头)/isLeader/online/leaving/position。
+    Q_INVOKABLE QVariantList liveLayout(QmlObjectListModel* vehicles) const;
+    /// 队形槽位按当前领机机头旋转到北/东，与 liveLayout 同坐标系；每项 north/east。
+    Q_INVOKABLE QVariantList slotLayout(QmlObjectListModel* vehicles) const;
     Q_INVOKABLE int formationMemberCount() const;
 
     QVariantList positions() const;
     QVariantList sysids() const;
+
     int shape() const { return _shape; }
+
     double spacingM() const { return _spacingM; }
+
     double vAngleDeg() const { return _vAngleDeg; }
+
     int leaderOverride() const { return _leaderOverride; }
+
     bool enabled() const { return _enabled; }
+
     int formationId() const { return _formationId; }
 
     void setShape(int shape);
@@ -84,6 +100,7 @@ public:
 signals:
     void configChanged();
     void formationActiveChanged();
+    void leaderChanged();
 
 private:
     struct Member
@@ -98,13 +115,16 @@ private:
         double batteryPct = -1.0;
     };
 
-    static bool _isMaplrs(Vehicle *vehicle);
+    static bool _isMaplrs(Vehicle* vehicle);
     void _emitRowChanged(int row);
+    void _refreshLeader();
+    Vehicle* _resolveLeader(QmlObjectListModel* vehicles) const;
     int _activeMemberCount() const;
     int _rowForSysid(int sysid) const;
 
     QList<Member> _members;
     bool _active = false;
+    int _cachedLeader = 0;
     mutable QString _lastError;
 
     int _shape = 0;

@@ -178,41 +178,6 @@ void FormationController::rejoin(QmlObjectListModel* vehicles, int sysid)
     _sendMember(vehicle, static_cast<uint16_t>(_model->formationId()), true);
 }
 
-void FormationController::takeoffAll(QmlObjectListModel* vehicles)
-{
-    if (!vehicles) {
-        return;
-    }
-    for (int row = 0; row < _model->rowCount(); ++row) {
-        const int sysid = _model->data(_model->index(row, 0), FormationModel::SysidRole).toInt();
-        if (sysid <= 0) {
-            continue;
-        }
-        Vehicle* vehicle = _findVehicle(vehicles, sysid);
-        if (vehicle) {
-            vehicle->startTakeoff();
-        }
-    }
-}
-
-void FormationController::landAll(QmlObjectListModel* vehicles)
-{
-    if (!vehicles) {
-        return;
-    }
-    _model->setActive(false);
-    for (int row = 0; row < _model->rowCount(); ++row) {
-        const int sysid = _model->data(_model->index(row, 0), FormationModel::SysidRole).toInt();
-        if (sysid <= 0) {
-            continue;
-        }
-        Vehicle* vehicle = _findVehicle(vehicles, sysid);
-        if (vehicle) {
-            vehicle->guidedModeLand();
-        }
-    }
-}
-
 void FormationController::gotoLeader(QmlObjectListModel* vehicles, double latitude, double longitude, double altitude)
 {
     if (!vehicles) {

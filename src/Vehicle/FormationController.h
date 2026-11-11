@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
-
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FormationModel.h"
@@ -38,7 +37,9 @@ public:
     static FormationController* instance();
 
     FormationModel* model() const { return _model; }
+
     Phase phase() const { return _phase; }
+
     QString errorString() const { return _errorString; }
 
     /// 校验通过后逐机发 FORM_CONFIG；全部发完进入 Applying，靠状态回传转 Active。
@@ -49,10 +50,6 @@ public:
     Q_INVOKABLE void kick(QmlObjectListModel* vehicles, int sysid);
     /// 让成员重新加入：先补发当前 config，再发 FORM_MEMBER join。
     Q_INVOKABLE void rejoin(QmlObjectListModel* vehicles, int sysid);
-    /// 所有在线成员一起起飞。
-    Q_INVOKABLE void takeoffAll(QmlObjectListModel* vehicles);
-    /// 所有在线成员原地降落。
-    Q_INVOKABLE void landAll(QmlObjectListModel* vehicles);
     /// 只给领机下 GUIDED 目标，跟随者靠实时相对位置跟随。
     Q_INVOKABLE void gotoLeader(QmlObjectListModel* vehicles, double latitude, double longitude, double altitude);
     /// 解析 GND 转来的 STATUSTEXT（FORM:<node>,<position>,<phase>,<leader_id>,<flags>,<formation_id>）。

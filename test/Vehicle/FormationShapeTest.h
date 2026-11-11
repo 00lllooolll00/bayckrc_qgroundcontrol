@@ -11,11 +11,13 @@ public:
     explicit FormationShapeTest(QObject* parent = nullptr) : UnitTest(parent) {}
 
 private slots:
-    void _leaderSlotAtOrigin();      // 所有队形槽 0 都在原点
-    void _lineSymmetry();            // 横队左右镜像对称
-    void _veeSymmetry();             // 人字镜像对称且向后展开
-    void _columnRearwardSpaced();    // 纵队正后方等距
-    void _gridCount();               // 方阵槽位数正确且按 row-major 顺序
-    void _gridNoLeaderOverlap();     // 奇数/偶数 cols 下跟随槽不落在领机 (0,0)
-    void _invalidInput();            // 非法入参返回空表
+    void _leaderSlotAtOrigin();       // 所有队形槽 0 都在原点
+    void _lineSymmetry();             // 横队左右镜像对称
+    void _veeSymmetry();              // 人字镜像对称且向后展开
+    void _columnRearwardSpaced();     // 纵队正后方等距
+    void _gridCount();                // 方阵槽位数正确且按 row-major 顺序
+    void _gridNoLeaderOverlap();      // 奇数/偶数 cols 下跟随槽不落在领机 (0,0)
+    void _invalidInput();             // 非法入参返回空表
+    void _northEastFromBodyOffset();  // 机体坐标按领机机头旋转回北/东，与正向互逆
+    void _bodyOffsetFromNE();         // 北/东偏移按领机机头旋转到 forward/right
 };

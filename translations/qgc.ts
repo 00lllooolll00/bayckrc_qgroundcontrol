@@ -7737,115 +7737,208 @@ VTOL</source>
     </message>
 </context>
 <context>
+    <name>FormationCanvas</name>
+    <message>
+        <location filename="../src/FlyView/FormationCanvas.qml" line="138"/>
+        <source>N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationCanvas.qml" line="253"/>
+        <source>Waiting for vehicle positions</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FormationPanel</name>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Line Abreast</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="32"/>
+        <source>Idle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Wedge</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="32"/>
+        <source>Waiting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="33"/>
+        <source>Streaming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="33"/>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="34"/>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="34"/>
+        <source>V</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="34"/>
         <source>Column</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="15"/>
-        <source>Circle</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="34"/>
+        <source>Grid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="20"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="35"/>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="35"/>
+        <source>Applying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="35"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="36"/>
+        <source>Stopping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="36"/>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="158"/>
         <source>Formation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="29"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="164"/>
+        <source>%1 online</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="207"/>
+        <source>CONFIGURATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="220"/>
         <source>Shape</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="37"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="232"/>
         <source>Spacing (m)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="46"/>
-        <source>Members</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="248"/>
+        <source>V angle (deg)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="57"/>
-        <source>Slot assignment (slot 0 = leader, not rewritten by mission upload)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="266"/>
+        <source>Leader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source>Slot </source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="304"/>
+        <source>FORMATION LAYOUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="79"/>
-        <source> (Leader)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="311"/>
+        <source>North up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="86"/>
-        <source>(Empty)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="346"/>
+        <source>Leader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="107"/>
-        <source>Unassigned</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="353"/>
+        <source>Follower</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="108"/>
+        <location filename="../src/FlyView/FormationPanel.qml" line="362"/>
+        <source>Slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="387"/>
+        <source>MEMBERS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="394"/>
+        <source>%1 in formation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="480"/>
+        <source>LEAVING</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="492"/>
+        <source>Slot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FormationPanel.qml" line="498"/>
         <source>Offline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="109"/>
-        <source>Error %1 m</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="514"/>
+        <source>Leader changed to 0x%1 - press Apply to take effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="116"/>
-        <source>Auto Assign</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="543"/>
+        <source>ACTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>Sending…</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="560"/>
+        <source>Apply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="122"/>
-        <source>Send Formation</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="568"/>
+        <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="129"/>
-        <source>Sending formation — do not operate the vehicle…</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="583"/>
+        <source>Set leader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="135"/>
-        <source>No online AIR nodes (MAPLRS cluster not connected)</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="610"/>
+        <source>Kick</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>Formation sent</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="624"/>
+        <source>Rejoin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FormationPanel.qml" line="157"/>
-        <source>Formation send failed</source>
+        <location filename="../src/FlyView/FormationPanel.qml" line="632"/>
+        <source>Leader focus</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -21923,7 +22016,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>VehicleMapItem</name>
     <message>
-        <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="112"/>
+        <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="127"/>
+        <source>Leader %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="127"/>
         <source>Vehicle %1</source>
         <translation type="unfinished"></translation>
     </message>

@@ -5,11 +5,19 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Fact.h"
+#include "FactGroup.h"
 #include "FormationShape.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-FormationModel::FormationModel(QObject* parent) : QAbstractListModel(parent) {}
+FormationModel::FormationModel(QObject* parent) : QAbstractListModel(parent)
+{
+    // 领机由成员状态与本地指定共同推导；任一变化后重算，只在结果变化时通知。
+    connect(this, &FormationModel::configChanged, this, &FormationModel::_refreshLeader);
+    connect(this, &QAbstractItemModel::dataChanged, this, &FormationModel::_refreshLeader);
+    connect(this, &QAbstractItemModel::modelReset, this, &FormationModel::_refreshLeader);
+}
 
 int FormationModel::rowCount(const QModelIndex& parent) const
 {
@@ -283,6 +291,115 @@ int FormationModel::leaderSysid() const
     return 0;
 }
 
+namespace {
+
+QGeoCoordinate _coordinateOf(Vehicle* vehicle)
+{
+    return vehicle ? vehicle->coordinate() : QGeoCoordinate();
+}
+
+double _headingOf(Vehicle* vehicle)
+{
+    if (!vehicle || !vehicle->vehicleFactGroup()) {
+        return 0.0;
+    }
+    Fact* fact = vehicle->vehicleFactGroup()->getFact(QStringLiteral("heading"));
+    const double value = fact ? fact->rawValue().toDouble() : 0.0;
+    return std::isfinite(value) ? value : 0.0;
+}
+
+}  // namespace
+
+Vehicle* FormationModel::_resolveLeader(QmlObjectListModel* vehicles) const
+{
+    if (!vehicles) {
+        return nullptr;
+    }
+
+    // 领机优先取成员状态推导的领机；还没有编队状态时退回最小 sysid 的在线定位机。
+    Vehicle* leader = nullptr;
+    const int leaderId = leaderSysid();
+    for (int i = 0; i < vehicles->count(); ++i) {
+        Vehicle* vehicle = vehicles->value<Vehicle*>(i);
+        if (!_isMaplrs(vehicle) || !_coordinateOf(vehicle).isValid()) {
+            continue;
+        }
+        if (leaderId != 0) {
+            if (vehicle->id() == leaderId) {
+                return vehicle;
+            }
+            continue;
+        }
+        if (!leader || vehicle->id() < leader->id()) {
+            leader = vehicle;
+        }
+    }
+    return leader;
+}
+
+QVariantList FormationModel::slotLayout(QmlObjectListModel* vehicles) const
+{
+    QVariantList out;
+    Vehicle* leader = _resolveLeader(vehicles);
+    const double leaderHeading = _headingOf(leader);
+
+    for (const QVariant& slot : positions()) {
+        const QVariantMap map = slot.toMap();
+        const FormationShape::NorthEastOffset ne =
+            FormationShape::northEastFromBodyOffset(map.value(QStringLiteral("forward")).toDouble(),
+                                                    map.value(QStringLiteral("right")).toDouble(), leaderHeading);
+        QVariantMap entry;
+        entry[QStringLiteral("north")] = ne.northM;
+        entry[QStringLiteral("east")] = ne.eastM;
+        out.append(entry);
+    }
+    return out;
+}
+
+QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
+{
+    QVariantList out;
+    Vehicle* leader = _resolveLeader(vehicles);
+    if (!leader) {
+        return out;
+    }
+
+    const bool hasLeaderId = leaderSysid() != 0;
+    const QGeoCoordinate origin = _coordinateOf(leader);
+    const double metersPerDegLon = 111320.0 * std::cos(qDegreesToRadians(origin.latitude()));
+
+    for (const Member& member : _members) {
+        Vehicle* vehicle = nullptr;
+        for (int i = 0; i < vehicles->count() && !vehicle; ++i) {
+            Vehicle* candidate = vehicles->value<Vehicle*>(i);
+            if (candidate && candidate->id() == member.sysid) {
+                vehicle = candidate;
+            }
+        }
+        const QGeoCoordinate coord = _coordinateOf(vehicle);
+        if (!vehicle || !coord.isValid()) {
+            continue;
+        }
+
+        double heading = std::fmod(_headingOf(vehicle), 360.0);
+        if (heading < 0.0) {
+            heading += 360.0;
+        }
+
+        QVariantMap entry;
+        entry[QStringLiteral("sysid")] = member.sysid;
+        entry[QStringLiteral("north")] = (coord.latitude() - origin.latitude()) * 111320.0;
+        entry[QStringLiteral("east")] = (coord.longitude() - origin.longitude()) * metersPerDegLon;
+        entry[QStringLiteral("heading")] = heading;
+        entry[QStringLiteral("isLeader")] = (vehicle == leader) && hasLeaderId;
+        entry[QStringLiteral("online")] = member.online;
+        entry[QStringLiteral("leaving")] = (member.flags & 0x01) != 0;
+        entry[QStringLiteral("position")] = member.position;
+        out.append(entry);
+    }
+    return out;
+}
+
 QVariantList FormationModel::positions() const
 {
     const int count = _activeMemberCount();
@@ -391,6 +508,16 @@ void FormationModel::_emitRowChanged(int row)
     }
     const QModelIndex idx = index(row, 0);
     emit dataChanged(idx, idx);
+}
+
+void FormationModel::_refreshLeader()
+{
+    const int leader = leaderSysid();
+    if (leader == _cachedLeader) {
+        return;
+    }
+    _cachedLeader = leader;
+    emit leaderChanged();
 }
 
 int FormationModel::_activeMemberCount() const

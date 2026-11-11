@@ -21,12 +21,26 @@ MapQuickItem {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var    _map:           map
     property bool   _multiVehicle:  QGroundControl.multiVehicleManager.vehicles.count > 1
+    // 编队领机：金色带星图标 + 外圈光环，与其他载具一眼区分
+    property bool   _isLeader:      vehicle && vehicle.maplrsFirmware
+                                    && QGroundControl.formationController.model.leaderSysid === vehicle.id
 
     sourceItem: Item {
         id:         vehicleItem
         width:      vehicleIcon.width
         height:     vehicleIcon.height
-        opacity:    vehicle === _activeVehicle ? 1.0 : 0.5
+        opacity:    (vehicle === _activeVehicle || _isLeader) ? 1.0 : 0.5
+
+        Rectangle {
+            visible:                _isLeader
+            anchors.centerIn:       vehicleIcon
+            width:                  _root.size * 1.25
+            height:                 width
+            radius:                 width / 2
+            color:                  "#33F5B800"
+            border.width:           2
+            border.color:           "#F5B800"
+        }
 
         Repeater {
             model: vehicle ? vehicle.gimbalController.gimbals : []
@@ -92,7 +106,8 @@ MapQuickItem {
 
         Image {
             id:                 vehicleIcon
-            source:             vehicle ? vehicle.vehicleImageOpaque : ""
+            source:             _isLeader ? "/qmlimages/vehicleArrowLeader.svg"
+                                          : (vehicle ? vehicle.vehicleImageOpaque : "")
             mipmap:             true
             width:              _root.size
             sourceSize.width:   _root.size
@@ -109,7 +124,7 @@ MapQuickItem {
             anchors.top:                parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _map
-            text:                       visible && vehicle ? qsTr("Vehicle %1").arg(vehicle.id) : ""
+            text:                       visible && vehicle ? (_isLeader ? qsTr("Leader %1") : qsTr("Vehicle %1")).arg(vehicle.id) : ""
             font.pointSize:             ScreenTools.smallFontPointSize
             visible:                    _multiVehicle
         }

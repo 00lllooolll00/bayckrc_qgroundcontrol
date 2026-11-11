@@ -94,6 +94,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flightmap_qmlimages
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/scale_endLight.png"
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/scaleLight.png"
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/sub.png"
+        "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/vehicleArrowLeader.svg"
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/vehicleArrowOpaque.svg"
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/vehicleArrowOutline.svg"
         "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/ZoomMinus.svg"

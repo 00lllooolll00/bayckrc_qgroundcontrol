@@ -27,4 +27,23 @@ struct SlotPolar
 /// vAngleDeg 仅 Vee 使用，表示两翼夹角。count<=0 或 spacing<=0 返回空表。
 QList<SlotPolar> slotPolar(Shape shape, int count, double spacing, double vAngleDeg = 45.0);
 
+struct BodyOffset
+{
+    double forwardM = 0.0;  // 领机机头方向为正
+    double rightM = 0.0;    // 领机右侧为正
+};
+
+/// 把以领机为原点的北/东偏移旋转到领机机体坐标（forward/right）。
+/// headingDeg 为领机机头，0 = 正北、顺时针；非有限值按 0 处理。
+BodyOffset bodyOffsetFromNE(double northM, double eastM, double headingDeg);
+
+struct NorthEastOffset
+{
+    double northM = 0.0;
+    double eastM = 0.0;
+};
+
+/// bodyOffsetFromNE 的逆运算：领机机体坐标（forward/right）旋转到北/东。
+NorthEastOffset northEastFromBodyOffset(double forwardM, double rightM, double headingDeg);
+
 }  // namespace FormationShape

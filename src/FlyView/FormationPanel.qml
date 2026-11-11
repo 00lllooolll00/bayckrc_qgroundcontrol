@@ -13,7 +13,7 @@ Item {
 
     width: ScreenTools.defaultFontPixelWidth * 44
     implicitWidth: width
-    implicitHeight: Math.min(content.implicitHeight, ScreenTools.defaultFontPixelHeight * 30)
+    implicitHeight: Math.min(content.implicitHeight, ScreenTools.defaultFontPixelHeight * 36)
 
     property var  _controller: QGroundControl.formationController
     property var  _model:      _controller.model
@@ -56,10 +56,26 @@ Item {
         var index = panel._memberSysids.indexOf(override)
         return index < 0 ? 0 : index + 1
     }
-    readonly property int _leaderSysid: {
+    readonly property int _leaderSysid: _model.leaderSysid
+    // 已选了领机但还没 Apply 到机上：机上上报的领机与本地指定不一致。
+    readonly property bool _leaderPending:
+        _model.leaderOverride !== 0 && _model.leaderOverride !== _leaderSysid
+    readonly property bool _anyInFormation: {
         void panel._tick
-        return _model.leaderSysid()
+        return _model.formationMemberCount() > 0
     }
+    readonly property var _live: {
+        void panel._tick
+        return _model.liveLayout(_vehicles)
+    }
+    readonly property var _slots: {
+        void panel._tick
+        void panel._model.positions
+        return _model.slotLayout(_vehicles)
+    }
+    readonly property bool _canSetLeader:
+        _selectedMember > 0 && _selectedOnline && !_selectedLeaving
+        && _selectedMember !== _model.leaderOverride && panel._controller.phase !== 1
     readonly property bool _selectedOnline: {
         void panel._tick
         return panel._selectedMember > 0 && _model.isOnline(panel._selectedMember)
@@ -292,7 +308,7 @@ Item {
                         }
                         Item { Layout.fillWidth: true }
                         QGCLabel {
-                            text: qsTr("Select a dot")
+                            text: qsTr("North up")
                             color: qgcPal.text
                             opacity: 0.45
                         }
@@ -300,7 +316,7 @@ Item {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 10
+                        Layout.preferredHeight: width
                         color: qgcPal.window
                         radius: Math.max(0, panel._radius - 2)
                         border.width: 1
@@ -309,12 +325,42 @@ Item {
 
                         FormationCanvas {
                             anchors.fill: parent
-                            model: panel._model
-                            positions: panel._model.positions
-                            livePositions: panel._buildLivePositions()
+                            slots: panel._slots
+                            members: panel._live
                             selectedSysid: panel._selectedMember
+                            leaderSysid: panel._leaderSysid
                             onMemberSelected: (sysid) => { panel._selectedMember = sysid }
                         }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: panel._pad
+
+                        Rectangle {
+                            Layout.preferredWidth: panel._pad
+                            Layout.preferredHeight: panel._pad
+                            radius: panel._pad / 2
+                            color: "#F5B800"
+                        }
+                        QGCLabel { text: qsTr("Leader"); opacity: 0.65 }
+                        Rectangle {
+                            Layout.preferredWidth: panel._pad
+                            Layout.preferredHeight: panel._pad
+                            radius: panel._pad / 2
+                            color: qgcPal.colorGreen
+                        }
+                        QGCLabel { text: qsTr("Follower"); opacity: 0.65 }
+                        Rectangle {
+                            Layout.preferredWidth: panel._pad
+                            Layout.preferredHeight: panel._pad
+                            radius: panel._pad / 2
+                            color: "transparent"
+                            border.width: 1
+                            border.color: qgcPal.text
+                        }
+                        QGCLabel { text: qsTr("Slot"); opacity: 0.65 }
+                        Item { Layout.fillWidth: true }
                     }
                 }
             }
@@ -406,14 +452,14 @@ Item {
                                     radius: width / 2
                                     color: !online ? qgcPal.buttonBorder
                                          : leaving ? qgcPal.warningText
-                                         : leader ? qgcPal.primaryButton
+                                         : leader ? "#F5B800"
                                          : qgcPal.colorGreen
                                 }
 
                                 QGCLabel {
-                                    text: "0x" + sysid.toString(16).toUpperCase()
+                                    text: (leader ? "\u2605 " : "") + "0x" + sysid.toString(16).toUpperCase()
                                     font.family: ScreenTools.fixedFontFamily
-                                    color: qgcPal.text
+                                    color: leader ? "#F5B800" : qgcPal.text
                                 }
 
                                 Rectangle {
@@ -457,6 +503,16 @@ Item {
                         }
                     }
                 }
+            }
+
+            // 领机已更换但未生效
+            QGCLabel {
+                Layout.fillWidth: true
+                visible: panel._leaderPending
+                wrapMode: Text.WordWrap
+                color: qgcPal.warningText
+                text: qsTr("Leader changed to 0x%1 - press Apply to take effect")
+                      .arg(panel._model.leaderOverride.toString(16).toUpperCase())
             }
 
             // 错误提示
@@ -510,7 +566,9 @@ Item {
                                 Layout.minimumWidth: panel._actionButtonWidth
                                 Layout.maximumWidth: panel._actionButtonWidth
                                 text: qsTr("Stop")
+                                // 重启 QGC 后控制器是 Idle 但机上可能仍在编队，同样要能 Stop。
                                 enabled: panel._controller.phase === 2 || panel._controller.phase === 1
+                                         || panel._anyInFormation
                                 onClicked: panel._controller.stop(panel._vehicles, true)
                             }
                         }
@@ -522,50 +580,9 @@ Item {
                             QGCButton {
                                 Layout.minimumWidth: panel._actionButtonWidth
                                 Layout.maximumWidth: panel._actionButtonWidth
-                                text: qsTr("Match online")
-                                onClicked: panel._model.matchOnline(panel._vehicles)
-                            }
-                            QGCButton {
-                                Layout.minimumWidth: panel._actionButtonWidth
-                                Layout.maximumWidth: panel._actionButtonWidth
-                                text: qsTr("Takeoff all")
-                                enabled: panel._controller.phase !== 1 && panel._onlineCount > 0
-                                onClicked: panel._controller.takeoffAll(panel._vehicles)
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: panel._pad
-
-                            QGCButton {
-                                Layout.minimumWidth: panel._actionButtonWidth
-                                Layout.maximumWidth: panel._actionButtonWidth
-                                text: qsTr("Land all")
-                                enabled: panel._onlineCount > 0
-                                onClicked: panel._controller.landAll(panel._vehicles)
-                            }
-                            QGCButton {
-                                Layout.minimumWidth: panel._actionButtonWidth
-                                Layout.maximumWidth: panel._actionButtonWidth
-                                text: qsTr("Kick")
-                                enabled: panel._selectedMember > 0 && panel._selectedOnline
-                                         && !panel._selectedLeaving && panel._controller.phase !== 1
-                                onClicked: panel._controller.kick(panel._vehicles, panel._selectedMember)
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: panel._pad
-
-                            QGCButton {
-                                Layout.minimumWidth: panel._actionButtonWidth
-                                Layout.maximumWidth: panel._actionButtonWidth
-                                text: qsTr("Rejoin")
-                                enabled: panel._selectedMember > 0 && panel._selectedOnline
-                                         && panel._selectedLeaving
-                                onClicked: panel._controller.rejoin(panel._vehicles, panel._selectedMember)
+                                text: qsTr("Set leader")
+                                enabled: panel._canSetLeader
+                                onClicked: panel._model.leaderOverride = panel._selectedMember
                             }
                             QGCButton {
                                 Layout.minimumWidth: panel._actionButtonWidth
@@ -578,6 +595,28 @@ Item {
                                         QGroundControl.multiVehicleManager.activeVehicle = v
                                     }
                                 }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: panel._pad
+
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Kick")
+                                enabled: panel._selectedMember > 0 && panel._selectedOnline
+                                         && !panel._selectedLeaving && panel._controller.phase !== 1
+                                onClicked: panel._controller.kick(panel._vehicles, panel._selectedMember)
+                            }
+                            QGCButton {
+                                Layout.minimumWidth: panel._actionButtonWidth
+                                Layout.maximumWidth: panel._actionButtonWidth
+                                text: qsTr("Rejoin")
+                                enabled: panel._selectedMember > 0 && panel._selectedOnline
+                                         && panel._selectedLeaving
+                                onClicked: panel._controller.rejoin(panel._vehicles, panel._selectedMember)
                             }
                         }
                     }
@@ -601,34 +640,5 @@ Item {
             return "—"
         }
         return panel._memberPhaseNames[phase]
-    }
-
-    function _buildLivePositions() {
-        void panel._tick
-        var out = {}
-        var leader = panel._vehicleById(_model.leaderSysid())
-        if (!leader || !leader.coordinate.isValid) {
-            for (var i = 0; i < _vehicles.count; i++) {
-                var candidate = _vehicles.get(i)
-                if (candidate && candidate.maplrsFirmware && candidate.coordinate.isValid) {
-                    leader = candidate
-                    break
-                }
-            }
-        }
-        if (!leader || !leader.coordinate.isValid) {
-            return out
-        }
-        for (var j = 0; j < _vehicles.count; j++) {
-            var vehicle = _vehicles.get(j)
-            if (!vehicle || !vehicle.coordinate.isValid) {
-                continue
-            }
-            var north = (vehicle.coordinate.latitude - leader.coordinate.latitude) * 111320
-            var east = (vehicle.coordinate.longitude - leader.coordinate.longitude)
-                       * 111320 * Math.cos(leader.coordinate.latitude * Math.PI / 180)
-            out[vehicle.id] = { north: north, east: east }
-        }
-        return out
     }
 }

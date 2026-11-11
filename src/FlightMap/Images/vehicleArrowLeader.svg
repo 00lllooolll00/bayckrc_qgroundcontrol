@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1" viewBox="0 0 72 72">
+    <style>
+        .edge{fill:#6b4a00}
+    </style>
+    <path d="M35.5 2.118v51.573L1.118 70.882z" style="fill:#e0a300"/>
+    <path d="M35 4.236v49.146L2.236 69.764zM36 0 0 72l36-18z" class="edge"/>
+    <path d="M36.5 53.691V2.118l34.382 68.764z" style="fill:#ffc400"/>
+    <path d="m37 4.236 32.764 65.528L37 53.382zM36 0v54l36 18z" class="edge"/>
+    <path d="m36 20 3.5 10.8 11.3.1-9.1 6.7 3.5 10.8L36 41.7l-9.2 6.7 3.5-10.8-9.1-6.7 11.3-.1z" style="fill:#fff;stroke:#6b4a00;stroke-width:1.5;stroke-linejoin:round"/>
+</svg>

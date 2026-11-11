@@ -1,7 +1,6 @@
 #include "FormationShape.h"
 
 #include <QtMath>
-
 #include <cmath>
 
 namespace FormationShape {
@@ -71,6 +70,30 @@ QList<SlotPolar> slotPolar(Shape shape, int count, double spacing, double vAngle
             break;
         }
     }
+    return out;
+}
+
+BodyOffset bodyOffsetFromNE(double northM, double eastM, double headingDeg)
+{
+    const double psi = qDegreesToRadians(std::isfinite(headingDeg) ? headingDeg : 0.0);
+    const double c = std::cos(psi);
+    const double s = std::sin(psi);
+
+    BodyOffset out;
+    out.forwardM = northM * c + eastM * s;
+    out.rightM = -northM * s + eastM * c;
+    return out;
+}
+
+NorthEastOffset northEastFromBodyOffset(double forwardM, double rightM, double headingDeg)
+{
+    const double psi = qDegreesToRadians(std::isfinite(headingDeg) ? headingDeg : 0.0);
+    const double c = std::cos(psi);
+    const double s = std::sin(psi);
+
+    NorthEastOffset out;
+    out.northM = forwardM * c - rightM * s;
+    out.eastM = forwardM * s + rightM * c;
     return out;
 }
 
