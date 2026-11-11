@@ -66,6 +66,8 @@ void FormationController::apply(QmlObjectListModel* vehicles)
         return;
     }
 
+    // Apply 是重新配置：清掉本地踢出覆盖，按当前成员表全体下发。
+    _model->clearLeaving();
     _vehicles = vehicles;
     _formationId = FormationProtocol::nextFormationId(_formationId);
     QSettings().setValue(QStringLiteral("Formation/formationId"), _formationId);
@@ -109,6 +111,8 @@ void FormationController::stop(QmlObjectListModel* vehicles, bool allMembers)
         return;
     }
 
+    // Stop 会收掉整队编队；本地 LEAVING 覆盖不再有意义。
+    _model->clearLeaving();
     _vehicles = vehicles;
     _pending = 0;
     for (int row = 0; row < _model->rowCount(); ++row) {

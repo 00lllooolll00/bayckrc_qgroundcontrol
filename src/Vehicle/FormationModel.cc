@@ -27,13 +27,13 @@ QVariant FormationModel::data(const QModelIndex& index, int role) const
         case SysidRole:
             return member.sysid;
         case RoleRole:
+            // 被踢出的成员即使编队 id 已被清 0，也要先显示 LEAVING，保留 Rejoin 语义。
+            if (member.flags & 0x01) {
+                return QStringLiteral("Leaving");
+            }
             // formation_id 为 0 表示已停止/退出编队；不能再显示成 Follower。
             if (member.formationId == 0) {
                 return QStringLiteral("Idle");
-            }
-            // LEAVING 优先于 LEADER：被踢的领机也不能继续显示为领机。
-            if (member.flags & 0x01) {
-                return QStringLiteral("Leaving");
             }
             return (member.flags & 0x04) ? QStringLiteral("Leader") : QStringLiteral("Follower");
         case OnlineRole:
@@ -165,6 +165,23 @@ void FormationModel::markRejoining(int sysid)
     emit configChanged();
 }
 
+void FormationModel::clearLeaving()
+{
+    bool changed = false;
+    for (int row = 0; row < _members.count(); ++row) {
+        Member& member = _members[row];
+        if ((member.flags & 0x01) == 0) {
+            continue;
+        }
+        member.flags &= ~0x01;
+        _emitRowChanged(row);
+        changed = true;
+    }
+    if (changed) {
+        emit configChanged();
+    }
+}
+
 bool FormationModel::isOnline(int sysid) const
 {
     const int row = _rowForSysid(sysid);
@@ -193,9 +210,10 @@ void FormationModel::updateStatus(int sysid, int position, int phase, int leader
     member.flags = flags;
     member.formationId = formationId;
     member.online = true;
-    // 本机刚执行 Kick 时，机上可能还在回旧的“非 LEAVING”状态；保留本地
-    // LEAVING，避免角色/按钮在命令生效前闪回 Follower。Rejoin 会先清本地位。
-    if (formationId != 0 && wasLeaving && !(flags & 0x01)) {
+    // 本机刚执行 Kick 时，机上可能回旧的“非 LEAVING”状态，甚至已经把
+    // formation_id 清成 0；保留本地 LEAVING，避免领机行闪成 Idle 并禁用 Rejoin。
+    // Rejoin/Apply/Stop 会显式清本地位。
+    if (wasLeaving && !(flags & 0x01)) {
         member.flags |= 0x01;
     }
     _emitRowChanged(row);

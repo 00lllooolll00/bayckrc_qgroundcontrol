@@ -55,6 +55,8 @@ public:
     Q_INVOKABLE void markLeaving(int sysid);
     /// 本机主动重入：清 LEAVING 位，等机上回包重新分配位置。
     Q_INVOKABLE void markRejoining(int sysid);
+    /// Apply/Stop 前清掉所有本地 LEAVING 覆盖，避免后续机上回包继续按踢出处理。
+    void clearLeaving();
     Q_INVOKABLE bool isOnline(int sysid) const;
     Q_INVOKABLE bool isLeaving(int sysid) const;
     Q_INVOKABLE void updateStatus(int sysid, int position, int phase, int leaderId, int flags, int formationId);
