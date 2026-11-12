@@ -94,6 +94,24 @@ void FormationShapeTest::_invalidInput()
     QVERIFY(FormationShape::slotPolar(Shape::Line, -1, -3.0).isEmpty());
 }
 
+void FormationShapeTest::_slotCountFromPositions()
+{
+    using FormationShape::slotCountFromPositions;
+
+    // 无有效槽位（地面阶段）→ 回退本地计数。
+    QCOMPARE(slotCountFromPositions({}, 3), 3);
+    QCOMPARE(slotCountFromPositions(QList<int>{-1, -1}, 3), 3);
+
+    // 连续占满 0..2 → 3 槽。
+    QCOMPARE(slotCountFromPositions(QList<int>{0, 1, 2}, 3), 3);
+
+    // 反复出现的现场：3 架机占了槽 0/1/3，机上实际 4 槽，本地只数到 3。
+    QCOMPARE(slotCountFromPositions(QList<int>{0, 1, 3}, 3), 4);
+
+    // 越界槽位号忽略，不能把面板撑成 43 槽。
+    QCOMPARE(slotCountFromPositions(QList<int>{42}, 3), 3);
+}
+
 void FormationShapeTest::_bodyOffsetFromNE()
 {
     // 领机朝北：北 = 前，东 = 右。

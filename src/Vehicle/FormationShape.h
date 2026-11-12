@@ -27,6 +27,10 @@ struct SlotPolar
 /// vAngleDeg 仅 Vee 使用，表示两翼夹角。count<=0 或 spacing<=0 返回空表。
 QList<SlotPolar> slotPolar(Shape shape, int count, double spacing, double vAngleDeg = 45.0);
 
+/// 固件按活跃成员数连续分配 0..N-1 的槽位号，所以槽位总数 = max(position)+1。
+/// 无效槽位（<0 或超出上限）忽略；没有有效槽位时返回 fallback。
+int slotCountFromPositions(const QList<int> &positions, int fallback);
+
 struct BodyOffset
 {
     double forwardM = 0.0;  // 领机机头方向为正

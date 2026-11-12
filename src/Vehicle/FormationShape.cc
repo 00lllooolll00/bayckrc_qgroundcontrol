@@ -73,6 +73,18 @@ QList<SlotPolar> slotPolar(Shape shape, int count, double spacing, double vAngle
     return out;
 }
 
+int slotCountFromPositions(const QList<int> &positions, int fallback)
+{
+    constexpr int kMaxSlots = 10;  // 与固件 FORMATION_MAX_MEMBERS 一致
+    int maxPosition = -1;
+    for (int position : positions) {
+        if (position >= 0 && position < kMaxSlots) {
+            maxPosition = qMax(maxPosition, position);
+        }
+    }
+    return maxPosition >= 0 ? maxPosition + 1 : fallback;
+}
+
 BodyOffset bodyOffsetFromNE(double northM, double eastM, double headingDeg)
 {
     const double psi = qDegreesToRadians(std::isfinite(headingDeg) ? headingDeg : 0.0);

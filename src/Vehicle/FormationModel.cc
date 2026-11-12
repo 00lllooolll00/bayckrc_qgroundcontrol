@@ -383,7 +383,16 @@ QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
 
 QVariantList FormationModel::positions() const
 {
-    const int count = _activeMemberCount();
+    // 槽位总数由固件分配结果决定：本地成员计数会因离线/上报延迟少算，
+    // 导致槽位布局与机上不一致（例如机上 4 槽、面板只画 3 槽）。
+    QList<int> memberPositions;
+    memberPositions.reserve(_members.count());
+    for (const Member& member : _members) {
+        if (member.online && !(member.flags & 0x01)) {
+            memberPositions.append(member.position);
+        }
+    }
+    const int count = FormationShape::slotCountFromPositions(memberPositions, _activeMemberCount());
     const QList<FormationShape::SlotPolar> polar =
         FormationShape::slotPolar(static_cast<FormationShape::Shape>(_shape), count, _spacingM, _vAngleDeg);
 

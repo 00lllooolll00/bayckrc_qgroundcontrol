@@ -18,6 +18,7 @@ private slots:
     void _gridCount();                // 方阵槽位数正确且按 row-major 顺序
     void _gridNoLeaderOverlap();      // 奇数/偶数 cols 下跟随槽不落在领机 (0,0)
     void _invalidInput();             // 非法入参返回空表
+    void _slotCountFromPositions();   // 槽位总数由机上 position 推导，缺槽不塌陷
     void _northEastFromBodyOffset();  // 机体坐标按领机机头旋转回北/东，与正向互逆
     void _bodyOffsetFromNE();         // 北/东偏移按领机机头旋转到 forward/right
 };
