@@ -68,7 +68,7 @@ Item {
         return qgcPal.colorRed
     }
 
-    function _sysidText(sysid) { return "0x" + sysid.toString(16).toUpperCase() }
+    function _sysidText(sysid) { return String(sysid) }
 
     function _drawStar(ctx, x, y, outer, inner) {
         ctx.beginPath()
