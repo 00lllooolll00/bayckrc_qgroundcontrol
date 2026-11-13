@@ -43,7 +43,7 @@ Item {
         void panel._tick
         var out = ["Auto"]
         for (var i = 0; i < panel._memberSysids.length; i++) {
-            out.push("0x" + panel._memberSysids[i].toString(16).toUpperCase())
+            out.push(String(panel._memberSysids[i]))
         }
         return out
     }
@@ -452,7 +452,7 @@ Item {
                                 }
 
                                 QGCLabel {
-                                    text: (leader ? "\u2605 " : "") + "0x" + sysid.toString(16).toUpperCase()
+                                    text: (leader ? "\u2605 " : "") + String(sysid)
                                     font.family: ScreenTools.fixedFontFamily
                                     color: leader ? "#F5B800" : qgcPal.text
                                 }
@@ -506,8 +506,8 @@ Item {
                 visible: panel._leaderPending
                 wrapMode: Text.WordWrap
                 color: qgcPal.warningText
-                text: qsTr("Leader changed to 0x%1 - press Apply to take effect")
-                      .arg(panel._model.leaderOverride.toString(16).toUpperCase())
+                text: qsTr("Leader changed to %1 - press Apply to take effect")
+                      .arg(panel._model.leaderOverride)
             }
 
             // 错误提示

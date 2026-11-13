@@ -22501,8 +22501,8 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
     <message>
       <location filename="../src/FlyView/FormationPanel.qml" line="514"/>
-      <source>Leader changed to 0x%1 - press Apply to take effect</source>
-      <translation>领航机已改为 0x%1，点击“应用”后生效</translation>
+      <source>Leader changed to %1 - press Apply to take effect</source>
+      <translation>领航机已改为 %1，点击“应用”后生效</translation>
     </message>
     <message>
       <location filename="../src/FlyView/FormationPanel.qml" line="543"/>
