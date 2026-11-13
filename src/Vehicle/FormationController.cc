@@ -34,6 +34,8 @@ FormationController::FormationController(QObject* parent) : QObject(parent), _mo
         if (vehicle) {
             connect(vehicle, &Vehicle::textMessageReceived, this, &FormationController::_onVehicleText,
                     Qt::UniqueConnection);
+            connect(vehicle, &Vehicle::firmwareTypeChanged, this, &FormationController::_onVehicleFirmwareTypeChanged,
+                    Qt::UniqueConnection);
         }
     }
 
@@ -42,6 +44,8 @@ FormationController::FormationController(QObject* parent) : QObject(parent), _mo
                 [this](Vehicle* lost) { _model->markOffline(lost->id()); });
         // 只是连接成功不保证已收到过 STATUSTEXT，这里直接订阅，保证编队状态能更新。
         connect(vehicle, &Vehicle::textMessageReceived, this, &FormationController::_onVehicleText,
+                Qt::UniqueConnection);
+        connect(vehicle, &Vehicle::firmwareTypeChanged, this, &FormationController::_onVehicleFirmwareTypeChanged,
                 Qt::UniqueConnection);
         _model->matchOnline(_vehicles);
     });
@@ -301,6 +305,11 @@ void FormationController::_onVehicleText(int sysid, int componentid, int severit
     Q_UNUSED(severity)
     Q_UNUSED(description)
     handleStatustext(text);
+}
+
+void FormationController::_onVehicleFirmwareTypeChanged()
+{
+    _model->matchOnline(_vehicles);
 }
 
 void FormationController::_setPhase(Phase phase)

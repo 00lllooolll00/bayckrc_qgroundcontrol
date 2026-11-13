@@ -212,6 +212,8 @@ void FormationModel::updateStatus(int sysid, int position, int phase, int leader
     Member& member = _members[row];
     const bool wasOnline = member.online;
     const bool wasLeaving = (member.flags & 0x01) != 0;
+    const int wasPosition = member.position;
+    const int wasFormationId = member.formationId;
     member.position = position;
     member.phase = phase;
     member.leaderId = leaderId;
@@ -226,7 +228,9 @@ void FormationModel::updateStatus(int sysid, int position, int phase, int leader
     }
     _emitRowChanged(row);
 
-    if (!wasOnline || wasLeaving != ((flags & 0x01) != 0)) {
+    const bool nowLeaving = (member.flags & 0x01) != 0;
+    // positions 绑定在 configChanged 上：成员槽位号或入队编号一变就通知小地图重算槽位列表。
+    if (!wasOnline || wasLeaving != nowLeaving || wasPosition != member.position || wasFormationId != member.formationId) {
         emit configChanged();
     }
 }

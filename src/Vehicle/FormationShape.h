@@ -27,7 +27,8 @@ struct SlotPolar
 /// vAngleDeg 仅 Vee 使用，表示两翼夹角。count<=0 或 spacing<=0 返回空表。
 QList<SlotPolar> slotPolar(Shape shape, int count, double spacing, double vAngleDeg = 45.0);
 
-/// 固件按活跃成员数连续分配 0..N-1 的槽位号，所以槽位总数 = max(position)+1。
+/// 固件按活跃成员数连续分配 0..N-1 的槽位号，但某机暂未分配（-1/0xFF）或两机抢槽时，
+/// 仅靠 max(position)+1 会少画槽位，因此取 max(max(position)+1, fallback)。
 /// 无效槽位（<0 或超出上限）忽略；没有有效槽位时返回 fallback。
 int slotCountFromPositions(const QList<int> &positions, int fallback);
 

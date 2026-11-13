@@ -70,6 +70,7 @@ private:
     void _sendStop(Vehicle* vehicle, bool allMembers);
     void _onTimeout();
     void _onVehicleText(int sysid, int componentid, int severity, const QString& text, const QString& description);
+    void _onVehicleFirmwareTypeChanged();
 
     FormationModel* _model = nullptr;
     QTimer _timeoutTimer;

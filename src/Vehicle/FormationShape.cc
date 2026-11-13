@@ -82,7 +82,7 @@ int slotCountFromPositions(const QList<int> &positions, int fallback)
             maxPosition = qMax(maxPosition, position);
         }
     }
-    return maxPosition >= 0 ? maxPosition + 1 : fallback;
+    return maxPosition >= 0 ? qMax(maxPosition + 1, fallback) : fallback;
 }
 
 BodyOffset bodyOffsetFromNE(double northM, double eastM, double headingDeg)

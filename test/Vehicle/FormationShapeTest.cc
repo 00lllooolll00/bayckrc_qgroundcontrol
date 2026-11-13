@@ -110,6 +110,10 @@ void FormationShapeTest::_slotCountFromPositions()
 
     // 越界槽位号忽略，不能把面板撑成 43 槽。
     QCOMPARE(slotCountFromPositions(QList<int>{42}, 3), 3);
+
+    // 有成员未分配（-1/0xFF）或两从机暂时撞槽时，槽位数绝不能塌陷到小于在线成员数 fallback。
+    QCOMPARE(slotCountFromPositions(QList<int>{0, 1, -1}, 3), 3);
+    QCOMPARE(slotCountFromPositions(QList<int>{0, 1, 1}, 3), 3);
 }
 
 void FormationShapeTest::_bodyOffsetFromNE()
