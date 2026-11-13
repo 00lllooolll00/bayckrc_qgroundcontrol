@@ -12,6 +12,7 @@ Item {
     property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2.5
     property var    _guidedController:    globals.guidedControllerFlyView
     property var    _activeVehicleColor:  "green"
+    readonly property color _leaderColor: "#F5B800"
     property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var    selectedVehicles:     QGroundControl.multiVehicleManager.selectedVehicles
 
@@ -154,6 +155,21 @@ Item {
             border.color:   qgcPal.text
 
             property var    _vehicle:   object
+            readonly property bool _isFormationLeader:
+                _vehicle && _vehicle.maplrsFirmware
+                && QGroundControl.formationController.model.leaderSysid === _vehicle.id
+
+            // 编队领航机左缘金色指示条：不被白色多选框压住，也不与绿色激活底色混淆
+            Rectangle {
+                visible:            _isFormationLeader
+                anchors.left:       parent.left
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                anchors.margins:    3
+                width:              4
+                radius:             2
+                color:              _leaderColor
+            }
 
             QGCMouseArea {
                 anchors.fill:       parent
@@ -196,11 +212,35 @@ Item {
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
-                    QGCLabel {
-                        text:                 _vehicle ? _vehicle.id : ""
-                        font.pointSize:       ScreenTools.largeFontPointSize
-                        color:                qgcPal.text
-                        Layout.alignment:     Qt.AlignHCenter
+                    ColumnLayout {
+                        spacing:            ScreenTools.defaultFontPixelHeight * 0.15
+                        Layout.alignment:   Qt.AlignVCenter
+
+                        QGCLabel {
+                            text:                 _vehicle ? _vehicle.id : ""
+                            font.pointSize:       ScreenTools.largeFontPointSize
+                            font.bold:            _isFormationLeader
+                            color:                _isFormationLeader ? _leaderColor : qgcPal.text
+                            Layout.alignment:     Qt.AlignHCenter
+                        }
+
+                        Rectangle {
+                            visible:                _isFormationLeader
+                            Layout.alignment:       Qt.AlignHCenter
+                            Layout.preferredWidth:  leaderBadgeLabel.implicitWidth + _margin * 2
+                            Layout.preferredHeight: leaderBadgeLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.15
+                            radius:                 height / 2
+                            color:                  _leaderColor
+
+                            QGCLabel {
+                                id:                 leaderBadgeLabel
+                                anchors.centerIn:   parent
+                                text:               "\u2605 " + qsTranslate("FormationPanel", "Leader")
+                                font.pointSize:     ScreenTools.defaultFontPointSize - 2
+                                font.bold:          true
+                                color:              "#1A1A1A"
+                            }
+                        }
                     }
 
                     QGCLabel {
