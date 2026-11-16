@@ -386,7 +386,10 @@ Item {
                         }
                         Item { Layout.fillWidth: true }
                         QGCLabel {
-                            text: qsTr("%1 in formation").arg(panel._model.formationMemberCount())
+                            text: {
+                                void panel._tick
+                                return qsTr("%1 in formation").arg(panel._model.formationMemberCount())
+                            }
                             color: qgcPal.text
                             opacity: 0.45
                         }
