@@ -2,6 +2,8 @@
 #include "Vehicle.h"
 
 #include <QtCore/QtMath>
+#include <cmath>
+#include <cstring>
 
 RadioStatusFactGroup::RadioStatusFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/RadioStatusFact.json"), parent)
@@ -13,6 +15,7 @@ RadioStatusFactGroup::RadioStatusFactGroup(QObject *parent)
     _addFact(&_txBufferFact);
     _addFact(&_lNoiseFact);
     _addFact(&_rNoiseFact);
+    _addFact(&_snrFact);
 }
 
 void RadioStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -21,9 +24,31 @@ void RadioStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message
 
     if (message.msgid == MAVLINK_MSG_ID_RADIO_STATUS) {
         _handleRadioStatus(message);
+    } else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT) {
+        _handleNamedValueFloat(message);
     }
 }
 
+void RadioStatusFactGroup::_handleNamedValueFloat(const mavlink_message_t &message)
+{
+    mavlink_named_value_float_t nv{};
+    mavlink_msg_named_value_float_decode(&message, &nv);
+
+    if (!std::isfinite(nv.value)) {
+        return;
+    }
+
+    char name[MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN + 1]{};
+    std::memcpy(name, nv.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
+
+    if (std::strncmp(name, "RSSI", MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN) == 0) {
+        lrssi()->setRawValue(qRound(nv.value));
+        _setTelemetryAvailable(true);
+    } else if (std::strncmp(name, "SNR", MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN) == 0) {
+        snr()->setRawValue(qRound(nv.value));
+        _setTelemetryAvailable(true);
+    }
+}
 void RadioStatusFactGroup::_handleRadioStatus(const mavlink_message_t &message)
 {
     mavlink_radio_status_t rstatus{};

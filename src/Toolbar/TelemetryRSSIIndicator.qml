@@ -78,6 +78,11 @@ Item {
                     label:      qsTr("Remote Noise:")
                     labelText:  _radioStatus.rNoise.rawValue
                 }
+
+                LabelledLabel {
+                    label:      qsTr("SNR:")
+                    labelText:  _radioStatus.snr.rawValue + " " + qsTr("dB")
+                }
             }
         }
     }

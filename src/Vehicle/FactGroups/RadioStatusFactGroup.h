@@ -20,6 +20,7 @@ class RadioStatusFactGroup : public FactGroup
     Q_PROPERTY(Fact *txBuffer   READ txBuffer   CONSTANT)
     Q_PROPERTY(Fact *lNoise     READ lNoise     CONSTANT)
     Q_PROPERTY(Fact *rNoise     READ rNoise     CONSTANT)
+    Q_PROPERTY(Fact *snr        READ snr        CONSTANT)
 
 public:
     explicit RadioStatusFactGroup(QObject *parent = nullptr);
@@ -31,11 +32,13 @@ public:
     Fact *txBuffer() { return &_txBufferFact; }
     Fact *lNoise()   { return &_lNoiseFact; }
     Fact *rNoise()   { return &_rNoiseFact; }
+    Fact *snr()      { return &_snrFact; }
 
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
     void _handleRadioStatus(const mavlink_message_t &message);
+    void _handleNamedValueFloat(const mavlink_message_t &message);
 
     Fact _lrssiFact    = Fact(0, QStringLiteral("lrssi"),    FactMetaData::valueTypeInt16);
     Fact _rrssiFact    = Fact(0, QStringLiteral("rrssi"),    FactMetaData::valueTypeInt16);
@@ -44,4 +47,5 @@ private:
     Fact _txBufferFact = Fact(0, QStringLiteral("txBuffer"), FactMetaData::valueTypeUint32);
     Fact _lNoiseFact   = Fact(0, QStringLiteral("lNoise"),   FactMetaData::valueTypeInt16);
     Fact _rNoiseFact   = Fact(0, QStringLiteral("rNoise"),   FactMetaData::valueTypeInt16);
+    Fact _snrFact      = Fact(0, QStringLiteral("snr"),      FactMetaData::valueTypeInt16);
 };

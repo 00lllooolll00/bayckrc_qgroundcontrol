@@ -42,6 +42,12 @@
     "shortDesc": "Remote Noise",
     "type":             "int16",
     "units":            "dBm"
+},
+{
+    "name":             "snr",
+    "shortDesc": "SNR",
+    "type":             "int16",
+    "units":            "dB"
 }
 ]
 }

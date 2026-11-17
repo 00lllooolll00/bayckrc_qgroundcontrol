@@ -271,6 +271,7 @@ Item {
                 }
 
                 QGCFlickable {
+                    id:                         telemFlickable
                     anchors.horizontalCenter:   parent.horizontalCenter
                     width:          Math.min(contentWidth, vehicleList.width)
                     height:         control.height
@@ -281,6 +282,37 @@ Item {
                         id:                     control
                         settingsGroup:          factValueGrid.vehicleCardSettingsGroup
                         specificVehicleForCard: _vehicle
+                    }
+                }
+
+                Rectangle {
+                    id:                         rfPill
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    (_vehicle && _vehicle.maplrsFirmware) || _hasRfSignal
+                    width:                      Math.min(vehicleList.width - _margin * 2, Math.max(rfRow.implicitWidth + _margin * 2, telemFlickable.width))
+                    height:                     rfRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.3
+                    radius:                     ScreenTools.defaultFontPixelWidth / 2
+                    color:                      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.75)
+
+                    readonly property var  _radioStatus: _vehicle ? _vehicle.radioStatus : null
+                    readonly property bool _hasRfSignal: _radioStatus ? _radioStatus.telemetryAvailable : false
+
+                    RowLayout {
+                        id:                 rfRow
+                        anchors.centerIn:   parent
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            text:           "RSSI " + (rfPill._hasRfSignal ? (rfPill._radioStatus.lrssi.rawValue + " dBm") : "-- dBm")
+                            color:          qgcPal.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                        }
+
+                        QGCLabel {
+                            text:           "SNR " + (rfPill._hasRfSignal ? (rfPill._radioStatus.snr.rawValue + " dB") : "-- dB")
+                            color:          qgcPal.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                        }
                     }
                 }
             }

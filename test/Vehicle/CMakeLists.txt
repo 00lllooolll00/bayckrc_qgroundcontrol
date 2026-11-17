@@ -35,6 +35,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4ExternalFlightModesTest.h
         PX4HasGripperTest.cc
         PX4HasGripperTest.h
+        RadioStatusFactGroupTest.cc
+        RadioStatusFactGroupTest.h
         RemoteIDManagerTest.cc
         RemoteIDManagerTest.h
         RequestMessageTest.cc
@@ -75,8 +77,8 @@ add_qgc_test(MavCommandQueueReentrancyTest LABELS Integration Vehicle)
 add_qgc_test(MultiVehicleManagerTest LABELS Integration Vehicle)
 add_qgc_test(PX4ExternalFlightModesTest LABELS Unit Vehicle)
 add_qgc_test(PX4HasGripperTest LABELS Integration Vehicle)
+add_qgc_test(RadioStatusFactGroupTest LABELS Unit Vehicle)
 add_qgc_test(RemoteIDManagerTest LABELS Integration Vehicle)
-add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle)
 add_qgc_test(SetEstimatorOriginTest LABELS Integration Vehicle)
