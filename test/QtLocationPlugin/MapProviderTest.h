@@ -28,4 +28,8 @@ private slots:
     void _testGetServerNumBasic();
     void _testGetServerNumWrap();
     void _testGettersReturnConstructorValues();
+    void _testMaxNativeZoomAndAmapScale();
+    void _testOverzoomCrop256Quadrants();
+    void _testOverzoomCrop512HiDpi();
+    void _testOverzoomPreservesAlphaAndInvalidInputs();
 };

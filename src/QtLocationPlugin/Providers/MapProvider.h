@@ -62,6 +62,11 @@ public:
     virtual bool isElevationProvider() const { return false; }
     virtual bool isBingProvider() const { return false; }
 
+    /// Maximum zoom level served natively by this provider's tile server.
+    /// Requests above this level are fulfilled client-side by cropping and upscaling
+    /// the parent tile at maxNativeZoom() (overzoom).
+    virtual int maxNativeZoom() const { return QGC_MAX_MAP_ZOOM; }
+
     virtual QGCTileSet getTileCount(int zoom, double topleftLon,
                                     double topleftLat, double bottomRightLon,
                                     double bottomRightLat) const;

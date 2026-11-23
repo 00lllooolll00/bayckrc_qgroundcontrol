@@ -47,16 +47,23 @@ QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
         return nullptr;
     }
 
-    /*if (spec.zoom() > provider->maximumZoomLevel() || spec.zoom() < provider->minimumZoomLevel()) {
-        return nullptr;
-    }*/
+    int fetchX = spec.x();
+    int fetchY = spec.y();
+    int fetchZoom = spec.zoom();
+    const int maxNativeZoom = provider->maxNativeZoom();
+    if (!provider->isElevationProvider() && spec.zoom() > maxNativeZoom && maxNativeZoom >= 0) {
+        const int dz = spec.zoom() - maxNativeZoom;
+        fetchX = spec.x() >> dz;
+        fetchY = spec.y() >> dz;
+        fetchZoom = maxNativeZoom;
+    }
 
-    const QNetworkRequest request = getNetworkRequest(spec.mapId(), spec.x(), spec.y(), spec.zoom());
+    const QNetworkRequest request = getNetworkRequest(spec.mapId(), fetchX, fetchY, fetchZoom);
     if (request.url().isEmpty()) {
         return nullptr;
     }
 
-    QGeoTiledMapReplyQGC* tileImage = new QGeoTiledMapReplyQGC(m_networkManager, request, spec);
+    QGeoTiledMapReplyQGC* tileImage = new QGeoTiledMapReplyQGC(m_networkManager, request, spec, fetchX, fetchY, fetchZoom);
     if (!tileImage->init()) {
         tileImage->deleteLater();
         return nullptr;

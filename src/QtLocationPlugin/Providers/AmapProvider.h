@@ -15,6 +15,9 @@ protected:
         : MapProvider(mapName, QStringLiteral("https://www.amap.com/"), imageFormat, averageSize, mapType)
         , _mapUrl(mapUrl) {}
 
+public:
+    int maxNativeZoom() const final { return 18; }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -30,7 +33,7 @@ public:
             QStringLiteral("png"),
             AVERAGE_AMAP_STREET_MAP,
             MapProvider::StreetMap,
-            QStringLiteral("https://webrd0%1.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=%2&y=%3&z=%4")) {}
+            QStringLiteral("https://webrd0%1.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=2&style=8&x=%2&y=%3&z=%4")) {}
 };
 
 class AmapSatelliteProvider : public AmapProvider

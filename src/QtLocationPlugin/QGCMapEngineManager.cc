@@ -12,6 +12,7 @@
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
+#include "MapProvider.h"
 #include "QGCCachedTileSet.h"
 #include "QGCFormat.h"
 #include "QGCCompression.h"
@@ -55,17 +56,21 @@ QGCMapEngineManager::~QGCMapEngineManager()
 
 void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString &mapName)
 {
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(mapName);
+    const int effectiveMaxZoom = provider ? qMin(maxZoom, provider->maxNativeZoom()) : maxZoom;
+    const int effectiveMinZoom = qMin(minZoom, effectiveMaxZoom);
+
     _topleftLat = lat0;
     _topleftLon = lon0;
     _bottomRightLat = lat1;
     _bottomRightLon = lon1;
-    _minZoom = minZoom;
-    _maxZoom = maxZoom;
+    _minZoom = effectiveMinZoom;
+    _maxZoom = effectiveMaxZoom;
 
     _imageSet.clear();
     _elevationSet.clear();
 
-    for (int z = minZoom; z <= maxZoom; z++) {
+    for (int z = _minZoom; z <= _maxZoom; z++) {
         const QGCTileSet set = UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
         _imageSet += set;
     }

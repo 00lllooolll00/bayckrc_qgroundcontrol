@@ -64,6 +64,7 @@ endif()
 
 target_link_libraries(QGCLocation
     PRIVATE
+        Qt6::Gui
         Qt6::Positioning
         QGCCompression
         QGCDatabase

@@ -1,9 +1,12 @@
 #include "QGeoMapReplyQGC.h"
 
+#include <QtCore/QBuffer>
 #include <QtCore/QFile>
+#include <QtGui/QImage>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QSslError>
+#include <cmath>
 
 #include "ElevationMapProvider.h"
 #include "MapProvider.h"
@@ -20,10 +23,28 @@ QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "QtLocationPlugin.QGeoTiledMapRepl
 QByteArray QGeoTiledMapReplyQGC::_bingNoTileImage;
 QByteArray QGeoTiledMapReplyQGC::_badTile;
 
-QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent)
+QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager,
+                                             const QNetworkRequest &request,
+                                             const QGeoTileSpec &spec,
+                                             QObject *parent)
+    : QGeoTiledMapReplyQGC(networkManager, request, spec, spec.x(), spec.y(), spec.zoom(), parent)
+{
+}
+
+QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager,
+                                             const QNetworkRequest &request,
+                                             const QGeoTileSpec &spec,
+                                             int fetchX,
+                                             int fetchY,
+                                             int fetchZoom,
+                                             QObject *parent)
     : QGeoTiledMapReply(spec, parent)
     , _networkManager(networkManager)
     , _request(request)
+    , _fetchX((fetchZoom >= 0) ? fetchX : spec.x())
+    , _fetchY((fetchZoom >= 0) ? fetchY : spec.y())
+    , _fetchZoom((fetchZoom >= 0) ? fetchZoom : spec.zoom())
+    , _isOverzoom(_fetchZoom < spec.zoom())
 {
     qCDebug(QGeoTiledMapReplyQGCLog) << this;
 }
@@ -50,7 +71,8 @@ bool QGeoTiledMapReplyQGC::init()
         setCached(false);
     }, Qt::AutoConnection);
 
-    QGCFetchTileTask *task = QGeoFileTileCacheQGC::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom());
+    QGCFetchTileTask *task = QGeoFileTileCacheQGC::createFetchTileTask(
+        UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), _fetchX, _fetchY, _fetchZoom);
     if (!task) {
         qCWarning(QGeoTiledMapReplyQGCLog) << "Failed to create fetch tile task";
         m_initialized = false;
@@ -135,18 +157,81 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
             return;
         }
     }
-    setMapImageData(image);
-
     const QString format = mapProvider->getImageFormat(image);
     if (format.isEmpty()) {
         setError(QGeoTiledMapReply::ParseError, tr("Unknown Format"));
         return;
     }
+
+    QGeoFileTileCacheQGC::cacheTile(mapProvider->getMapName(), _fetchX, _fetchY, _fetchZoom, image, format);
+
+    if (_isOverzoom) {
+        QString croppedFormat;
+        const QByteArray cropped = cropOverzoomTile(
+            image, tileSpec().x(), tileSpec().y(), tileSpec().zoom(), _fetchZoom, &croppedFormat);
+        if (cropped.isEmpty()) {
+            setError(QGeoTiledMapReply::ParseError, tr("Failed to Overzoom Tile"));
+            return;
+        }
+        setMapImageData(cropped);
+        setMapImageFormat(croppedFormat);
+        // Mark derived overzoom tiles as cached so Qt does not write duplicate crops to disk.
+        setCached(true);
+        setFinished(true);
+        return;
+    }
+
+    setMapImageData(image);
     setMapImageFormat(format);
-
-    QGeoFileTileCacheQGC::cacheTile(mapProvider->getMapName(), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), image, format);
-
     setFinished(true);
+}
+
+QByteArray QGeoTiledMapReplyQGC::cropOverzoomTile(const QByteArray &parentImageData,
+                                                 int x, int y, int zoom,
+                                                 int parentZoom,
+                                                 QString *outFormat,
+                                                 int outputTileSize)
+{
+    if (parentImageData.isEmpty() || zoom <= parentZoom || parentZoom < 0 ||
+        (zoom - parentZoom) > 16 || outputTileSize <= 0) {
+        return {};
+    }
+
+    const QImage parentImg = QImage::fromData(parentImageData);
+    if (parentImg.isNull() || parentImg.width() <= 0 || parentImg.height() <= 0) {
+        return {};
+    }
+
+    const int dz = zoom - parentZoom;
+    const int tilesPerAxis = 1 << dz;
+    const int subX = x & (tilesPerAxis - 1);
+    const int subY = y & (tilesPerAxis - 1);
+
+    const int w = parentImg.width();
+    const int h = parentImg.height();
+    const double tileW = static_cast<double>(w) / tilesPerAxis;
+    const double tileH = static_cast<double>(h) / tilesPerAxis;
+
+    const int rx = qBound(0, static_cast<int>(std::floor(subX * tileW)), w - 1);
+    const int ry = qBound(0, static_cast<int>(std::floor(subY * tileH)), h - 1);
+    const int rx2 = qBound(rx + 1, static_cast<int>(std::floor((subX + 1) * tileW)), w);
+    const int ry2 = qBound(ry + 1, static_cast<int>(std::floor((subY + 1) * tileH)), h);
+
+    QImage cropped = parentImg.copy(rx, ry, rx2 - rx, ry2 - ry);
+    if (cropped.width() != outputTileSize || cropped.height() != outputTileSize) {
+        cropped = cropped.scaled(outputTileSize, outputTileSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+
+    QByteArray encoded;
+    QBuffer buffer(&encoded);
+    if (!buffer.open(QIODevice::WriteOnly) || !cropped.save(&buffer, "PNG")) {
+        return {};
+    }
+
+    if (outFormat != nullptr) {
+        *outFormat = QStringLiteral("png");
+    }
+    return encoded;
 }
 
 void QGeoTiledMapReplyQGC::_networkReplyError(QNetworkReply::NetworkError error)
@@ -181,6 +266,21 @@ void QGeoTiledMapReplyQGC::_networkReplySslErrors(const QList<QSslError> &errors
 void QGeoTiledMapReplyQGC::_cacheReply(QGCCacheTile *tile)
 {
     if (tile) {
+        if (_isOverzoom) {
+            QString croppedFormat;
+            const QByteArray cropped = cropOverzoomTile(
+                tile->img, tileSpec().x(), tileSpec().y(), tileSpec().zoom(), _fetchZoom, &croppedFormat);
+            delete tile;
+            if (cropped.isEmpty()) {
+                setError(QGeoTiledMapReply::ParseError, tr("Failed to Overzoom Tile"));
+                return;
+            }
+            setMapImageData(cropped);
+            setMapImageFormat(croppedFormat);
+            setCached(true);
+            setFinished(true);
+            return;
+        }
         setMapImageData(tile->img);
         setMapImageFormat(tile->format);
         setCached(true);
