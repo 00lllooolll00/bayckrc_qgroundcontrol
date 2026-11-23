@@ -32,6 +32,14 @@ FormationController::FormationController(QObject* parent) : QObject(parent), _mo
     for (int i = 0; i < _vehicles->count(); ++i) {
         Vehicle* vehicle = _vehicles->value<Vehicle*>(i);
         if (vehicle) {
+            connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this,
+                    [this, vehicle](bool lost) {
+                        if (lost) {
+                            _model->markOffline(vehicle->id());
+                        } else {
+                            _model->matchOnline(_vehicles);
+                        }
+                    });
             connect(vehicle, &Vehicle::textMessageReceived, this, &FormationController::_onVehicleText,
                     Qt::UniqueConnection);
             connect(vehicle, &Vehicle::firmwareTypeChanged, this, &FormationController::_onVehicleFirmwareTypeChanged,
@@ -42,6 +50,14 @@ FormationController::FormationController(QObject* parent) : QObject(parent), _mo
     connect(manager, &MultiVehicleManager::vehicleAdded, this, [this](Vehicle* vehicle) {
         connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this,
                 [this](Vehicle* lost) { _model->markOffline(lost->id()); });
+        connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this,
+                [this, vehicle](bool lost) {
+                    if (lost) {
+                        _model->markOffline(vehicle->id());
+                    } else {
+                        _model->matchOnline(_vehicles);
+                    }
+                });
         // 只是连接成功不保证已收到过 STATUSTEXT，这里直接订阅，保证编队状态能更新。
         connect(vehicle, &Vehicle::textMessageReceived, this, &FormationController::_onVehicleText,
                 Qt::UniqueConnection);

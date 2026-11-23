@@ -15,7 +15,7 @@ Item {
     height: ScreenTools.toolbarHeight
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
+    property bool   _communicationLost: QGroundControl.multiVehicleManager.communicationLost
     property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView

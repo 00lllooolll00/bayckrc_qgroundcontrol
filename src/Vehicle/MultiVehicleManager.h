@@ -19,6 +19,7 @@ class MultiVehicleManager : public QObject
     Q_PROPERTY(bool activeVehicleAvailable READ activeVehicleAvailable NOTIFY activeVehicleAvailableChanged)
     Q_PROPERTY(bool parameterReadyVehicleAvailable READ parameterReadyVehicleAvailable NOTIFY
                    parameterReadyVehicleAvailableChanged)
+    Q_PROPERTY(bool communicationLost READ communicationLost NOTIFY communicationLostChanged)
     Q_PROPERTY(Vehicle* activeVehicle READ activeVehicle WRITE setActiveVehicle NOTIFY activeVehicleChanged)
     Q_PROPERTY(QmlObjectListModel* vehicles READ vehicles CONSTANT)
     Q_PROPERTY(QmlObjectListModel* selectedVehicles READ selectedVehicles CONSTANT)
@@ -50,11 +51,14 @@ public:
 
     bool parameterReadyVehicleAvailable() const { return _parameterReadyVehicleAvailable; }
 
+    bool communicationLost() const { return _communicationLost; }
+
 signals:
     void vehicleAdded(Vehicle* vehicle);
     void vehicleRemoved(Vehicle* vehicle);
     void activeVehicleAvailableChanged(bool activeVehicleAvailable);
     void parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
+    void communicationLostChanged(bool communicationLost);
     void activeVehicleChanged(Vehicle* activeVehicle);
 
 private slots:
@@ -64,6 +68,7 @@ private slots:
     void _deleteVehiclePhase2(Vehicle* vehicle);
     void _setActiveVehiclePhase2(Vehicle* vehicle);
     void _vehicleParametersReadyChanged(bool parametersReady);
+    void _vehicleCommunicationLostChanged(bool communicationLost);
     void _sendGCSHeartbeat();
     void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType,
                                int vehicleType);
@@ -75,6 +80,7 @@ private:
     void _setActiveVehicle(Vehicle* vehicle);
     void _setActiveVehicleAvailable(bool activeVehicleAvailable);
     void _setParameterReadyVehicleAvailable(bool parametersReady);
+    void _updateCommunicationLost();
 
     QTimer* _gcsHeartbeatTimer = nullptr;         ///< Timer to emit heartbeats
     QTimer* _vehicleConnectNotifTimer = nullptr;  ///< Debounce timer for the aggregated vehicle-connected notice
@@ -83,6 +89,7 @@ private:
     Vehicle* _offlineEditingVehicle = nullptr;     ///< Disconnected vechicle used for offline editing
     bool _activeVehicleAvailable = false;          ///< true: An active vehicle is available
     bool _parameterReadyVehicleAvailable = false;  ///< true: An active vehicle with ready parameters is available
+    bool _communicationLost = false;               ///< true: All connected vehicles have lost communication
     Vehicle* _activeVehicle = nullptr;             ///< Currently active vehicle from a ui perspective
     QList<int> _ignoreVehicleIds;                  ///< List of vehicle id for which we ignore further communication
     bool _initialized = false;

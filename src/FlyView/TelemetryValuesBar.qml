@@ -10,10 +10,17 @@ Item {
     implicitHeight: mainLayout.height + (_toolsMargin * 2)
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
+    property bool interactive: true
 
     property alias factValueGrid:           factValueGrid
     property alias settingsGroup:           factValueGrid.settingsGroup
     property alias specificVehicleForCard:  factValueGrid.specificVehicleForCard
+
+    onInteractiveChanged: {
+        if (!interactive) {
+            factValueGrid.settingsUnlocked = false
+        }
+    }
 
     Rectangle {
         id:         backgroundRect
@@ -31,7 +38,7 @@ Item {
         anchors.left:       parent.left
 
         RowLayout {
-            visible: factValueGrid.settingsUnlocked
+            visible: control.interactive && factValueGrid.settingsUnlocked
 
             QGCColoredImage {
                 source:             "qrc:/InstrumentValueIcons/lock-open.svg"
@@ -62,7 +69,8 @@ Item {
         height:                     mainLayout.height
         acceptedButtons:            Qt.LeftButton | Qt.RightButton
         propagateComposedEvents:    true
-        visible:                    !factValueGrid.settingsUnlocked
+        enabled:                    control.interactive
+        visible:                    control.interactive && !factValueGrid.settingsUnlocked
 
         onClicked: (mouse) => {
             if (!ScreenTools.isMobile && mouse.button === Qt.RightButton) {

@@ -124,10 +124,13 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT) vehicleFirmwareType, (MAV_TYPE) vehicleType, this);
     (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this,
                    &MultiVehicleManager::_deleteVehiclePhase1);
+    (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this,
+                   &MultiVehicleManager::_vehicleCommunicationLostChanged);
     (void) connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this,
                    &MultiVehicleManager::_vehicleParametersReadyChanged);
 
     _vehicles->append(vehicle);
+    _updateCommunicationLost();
 
     // Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
     _sendGCSHeartbeat();
@@ -174,6 +177,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     }
 
     deselectVehicle(vehicle->id());
+    _updateCommunicationLost();
 
     _setActiveVehicleAvailable(false);
     _setParameterReadyVehicleAvailable(false);
@@ -207,7 +211,14 @@ void MultiVehicleManager::_deleteVehiclePhase2(Vehicle* vehicle)
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
 
     Vehicle* newActiveVehicle = nullptr;
-    if (_vehicles->count() > 0) {
+    for (int i = 0; i < _vehicles->count(); ++i) {
+        Vehicle* candidate = qobject_cast<Vehicle*>(_vehicles->get(i));
+        if (candidate && !candidate->vehicleLinkManager()->communicationLost()) {
+            newActiveVehicle = candidate;
+            break;
+        }
+    }
+    if (!newActiveVehicle && _vehicles->count() > 0) {
         newActiveVehicle = qobject_cast<Vehicle*>(_vehicles->get(0));
     }
 
@@ -266,6 +277,48 @@ void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 
     if (paramMgr->vehicle() == _activeVehicle) {
         _setParameterReadyVehicleAvailable(parametersReady);
+    }
+}
+
+void MultiVehicleManager::_vehicleCommunicationLostChanged(bool communicationLost)
+{
+    _updateCommunicationLost();
+
+    if (!communicationLost) {
+        return;
+    }
+
+    VehicleLinkManager* const linkMgr = qobject_cast<VehicleLinkManager*>(sender());
+    if (!linkMgr || !_activeVehicle || _activeVehicle->vehicleLinkManager() != linkMgr) {
+        return;
+    }
+
+    // 当前选中的 AIR 失联但集群内仍有其它在线 AIR 时，自动切到在线载具，避免主状态栏进入失联态。
+    for (int i = 0; i < _vehicles->count(); ++i) {
+        Vehicle* candidate = qobject_cast<Vehicle*>(_vehicles->get(i));
+        if (candidate && candidate != _activeVehicle && !candidate->vehicleLinkManager()->communicationLost()) {
+            setActiveVehicle(candidate);
+            break;
+        }
+    }
+}
+
+void MultiVehicleManager::_updateCommunicationLost()
+{
+    bool allLost = (_vehicles && _vehicles->count() > 0);
+    if (allLost) {
+        for (int i = 0; i < _vehicles->count(); ++i) {
+            Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles->get(i));
+            if (vehicle && !vehicle->vehicleLinkManager()->communicationLost()) {
+                allLost = false;
+                break;
+            }
+        }
+    }
+
+    if (_communicationLost != allLost) {
+        _communicationLost = allLost;
+        emit communicationLostChanged(_communicationLost);
     }
 }
 

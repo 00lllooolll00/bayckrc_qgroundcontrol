@@ -149,26 +149,30 @@ Item {
         delegate: Rectangle {
             width:          vehicleList.width
             height:         innerColumn.height + _margin * 2
-            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
+            color:          _isCommLost
+                            ? (QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? "#C62828" : "#8B1E1E")
+                            : (QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button)
             radius:         _margin
-            border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : 0
-            border.color:   qgcPal.text
+            border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : (_isCommLost ? 1 : 0)
+            border.color:   _vehicle && vehicleSelected(_vehicle.id) ? qgcPal.text : (_isCommLost ? "#FF5252" : qgcPal.text)
 
             property var    _vehicle:   object
+            readonly property bool _isCommLost:
+                _vehicle && _vehicle.vehicleLinkManager ? _vehicle.vehicleLinkManager.communicationLost : false
             readonly property bool _isFormationLeader:
                 _vehicle && _vehicle.maplrsFirmware
                 && QGroundControl.formationController.model.leaderSysid === _vehicle.id
 
-            // 编队领航机左缘金色指示条：不被白色多选框压住，也不与绿色激活底色混淆
+            // 编队领航机左缘金色指示条（失联时改为高亮红条）：不被白色多选框压住，也不与绿色激活底色混淆
             Rectangle {
-                visible:            _isFormationLeader
+                visible:            _isFormationLeader || _isCommLost
                 anchors.left:       parent.left
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 anchors.margins:    3
                 width:              4
                 radius:             2
-                color:              _leaderColor
+                color:              _isCommLost ? "#FF5252" : _leaderColor
             }
 
             QGCMouseArea {
@@ -219,26 +223,28 @@ Item {
                         QGCLabel {
                             text:                 _vehicle ? _vehicle.id : ""
                             font.pointSize:       ScreenTools.largeFontPointSize
-                            font.bold:            _isFormationLeader
-                            color:                _isFormationLeader ? _leaderColor : qgcPal.text
+                            font.bold:            _isFormationLeader || _isCommLost
+                            color:                _isCommLost ? "#FFCDD2" : (_isFormationLeader ? _leaderColor : qgcPal.text)
                             Layout.alignment:     Qt.AlignHCenter
                         }
 
                         Rectangle {
-                            visible:                _isFormationLeader
+                            visible:                _isCommLost || _isFormationLeader
                             Layout.alignment:       Qt.AlignHCenter
                             Layout.preferredWidth:  leaderBadgeLabel.implicitWidth + _margin * 2
                             Layout.preferredHeight: leaderBadgeLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.15
                             radius:                 height / 2
-                            color:                  _leaderColor
+                            color:                  _isCommLost ? "#D32F2F" : _leaderColor
 
                             QGCLabel {
                                 id:                 leaderBadgeLabel
                                 anchors.centerIn:   parent
-                                text:               "\u2605 " + qsTranslate("FormationPanel", "Leader")
+                                text:               _isCommLost
+                                                    ? ("! " + qsTr("Comms Lost"))
+                                                    : ("\u2605 " + qsTranslate("FormationPanel", "Leader"))
                                 font.pointSize:     ScreenTools.defaultFontPointSize - 2
                                 font.bold:          true
-                                color:              "#1A1A1A"
+                                color:              _isCommLost ? "#FFFFFF" : "#1A1A1A"
                             }
                         }
                     }
@@ -264,8 +270,11 @@ Item {
 
                         QGCLabel {
                             Layout.alignment:     Qt.AlignHCenter
-                            text:                 _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
-                            color:                qgcPal.text
+                            text:                 _isCommLost
+                                                  ? qsTr("Comms Lost")
+                                                  : (_vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed"))
+                            font.bold:            _isCommLost
+                            color:                _isCommLost ? "#FFCDD2" : qgcPal.text
                         }
                     }
                 }
@@ -277,9 +286,11 @@ Item {
                     height:         control.height
                     contentWidth:   control.width
                     contentHeight:  control.height
+                    interactive:    false
 
                     TelemetryValuesBar {
                         id:                     control
+                        interactive:            false
                         settingsGroup:          factValueGrid.vehicleCardSettingsGroup
                         specificVehicleForCard: _vehicle
                     }
@@ -295,7 +306,7 @@ Item {
                     color:                      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.75)
 
                     readonly property var  _radioStatus: _vehicle ? _vehicle.radioStatus : null
-                    readonly property bool _hasRfSignal: _radioStatus ? _radioStatus.telemetryAvailable : false
+                    readonly property bool _hasRfSignal: !_isCommLost && (_radioStatus ? _radioStatus.telemetryAvailable : false)
 
                     RowLayout {
                         id:                 rfRow
