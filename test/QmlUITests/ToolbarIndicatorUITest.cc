@@ -6,6 +6,7 @@
 #include <QtTest/QTest>
 
 #include "MockLink.h"
+#include "Vehicle.h"
 
 UT_REGISTER_TEST(ToolbarIndicatorUITest, TestLabel::Integration)
 
@@ -128,4 +129,43 @@ void ToolbarIndicatorUITest::_testAPMCopterIndicators()
 
     _runIndicatorTest([] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
                       QStringLiteral("APMCopter"));
+}
+
+void ToolbarIndicatorUITest::_testSingleClickDisarm()
+{
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+        QVERIFY(vehicle);
+        QVERIFY(!vehicle->armed());
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_fly"), 3000), "Fly view not visible");
+
+        // 1. Arm keeps delay-button confirmation (single-click button remains hidden)
+        QVERIFY(QMetaObject::invokeMethod(_window, "armVehicleRequest"));
+        QVERIFY_TRUE_WAIT(findVisibleItem(_rootItem, QStringLiteral("guidedActionConfirmButton"), 0) == nullptr,
+                          1000);
+        QTest::keyClick(_window, Qt::Key_Escape);
+
+        // 2. MainStatus drawer -> single click Disarm button (no hold) disarms immediately
+        vehicle->setArmed(true, false);
+        QVERIFY_TRUE_WAIT(vehicle->armed(), 3000);
+
+        QVERIFY2(clickButton(QStringLiteral("toolbar_mainStatusIndicator")), "Failed to open MainStatus drawer");
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainStatusDisarmButton"), 2000),
+                 "Single-click Disarm button not visible in MainStatus drawer");
+        QVERIFY2(clickButton(QStringLiteral("mainStatusDisarmButton")), "Failed to click MainStatus Disarm button");
+        QVERIFY_TRUE_WAIT(!vehicle->armed(), 3000);
+        QVERIFY_TRUE_WAIT(findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 0) == nullptr,
+                          3000);
+
+        // 3. GuidedActionConfirm for actionDisarm -> single click confirms immediately without hold
+        vehicle->setArmed(true, false);
+        QVERIFY_TRUE_WAIT(vehicle->armed(), 3000);
+
+        QVERIFY(QMetaObject::invokeMethod(_window, "disarmVehicleRequest"));
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("guidedActionConfirmButton"), 2000),
+                 "Single-click Disarm confirm button not visible in GuidedActionConfirm");
+        QVERIFY2(clickButton(QStringLiteral("guidedActionConfirmButton")),
+                 "Failed to click GuidedActionConfirm Disarm button");
+        QVERIFY_TRUE_WAIT(!vehicle->armed(), 3000);
+    });
 }

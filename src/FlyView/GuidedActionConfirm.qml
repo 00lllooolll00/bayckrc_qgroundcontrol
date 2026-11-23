@@ -22,8 +22,9 @@ Item {
     property alias  optionText:         optionCheckBox.text
     property alias  optionChecked:      optionCheckBox.checked
 
-    property real _margins:         2
-    property bool _emergencyAction: action === guidedController.actionEmergencyStop
+    property real _margins:           2
+    property bool _emergencyAction:   action === guidedController.actionEmergencyStop
+    property bool _singleClickConfirm: guidedController ? (action === guidedController.actionDisarm) : false
 
     Component.onCompleted: guidedController.confirmDialog = this
 
@@ -73,6 +74,25 @@ Item {
         messageFadeTimer.start()
     }
 
+    function _confirmAction() {
+        control.visible = false
+        var sliderOutputValue = 0
+        if (guidedValueSlider.visible) {
+            sliderOutputValue = guidedValueSlider.getOutputValue()
+            guidedValueSlider.visible = false
+        }
+        hideTrigger = false
+        let success = guidedController.executeAction(control.action, control.actionData, sliderOutputValue, control.optionChecked)
+        if (mapIndicator) {
+            if (success) {
+                mapIndicator.actionConfirmed()
+            } else {
+                mapIndicator.actionCancelled()
+            }
+            mapIndicator = undefined
+        }
+    }
+
     Timer {
         id:             visibleTimer
         interval:       1000
@@ -91,25 +111,18 @@ Item {
         QGCDelayButton {
             text:               control.title
             enabled:            true
+            visible:            !control._singleClickConfirm
 
-            onActivated: {
-                control.visible = false
-                var sliderOutputValue = 0
-                if (guidedValueSlider.visible) {
-                    sliderOutputValue = guidedValueSlider.getOutputValue()
-                    guidedValueSlider.visible = false
-                }
-                hideTrigger = false
-                let success = guidedController.executeAction(control.action, control.actionData, sliderOutputValue, control.optionChecked)
-                if (mapIndicator) {
-                    if (success) {
-                        mapIndicator.actionConfirmed()
-                    } else {
-                        mapIndicator.actionCancelled()
-                    }
-                    mapIndicator = undefined
-                }
-            }
+            onActivated:        control._confirmAction()
+        }
+
+        QGCButton {
+            objectName:         "guidedActionConfirmButton"
+            text:               control.title
+            enabled:            true
+            visible:            control._singleClickConfirm
+
+            onClicked:          control._confirmAction()
         }
 
         QGCCheckBox {

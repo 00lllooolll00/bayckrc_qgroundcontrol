@@ -194,20 +194,35 @@ RowLayout {
                 spacing: ScreenTools.defaultFontPixelWidth
                 visible: parametersReady
 
+                readonly property bool _singleClickDisarm: _armed
+
                 QGCDelayButton {
-                    enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
-                    text:       _armed ? qsTr("Disarm") : (control._allowForceArm ? qsTr("Force Arm") : qsTr("Arm"))
+                    enabled:    !_healthAndArmingChecksSupported || (_activeVehicle && _activeVehicle.healthAndArmingCheckReport.canArm)
+                    text:       control._allowForceArm ? qsTr("Force Arm") : qsTr("Arm")
+                    visible:    !parent._singleClickDisarm
 
                     onActivated: {
-                        if (_armed) {
-                            _activeVehicle.armed = false
-                        } else {
+                        if (_activeVehicle) {
                             if (_allowForceArm) {
                                 _allowForceArm = false
                                 _activeVehicle.forceArm()
                             } else {
                                 _activeVehicle.armed = true
                             }
+                        }
+                        mainWindow.closeIndicatorDrawer()
+                    }
+                }
+
+                QGCButton {
+                    objectName: "mainStatusDisarmButton"
+                    enabled:    true
+                    text:       qsTr("Disarm")
+                    visible:    parent._singleClickDisarm
+
+                    onClicked: {
+                        if (_activeVehicle) {
+                            _activeVehicle.armed = false
                         }
                         mainWindow.closeIndicatorDrawer()
                     }

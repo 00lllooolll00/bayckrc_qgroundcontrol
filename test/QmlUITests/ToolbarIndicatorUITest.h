@@ -23,6 +23,7 @@ public:
 private slots:
     void _testPX4Indicators();
     void _testAPMCopterIndicators();
+    void _testSingleClickDisarm();
 
 private:
     /// Shared implementation: connect a MockLink via \a factory and cycle
