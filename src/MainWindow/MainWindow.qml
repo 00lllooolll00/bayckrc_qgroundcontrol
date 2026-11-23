@@ -332,6 +332,20 @@ ApplicationWindow {
         anchors.fill:           parent
     }
 
+    SpaceArmDisarmOverlay {
+        id: spaceArmDisarmOverlay
+        anchors.fill: parent
+        z: QGroundControl.zOrderTopMost
+        targetWindow: mainWindow
+        shortcutEnabled: flyView.visible
+            && !toolDrawer.visible
+            && !indicatorDrawer.visible
+            && !firstRunPromptManager.currentDialog
+            && !(flyView.guidedController
+                && flyView.guidedController.confirmDialog
+                && flyView.guidedController.confirmDialog.visible)
+    }
+
     PlanView {
         id:             planView
         objectName:     "mainView_plan"

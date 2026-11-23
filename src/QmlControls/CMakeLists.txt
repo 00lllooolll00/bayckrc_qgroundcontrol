@@ -60,6 +60,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         RCToParamDialogController.h
         ScreenToolsController.cc
         ScreenToolsController.h
+        SpaceArmDisarmController.cc
+        SpaceArmDisarmController.h
         TerrainProfile.cc
         TerrainProfile.h
         ToolStripAction.cc
