@@ -8,14 +8,15 @@ import QGroundControl.FlightMap
 import QGroundControl.FlyView
 
 Item {
-    property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
-    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2.5
+    property real   _margin:              ScreenTools.defaultFontPixelWidth * 0.42
+    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2.2
     property var    _guidedController:    globals.guidedControllerFlyView
     property var    _activeVehicleColor:  "green"
     readonly property color _leaderColor: "#F5B800"
     property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var    selectedVehicles:     QGroundControl.multiVehicleManager.selectedVehicles
 
+    implicitWidth:  ScreenTools.defaultFontPixelHeight * 18
     implicitHeight: vehicleList.contentHeight
 
     function armAvailable() {
@@ -138,7 +139,7 @@ Item {
         anchors.right:      parent.right
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.55 // _layoutMargin
         orientation:        ListView.Vertical
         model:              QGroundControl.multiVehicleManager.vehicles
         cacheBuffer:        _cacheBuffer < 0 ? 0 : _cacheBuffer
@@ -152,7 +153,7 @@ Item {
             color:          _isCommLost
                             ? (QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? "#C62828" : "#8B1E1E")
                             : (QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button)
-            radius:         _margin
+            radius:         ScreenTools.defaultFontPixelWidth * 0.45
             border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : (_isCommLost ? 1 : 0)
             border.color:   _vehicle && vehicleSelected(_vehicle.id) ? qgcPal.text : (_isCommLost ? "#FF5252" : qgcPal.text)
 
@@ -192,37 +193,36 @@ Item {
             Column {
                 id:                         innerColumn
                 anchors.centerIn:           parent
-                spacing:                    _margin
+                spacing:                    ScreenTools.defaultFontPixelHeight * 0.28
 
                 RowLayout {
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.margins:    _margin
-                    spacing:            _margin
+                    spacing:                    _margin
 
                     IntegratedCompassAttitude {
                         id: compassWidget
                         compassRadius:              _widgetHeight / 2 - attitudeSize / 2
                         compassBorder:              0
-                        attitudeSize:               ScreenTools.defaultFontPixelWidth / 2
+                        attitudeSize:               ScreenTools.defaultFontPixelWidth * 0.45
                         attitudeSpacing:            attitudeSize / 2
                         usedByMultipleVehicleList:   true
                         vehicle:                     _vehicle
                     }
 
                     QGCLabel {
-                        text: " | "
-                        font.pointSize:       ScreenTools.largeFontPointSize
+                        text: "|"
+                        font.pointSize:       ScreenTools.mediumFontPointSize
                         color:                qgcPal.text
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     ColumnLayout {
-                        spacing:            ScreenTools.defaultFontPixelHeight * 0.15
+                        spacing:            ScreenTools.defaultFontPixelHeight * 0.12
                         Layout.alignment:   Qt.AlignVCenter
 
                         QGCLabel {
                             text:                 _vehicle ? _vehicle.id : ""
-                            font.pointSize:       ScreenTools.largeFontPointSize
+                            font.pointSize:       ScreenTools.mediumFontPointSize
                             font.bold:            _isFormationLeader || _isCommLost
                             color:                _isCommLost ? "#FFCDD2" : (_isFormationLeader ? _leaderColor : qgcPal.text)
                             Layout.alignment:     Qt.AlignHCenter
@@ -232,7 +232,7 @@ Item {
                             visible:                _isCommLost || _isFormationLeader
                             Layout.alignment:       Qt.AlignHCenter
                             Layout.preferredWidth:  leaderBadgeLabel.implicitWidth + _margin * 2
-                            Layout.preferredHeight: leaderBadgeLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.15
+                            Layout.preferredHeight: leaderBadgeLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.12
                             radius:                 height / 2
                             color:                  _isCommLost ? "#D32F2F" : _leaderColor
 
@@ -250,20 +250,19 @@ Item {
                     }
 
                     QGCLabel {
-                        text: " | "
-                        font.pointSize:       ScreenTools.largeFontPointSize
+                        text: "|"
+                        font.pointSize:       ScreenTools.mediumFontPointSize
                         color:                qgcPal.text
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     ColumnLayout {
-                        spacing:              _margin
-                        Layout.rightMargin:   compassWidget.width / 4
+                        spacing:              ScreenTools.defaultFontPixelHeight * 0.12
                         Layout.alignment:     Qt.AlignCenter
 
                         FlightModeMenu {
                             Layout.alignment:     Qt.AlignHCenter
-                            font.pointSize:       ScreenTools.largeFontPointSize
+                            font.pointSize:       ScreenTools.mediumFontPointSize
                             color:                qgcPal.text
                             currentVehicle:       _vehicle
                         }
@@ -282,7 +281,7 @@ Item {
                 QGCFlickable {
                     id:                         telemFlickable
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    width:          Math.min(contentWidth, vehicleList.width)
+                    width:          Math.min(contentWidth, vehicleList.width - _margin * 2)
                     height:         control.height
                     contentWidth:   control.width
                     contentHeight:  control.height
@@ -291,6 +290,7 @@ Item {
                     TelemetryValuesBar {
                         id:                     control
                         interactive:            false
+                        barMargin:              ScreenTools.defaultFontPixelWidth * 0.55
                         settingsGroup:          factValueGrid.vehicleCardSettingsGroup
                         specificVehicleForCard: _vehicle
                     }
@@ -300,9 +300,9 @@ Item {
                     id:                         rfPill
                     anchors.horizontalCenter:   parent.horizontalCenter
                     visible:                    (_vehicle && _vehicle.maplrsFirmware) || _hasRfSignal
-                    width:                      Math.min(vehicleList.width - _margin * 2, Math.max(rfRow.implicitWidth + _margin * 2, telemFlickable.width))
-                    height:                     rfRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.3
-                    radius:                     ScreenTools.defaultFontPixelWidth / 2
+                    width:                      Math.min(vehicleList.width - _margin * 2, Math.max(rfRow.implicitWidth + _margin * 2.5, telemFlickable.width))
+                    height:                     rfRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.25
+                    radius:                     ScreenTools.defaultFontPixelWidth * 0.45
                     color:                      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.75)
 
                     readonly property var  _radioStatus: _vehicle ? _vehicle.radioStatus : null
@@ -311,7 +311,7 @@ Item {
                     RowLayout {
                         id:                 rfRow
                         anchors.centerIn:   parent
-                        spacing:            ScreenTools.defaultFontPixelWidth
+                        spacing:            ScreenTools.defaultFontPixelWidth * 0.85
 
                         QGCLabel {
                             text:           "RSSI " + (rfPill._hasRfSignal ? (rfPill._radioStatus.lrssi.rawValue + " dBm") : "-- dBm")

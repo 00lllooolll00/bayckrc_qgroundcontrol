@@ -6,11 +6,12 @@ import QGroundControl.Controls
 
 Item {
     id:             control
-    implicitWidth:  mainLayout.width + (_toolsMargin * 2)
-    implicitHeight: mainLayout.height + (_toolsMargin * 2)
+    implicitWidth:  mainLayout.width + (barMargin * 2)
+    implicitHeight: mainLayout.height + (barMargin * 2)
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
     property bool interactive: true
+    property real barMargin:   _toolsMargin
 
     property alias factValueGrid:           factValueGrid
     property alias settingsGroup:           factValueGrid.settingsGroup
@@ -33,7 +34,7 @@ Item {
 
     ColumnLayout {
         id:                 mainLayout
-        anchors.margins:    _toolsMargin
+        anchors.margins:    barMargin
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
 

@@ -433,7 +433,7 @@ void QGCApplication::showCriticalVehicleMessage(const QString& message)
 
 void QGCApplication::showAppMessage(const QString& message, const QString& title)
 {
-    const QString dialogTitle = title.isEmpty() ? applicationName() : title;
+    const QString dialogTitle = title.isEmpty() ? applicationDisplayName() : title;
 
     if (runningUnitTests()) {
         // Logged under QGCAppMessageLog so tests can assert expected dialogs via
@@ -485,7 +485,7 @@ void QGCApplication::showRebootVehicleMessage(const QString& message, const QStr
         return;
     }
 
-    const QString dialogTitle = title.isEmpty() ? applicationName() : title;
+    const QString dialogTitle = title.isEmpty() ? applicationDisplayName() : title;
 
     if (runningUnitTests()) {
         // Same log format as showAppMessage() so tests assert this via expectAppMessage()

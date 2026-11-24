@@ -13497,6 +13497,11 @@ Do you wish to proceed?</source>
       <source>Connected to Vehicle %1</source>
       <translation>已连接到载具 %1</translation>
     </message>
+    <message>
+      <location filename="../src/Vehicle/MultiVehicleManager.cc" line="356"/>
+      <source>Connected to %1 vehicles</source>
+      <translation>已连接到 %1 台载具</translation>
+    </message>
   </context>
   <context>
     <name>MultiVehicleSelector</name>

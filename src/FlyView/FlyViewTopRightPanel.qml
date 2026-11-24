@@ -12,9 +12,14 @@ Rectangle {
     width:          contentWidth
     height:         Math.max(contentHeight, minimumHeight)
     color:          qgcPal.toolbarBackground
-    radius:         ScreenTools.defaultFontPixelHeight / 2
+    radius:         ScreenTools.defaultFontPixelHeight * 0.45
     visible:        !QGroundControl.videoManager.fullScreen && _multipleVehicles && _settingEnableMVPanel
     clip:           true
+
+    property real  _panelMargin:            ScreenTools.defaultFontPixelHeight * 0.4
+    property real  _pageContentMargin:      ScreenTools.defaultFontPixelHeight * 0.8
+    property real  _buttonHeight:           ScreenTools.defaultFontPixelHeight * 1.45
+    property real  _actionButtonMinWidth:   ScreenTools.defaultFontPixelHeight * 2.45
 
     property bool _settingEnableMVPanel:    QGroundControl.settingsManager.appSettings.enableMultiVehiclePanel.value
     property bool  _multipleVehicles:       QGroundControl.multiVehicleManager.vehicles.count > 1
@@ -23,7 +28,7 @@ Rectangle {
     property real  contentWidth:            Math.max(
                                                 multiVehicleList.implicitWidth,
                                                 swipeViewContainer.implicitWidth
-                                            ) + ScreenTools.defaultFontPixelHeight
+                                            ) + _panelMargin * 2
     property real  contentHeight:           Math.min(
                                                 maximumHeight,
                                                 topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.anchors.margins * 2
@@ -40,8 +45,8 @@ Rectangle {
     ColumnLayout {
         id:                 topRightPanelColumnLayout
         anchors.fill:       parent
-        anchors.margins:    topRightPanel.color.a ? ScreenTools.defaultFontPixelHeight / 2 : 0
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
+        anchors.margins:    topRightPanel.color.a ? topRightPanel._panelMargin : 0
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.6 // _layoutMargin
 
         MultiVehicleList {
             id:                    multiVehicleList
@@ -98,17 +103,16 @@ Rectangle {
 
                 MvPanelPage {
                     id:                buttonsPage
-                    implicitHeight:    buttonsColumnLayout.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
-                    implicitWidth:     buttonsColumnLayout.implicitWidth + ScreenTools.defaultFontPixelHeight * 2
+                    contentMargin:     topRightPanel._pageContentMargin
+                    implicitHeight:    buttonsColumnLayout.implicitHeight + contentMargin * 2.5
+                    implicitWidth:     Math.max(selectionRowLayout.implicitWidth, actionRowLayout.implicitWidth, multiActionLabel.implicitWidth) + contentMargin * 2
 
                     ColumnLayout {
                         id:                     buttonsColumnLayout
                         anchors.right:          parent.right
                         anchors.left:           parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing:                ScreenTools.defaultFontPixelHeight / 2
-                        implicitHeight:         Math.max(selectionRowLayout.height, actionRowLayout.height) + ScreenTools.defaultFontPixelHeight * 2
-                        implicitWidth:          Math.max(selectionRowLayout.width, actionRowLayout.width) + ScreenTools.defaultFontPixelHeight * 4
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.35
 
                         QGCLabel {
                             text: {
@@ -118,29 +122,43 @@ Rectangle {
                                 .join(", ")
                                 return qsTr("Vehicles Selected: ") + (ids ? ids : "-")
                             }
-                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.fillWidth:    true
+                            horizontalAlignment: Text.AlignHCenter
+                            elide:               Text.ElideRight
                         }
 
                         RowLayout {
                             id:                 selectionRowLayout
                             Layout.alignment:   Qt.AlignHCenter
+                            spacing:            ScreenTools.defaultFontPixelWidth * 0.75
 
                             QGCButton {
                                 text:                  qsTr("Select All")
                                 enabled:               multiVehicleList.selectedVehicles && multiVehicleList.selectedVehicles.count !== QGroundControl.multiVehicleManager.vehicles.count
                                 onClicked:             multiVehicleList.selectAll()
+                                topPadding:            0
+                                bottomPadding:         0
+                                leftPadding:           ScreenTools.defaultFontPixelWidth * 1.5
+                                rightPadding:          ScreenTools.defaultFontPixelWidth * 1.5
+                                Layout.preferredHeight: topRightPanel._buttonHeight
                             }
 
                             QGCButton {
                                 text:                  qsTr("Deselect All")
                                 enabled:               multiVehicleList.selectedVehicles && multiVehicleList.selectedVehicles.count > 0
                                 onClicked:             multiVehicleList.deselectAll()
+                                topPadding:            0
+                                bottomPadding:         0
+                                leftPadding:           ScreenTools.defaultFontPixelWidth * 1.5
+                                rightPadding:          ScreenTools.defaultFontPixelWidth * 1.5
+                                Layout.preferredHeight: topRightPanel._buttonHeight
                             }
 
                         }
 
 
                         QGCLabel {
+                            id:                multiActionLabel
                             text:              qsTr("Multi Vehicle Actions")
                             Layout.alignment:  Qt.AlignHCenter
                         }
@@ -148,68 +166,90 @@ Rectangle {
                         RowLayout {
                             id:                actionRowLayout
                             Layout.alignment:  Qt.AlignHCenter
+                            spacing:           ScreenTools.defaultFontPixelWidth * 0.45
 
                             QGCButton {
-                                text:                  qsTr("Arm")
-                                enabled:               multiVehicleList.armAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVArm)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Arm")
+                                enabled:                multiVehicleList.armAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVArm)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Disarm")
-                                enabled:               multiVehicleList.disarmAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVDisarm)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Disarm")
+                                enabled:                multiVehicleList.disarmAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVDisarm)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Takeoff")
-                                enabled:               multiVehicleList.takeoffAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVTakeoff)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Takeoff")
+                                enabled:                multiVehicleList.takeoffAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVTakeoff)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Land")
-                                enabled:               multiVehicleList.landAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVLand)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Land")
+                                enabled:                multiVehicleList.landAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVLand)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Return")
-                                enabled:               multiVehicleList.rtlAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVRTL)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Return")
+                                enabled:                multiVehicleList.rtlAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVRTL)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Start")
-                                enabled:               multiVehicleList.startAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVStartMission)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Start")
+                                enabled:                multiVehicleList.startAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVStartMission)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
 
                             QGCButton {
-                                text:                  qsTr("Pause")
-                                enabled:               multiVehicleList.pauseAvailable()
-                                onClicked:             _guidedController.confirmAction(_guidedController.actionMVPause)
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
-                                leftPadding:           0
-                                rightPadding:          0
+                                text:                   qsTr("Pause")
+                                enabled:                multiVehicleList.pauseAvailable()
+                                onClicked:              _guidedController.confirmAction(_guidedController.actionMVPause)
+                                topPadding:             0
+                                bottomPadding:          0
+                                leftPadding:            0
+                                rightPadding:           0
+                                Layout.preferredHeight: topRightPanel._buttonHeight
+                                Layout.preferredWidth:  Math.max(topRightPanel._actionButtonMinWidth, implicitContentWidth + ScreenTools.defaultFontPixelWidth)
                             }
                         }
                     }
@@ -218,8 +258,9 @@ Rectangle {
                 MvPanelPage {
 
                     id:                  photoVideoPage
-                    implicitHeight:      photoVideoControlLoader.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
-                    implicitWidth:       photoVideoControlLoader.implicitWidth + ScreenTools.defaultFontPixelHeight * 2
+                    contentMargin:       topRightPanel._pageContentMargin
+                    implicitHeight:      photoVideoControlLoader.implicitHeight + contentMargin * 2.5
+                    implicitWidth:       photoVideoControlLoader.implicitWidth + contentMargin
 
                     // We use a Loader to load the photoVideoControlComponent only when the active vehicle is not null
                     // This make it easier to implement PhotoVideoControl without having to check for the mavlink camera
@@ -248,10 +289,10 @@ Rectangle {
                 currentIndex:             swipePages.currentIndex
                 anchors.bottom:           parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.margins:          ScreenTools.defaultFontPixelHeight / 4
+                anchors.margins:          ScreenTools.defaultFontPixelHeight * 0.25
 
                 delegate: Rectangle {
-                    height:    ScreenTools.defaultFontPixelHeight  / 2
+                    height:    ScreenTools.defaultFontPixelHeight * 0.42
                     width:     height
                     radius:    width / 2
                     color:     model.index === pageIndicator.currentIndex ? qgcPal.text : qgcPal.button
