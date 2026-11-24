@@ -13484,6 +13484,11 @@ Do you wish to proceed?</source>
       <source>Comms Lost</source>
       <translation>失联</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/MultiVehicleList.qml" line="270"/>
+      <source>In Formation</source>
+      <translation>编队中</translation>
+    </message>
   </context>
   <context>
     <name>MultiVehicleManager</name>

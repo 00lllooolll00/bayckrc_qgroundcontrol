@@ -202,6 +202,12 @@ bool FormationModel::isLeaving(int sysid) const
     return row >= 0 && (_members[row].flags & 0x01);
 }
 
+bool FormationModel::isInFormation(int sysid) const
+{
+    const int row = _rowForSysid(sysid);
+    return row >= 0 && _members[row].online && !(_members[row].flags & 0x01) && _members[row].formationId != 0;
+}
+
 void FormationModel::updateStatus(int sysid, int position, int phase, int leaderId, int flags, int formationId)
 {
     const int row = _rowForSysid(sysid);

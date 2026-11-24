@@ -62,6 +62,7 @@ public:
     void clearLeaving();
     Q_INVOKABLE bool isOnline(int sysid) const;
     Q_INVOKABLE bool isLeaving(int sysid) const;
+    Q_INVOKABLE bool isInFormation(int sysid) const;
     Q_INVOKABLE void updateStatus(int sysid, int position, int phase, int leaderId, int flags, int formationId);
     Q_INVOKABLE bool validate() const;
 
