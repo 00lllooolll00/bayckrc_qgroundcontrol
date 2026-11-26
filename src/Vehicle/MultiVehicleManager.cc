@@ -179,8 +179,10 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     deselectVehicle(vehicle->id());
     _updateCommunicationLost();
 
-    _setActiveVehicleAvailable(false);
-    _setParameterReadyVehicleAvailable(false);
+    if (vehicle == _activeVehicle) {
+        _setActiveVehicleAvailable(false);
+        _setParameterReadyVehicleAvailable(false);
+    }
     emit vehicleRemoved(vehicle);
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -210,24 +212,28 @@ void MultiVehicleManager::_deleteVehiclePhase2(Vehicle* vehicle)
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
 
-    Vehicle* newActiveVehicle = nullptr;
-    for (int i = 0; i < _vehicles->count(); ++i) {
-        Vehicle* candidate = qobject_cast<Vehicle*>(_vehicles->get(i));
-        if (candidate && !candidate->vehicleLinkManager()->communicationLost()) {
-            newActiveVehicle = candidate;
-            break;
+    // 仅当被销毁的正是当前激活载具（或当前已无激活载具）时才重新切换焦点，
+    // 单独断开后台已掉线飞机时不打断正在操控的在线飞机。
+    if (!_activeVehicle || _activeVehicle == vehicle || !_vehicles->contains(_activeVehicle)) {
+        Vehicle* newActiveVehicle = nullptr;
+        for (int i = 0; i < _vehicles->count(); ++i) {
+            Vehicle* candidate = qobject_cast<Vehicle*>(_vehicles->get(i));
+            if (candidate && !candidate->vehicleLinkManager()->communicationLost()) {
+                newActiveVehicle = candidate;
+                break;
+            }
         }
-    }
-    if (!newActiveVehicle && _vehicles->count() > 0) {
-        newActiveVehicle = qobject_cast<Vehicle*>(_vehicles->get(0));
-    }
+        if (!newActiveVehicle && _vehicles->count() > 0) {
+            newActiveVehicle = qobject_cast<Vehicle*>(_vehicles->get(0));
+        }
 
-    _setActiveVehicle(newActiveVehicle);
+        _setActiveVehicle(newActiveVehicle);
 
-    if (_activeVehicle) {
-        _setActiveVehicleAvailable(true);
-        if (_activeVehicle->parameterManager()->parametersReady()) {
-            _setParameterReadyVehicleAvailable(true);
+        if (_activeVehicle) {
+            _setActiveVehicleAvailable(true);
+            if (_activeVehicle->parameterManager()->parametersReady()) {
+                _setParameterReadyVehicleAvailable(true);
+            }
         }
     }
 

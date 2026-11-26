@@ -17,6 +17,8 @@ private slots:
     void _positionUpdateEmitsConfigChanged();
     void _unassignedFollowerKeepsSlotCount();
     void _leaderSwitchNotifiesLeaderChanged();
+    void _offlineVehicleExcludedFromFormation();
+    void _middleMemberOfflineHidesEmptySlot();
 
 private:
     bool _startSmartApVehicle();

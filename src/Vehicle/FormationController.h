@@ -62,6 +62,7 @@ signals:
 private:
     explicit FormationController(QObject* parent = nullptr);
 
+    static bool _isVehicleOnline(Vehicle* vehicle);
     void _setPhase(Phase phase);
     void _setError(const QString& error);
     Vehicle* _findVehicle(QmlObjectListModel* vehicles, int sysid) const;

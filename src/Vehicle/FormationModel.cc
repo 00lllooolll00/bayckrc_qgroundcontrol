@@ -1,5 +1,6 @@
 #include "FormationModel.h"
 
+#include <QSet>
 #include <QVariantMap>
 #include <QtMath>
 #include <algorithm>
@@ -10,6 +11,7 @@
 #include "FormationShape.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 FormationModel::FormationModel(QObject* parent) : QAbstractListModel(parent)
 {
@@ -75,50 +77,78 @@ void FormationModel::matchOnline(QmlObjectListModel* vehicles)
         return;
     }
 
+    QList<int> present;
     QList<int> online;
     for (int i = 0; i < vehicles->count(); ++i) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
         if (_isMaplrs(vehicle)) {
-            online.append(vehicle->id());
+            const int id = vehicle->id();
+            present.append(id);
+            if (_isVehicleOnline(vehicle)) {
+                online.append(id);
+            }
         }
     }
+    std::sort(present.begin(), present.end());
     std::sort(online.begin(), online.end());
 
-    if (_active) {
+    bool sameMembers = (_members.count() == present.count());
+    if (sameMembers) {
         for (int row = 0; row < _members.count(); ++row) {
-            const bool present = online.contains(_members[row].sysid);
-            if (_members[row].online != present) {
-                _members[row].online = present;
+            if (_members[row].sysid != present[row]) {
+                sameMembers = false;
+                break;
+            }
+        }
+    }
+
+    if (sameMembers) {
+        for (int row = 0; row < _members.count(); ++row) {
+            Member& member = _members[row];
+            const bool memberOnline = online.contains(member.sysid);
+            bool rowChanged = false;
+            if (member.online != memberOnline) {
+                member.online = memberOnline;
+                rowChanged = true;
+            }
+            if (!memberOnline && _clearMemberFormationState(member)) {
+                rowChanged = true;
+            }
+            if (rowChanged) {
                 _emitRowChanged(row);
             }
         }
-        emit configChanged();
-        return;
-    }
-
-    QHash<int, Member> old;
-    for (const Member& member : _members) {
-        old.insert(member.sysid, member);
-    }
-
-    beginResetModel();
-    _members.clear();
-    for (int sysid : online) {
-        Member member;
-        member.sysid = sysid;
-        member.online = true;
-        if (old.contains(sysid)) {
-            const Member previous = old.value(sysid);
-            member.position = previous.position;
-            member.phase = previous.phase;
-            member.leaderId = previous.leaderId;
-            member.flags = previous.flags;
-            member.formationId = previous.formationId;
-            member.batteryPct = previous.batteryPct;
+    } else {
+        QHash<int, Member> old;
+        for (const Member& member : _members) {
+            old.insert(member.sysid, member);
         }
-        _members.append(member);
+
+        beginResetModel();
+        _members.clear();
+        for (int sysid : present) {
+            Member member;
+            member.sysid = sysid;
+            member.online = online.contains(sysid);
+            if (old.contains(sysid)) {
+                const Member previous = old.value(sysid);
+                member.batteryPct = previous.batteryPct;
+                if (member.online) {
+                    member.position = previous.position;
+                    member.phase = previous.phase;
+                    member.leaderId = previous.leaderId;
+                    member.flags = previous.flags;
+                    member.formationId = previous.formationId;
+                }
+            }
+            _members.append(member);
+        }
+        endResetModel();
     }
-    endResetModel();
+
+    if (_leaderOverride != 0 && !isOnline(_leaderOverride)) {
+        _leaderOverride = 0;
+    }
 
     emit configChanged();
 }
@@ -135,12 +165,31 @@ void FormationModel::setActive(bool active)
 void FormationModel::markOffline(int sysid)
 {
     const int row = _rowForSysid(sysid);
-    if (row < 0 || !_members[row].online) {
+    if (row < 0) {
         return;
     }
-    _members[row].online = false;
-    _emitRowChanged(row);
-    emit configChanged();
+    Member& member = _members[row];
+    bool rowChanged = false;
+    bool configDirty = false;
+    if (member.online) {
+        member.online = false;
+        rowChanged = true;
+        configDirty = true;
+    }
+    if (_clearMemberFormationState(member)) {
+        rowChanged = true;
+        configDirty = true;
+    }
+    if (_leaderOverride == sysid) {
+        _leaderOverride = 0;
+        configDirty = true;
+    }
+    if (rowChanged) {
+        _emitRowChanged(row);
+    }
+    if (configDirty) {
+        emit configChanged();
+    }
 }
 
 void FormationModel::markLeaving(int sysid)
@@ -184,6 +233,21 @@ void FormationModel::clearLeaving()
         member.flags &= ~0x01;
         _emitRowChanged(row);
         changed = true;
+    }
+    if (changed) {
+        emit configChanged();
+    }
+}
+
+void FormationModel::clearOfflineFormationState()
+{
+    bool changed = false;
+    for (int row = 0; row < _members.count(); ++row) {
+        Member& member = _members[row];
+        if (!member.online && _clearMemberFormationState(member)) {
+            _emitRowChanged(row);
+            changed = true;
+        }
     }
     if (changed) {
         emit configChanged();
@@ -245,8 +309,14 @@ bool FormationModel::validate() const
 {
     _lastError.clear();
 
-    if (_members.isEmpty()) {
-        _lastError = QStringLiteral("没有编队成员");
+    int onlineCount = 0;
+    for (const Member& member : _members) {
+        if (member.online) {
+            ++onlineCount;
+        }
+    }
+    if (onlineCount == 0) {
+        _lastError = _members.isEmpty() ? QStringLiteral("没有编队成员") : QStringLiteral("没有在线的编队成员");
         return false;
     }
     if (_shape < 0 || _shape > 3) {
@@ -261,9 +331,15 @@ bool FormationModel::validate() const
         _lastError = QStringLiteral("V 字夹角必须在 0..90°");
         return false;
     }
-    if (_leaderOverride != 0 && _rowForSysid(_leaderOverride) < 0) {
-        _lastError = QStringLiteral("指定的领机不在编队成员中");
-        return false;
+    if (_leaderOverride != 0) {
+        if (_rowForSysid(_leaderOverride) < 0) {
+            _lastError = QStringLiteral("指定的领机不在编队成员中");
+            return false;
+        }
+        if (!isOnline(_leaderOverride)) {
+            _lastError = QStringLiteral("指定的领机已离线");
+            return false;
+        }
     }
     return true;
 }
@@ -331,7 +407,7 @@ Vehicle* FormationModel::_resolveLeader(QmlObjectListModel* vehicles) const
     const int leaderId = leaderSysid();
     for (int i = 0; i < vehicles->count(); ++i) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
-        if (!_isMaplrs(vehicle) || !_coordinateOf(vehicle).isValid()) {
+        if (!_isVehicleOnline(vehicle) || !_coordinateOf(vehicle).isValid()) {
             continue;
         }
         if (leaderId != 0) {
@@ -360,6 +436,9 @@ QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
     const double metersPerDegLon = 111320.0 * std::cos(qDegreesToRadians(origin.latitude()));
 
     for (const Member& member : _members) {
+        if (!member.online) {
+            continue;
+        }
         Vehicle* vehicle = nullptr;
         for (int i = 0; i < vehicles->count() && !vehicle; ++i) {
             Vehicle* candidate = vehicles->value<Vehicle*>(i);
@@ -368,7 +447,7 @@ QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
             }
         }
         const QGeoCoordinate coord = _coordinateOf(vehicle);
-        if (!vehicle || !coord.isValid()) {
+        if (!_isVehicleOnline(vehicle) || !coord.isValid()) {
             continue;
         }
 
@@ -393,27 +472,37 @@ QVariantList FormationModel::liveLayout(QmlObjectListModel* vehicles) const
 
 QVariantList FormationModel::positions() const
 {
-    // 槽位总数由固件分配结果决定：本地成员计数会因离线/上报延迟少算，
-    // 导致槽位布局与机上不一致（例如机上 4 槽、面板只画 3 槽）。
+    // 槽位总数由在线成员实际占用情况决定：成员掉线后实时收回或隐藏其空槽位。
     QList<int> memberPositions;
+    QSet<int> occupiedSlots;
+    int unassignedCount = 0;
     memberPositions.reserve(_members.count());
     for (const Member& member : _members) {
         if (member.online && !(member.flags & 0x01)) {
             memberPositions.append(member.position);
+            if (member.position >= 0) {
+                occupiedSlots.insert(member.position);
+            } else {
+                ++unassignedCount;
+            }
         }
     }
-    const int count = FormationShape::slotCountFromPositions(memberPositions, _activeMemberCount());
+    const int activeCount = _activeMemberCount();
+    const int count = FormationShape::slotCountFromPositions(memberPositions, activeCount);
     const QList<FormationShape::SlotPolar> polar =
         FormationShape::slotPolar(static_cast<FormationShape::Shape>(_shape), count, _spacingM, _vAngleDeg);
 
     QVariantList out;
-    for (const FormationShape::SlotPolar& slot : polar) {
+    for (int idx = 0; idx < polar.count(); ++idx) {
+        const FormationShape::SlotPolar& slot = polar[idx];
         const double angleRad = qDegreesToRadians(slot.angleDeg);
+        const bool visible = (idx == 0) || occupiedSlots.contains(idx) || (unassignedCount > 0 && idx < activeCount);
         QVariantMap map;
         map["distance"] = slot.distanceM;
         map["angle"] = slot.angleDeg;
         map["forward"] = slot.distanceM * qCos(angleRad);
         map["right"] = slot.distanceM * qSin(angleRad);
+        map["visible"] = visible;
         out.append(map);
     }
     return out;
@@ -424,6 +513,17 @@ QVariantList FormationModel::sysids() const
     QVariantList out;
     for (const Member& member : _members) {
         if (member.sysid > 0) {
+            out.append(member.sysid);
+        }
+    }
+    return out;
+}
+
+QVariantList FormationModel::onlineSysids() const
+{
+    QVariantList out;
+    for (const Member& member : _members) {
+        if (member.sysid > 0 && member.online) {
             out.append(member.sysid);
         }
     }
@@ -499,6 +599,25 @@ void FormationModel::setFormationId(int formationId)
 bool FormationModel::_isMaplrs(Vehicle* vehicle)
 {
     return vehicle != nullptr && vehicle->maplrsFirmware();
+}
+
+bool FormationModel::_isVehicleOnline(Vehicle* vehicle)
+{
+    return _isMaplrs(vehicle) && (!vehicle->vehicleLinkManager() || !vehicle->vehicleLinkManager()->communicationLost());
+}
+
+bool FormationModel::_clearMemberFormationState(Member& member)
+{
+    if (member.position == -1 && member.phase == 0 && member.leaderId == 0 && member.flags == 0 &&
+        member.formationId == 0) {
+        return false;
+    }
+    member.position = -1;
+    member.phase = 0;
+    member.leaderId = 0;
+    member.flags = 0;
+    member.formationId = 0;
+    return true;
 }
 
 void FormationModel::_emitRowChanged(int row)

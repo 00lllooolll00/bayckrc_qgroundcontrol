@@ -35,6 +35,7 @@ public:
 
     Q_PROPERTY(QVariantList positions READ positions NOTIFY configChanged)
     Q_PROPERTY(QVariantList sysids READ sysids NOTIFY configChanged)
+    Q_PROPERTY(QVariantList onlineSysids READ onlineSysids NOTIFY configChanged)
     Q_PROPERTY(int shape READ shape WRITE setShape NOTIFY configChanged)
     Q_PROPERTY(double spacingM READ spacingM WRITE setSpacingM NOTIFY configChanged)
     Q_PROPERTY(double vAngleDeg READ vAngleDeg WRITE setVAngleDeg NOTIFY configChanged)
@@ -60,6 +61,8 @@ public:
     Q_INVOKABLE void markRejoining(int sysid);
     /// Apply/Stop 前清掉所有本地 LEAVING 覆盖，避免后续机上回包继续按踢出处理。
     void clearLeaving();
+    /// Apply/Stop 时清掉已离线成员的旧编队态，避免面板和槽位统计残留。
+    Q_INVOKABLE void clearOfflineFormationState();
     Q_INVOKABLE bool isOnline(int sysid) const;
     Q_INVOKABLE bool isLeaving(int sysid) const;
     Q_INVOKABLE bool isInFormation(int sysid) const;
@@ -76,6 +79,7 @@ public:
 
     QVariantList positions() const;
     QVariantList sysids() const;
+    QVariantList onlineSysids() const;
 
     int shape() const { return _shape; }
 
@@ -115,6 +119,8 @@ private:
     };
 
     static bool _isMaplrs(Vehicle* vehicle);
+    static bool _isVehicleOnline(Vehicle* vehicle);
+    static bool _clearMemberFormationState(Member& member);
     void _emitRowChanged(int row);
     void _refreshLeader();
     Vehicle* _resolveLeader(QmlObjectListModel* vehicles) const;

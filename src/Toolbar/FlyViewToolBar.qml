@@ -94,7 +94,7 @@ Item {
                         id:         disconnectButton
                         text:       qsTr("Disconnect")
                         onClicked:  _activeVehicle.closeVehicle()
-                        visible:    _activeVehicle && _communicationLost
+                        visible:    _activeVehicle && (_communicationLost || (_activeVehicle.vehicleLinkManager && _activeVehicle.vehicleLinkManager.communicationLost))
                     }
 
                     FlightModeIndicator {

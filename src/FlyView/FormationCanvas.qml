@@ -23,20 +23,23 @@ Item {
 
     readonly property color _leaderColor: "#F5B800"
     readonly property real  _margin: ScreenTools.defaultFontPixelHeight * 1.6
-    readonly property real  _minExtentM: 15
+    readonly property real  _minAutoExtentM: 2.0
+    readonly property real  _defaultIdleExtentM: 5.0
+    readonly property real  _minManualExtentM: 1.0
+    readonly property real  _maxManualExtentM: 1000.0
 
-    // 画面半径对应的实际米数：覆盖全部槽位与飞机，并留 10% 余量。
-    readonly property real _extentM: {
-        var extent = _minExtentM
-        for (var i = 0; i < slots.length; i++) {
-            extent = Math.max(extent, Math.hypot(slots[i].forward, slots[i].right))
-        }
-        for (var j = 0; j < members.length; j++) {
-            extent = Math.max(extent, Math.hypot(members[j].north, members[j].east))
-        }
-        return extent * 1.1
+    property bool autoZoom: true
+    property real _autoExtentM: _defaultIdleExtentM
+    property real _manualExtentM: _defaultIdleExtentM
+    readonly property real _targetExtentM: autoZoom ? _autoExtentM : _manualExtentM
+    property real displayExtentM: _targetExtentM
+
+    Behavior on displayExtentM {
+        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
     }
-    readonly property real _pxPerMeter: Math.max(0.1, (Math.min(width, height) * 0.5 - _margin) / _extentM)
+
+    readonly property real _pxPerMeter:
+        Math.max(0.1, (Math.min(width, height) * 0.5 - _margin) / Math.max(0.5, displayExtentM))
 
     implicitWidth: 300
     implicitHeight: 300
@@ -44,12 +47,48 @@ Item {
 
     QGCPalette { id: qgcPal }
 
+    function _computeDesiredExtentM() {
+        var maxDist = 0
+        for (var i = 0; i < slots.length; i++) {
+            if (slots[i].visible === false) continue
+            var dSlot = Math.hypot(slots[i].forward, slots[i].right)
+            if (isFinite(dSlot)) maxDist = Math.max(maxDist, dSlot)
+        }
+        for (var j = 0; j < members.length; j++) {
+            var dMem = Math.hypot(members[j].north, members[j].east)
+            if (isFinite(dMem)) maxDist = Math.max(maxDist, dMem)
+        }
+        return maxDist < 0.1 ? _defaultIdleExtentM : Math.max(_minAutoExtentM, maxDist * 1.3)
+    }
+
+    function _updateAutoExtent(force) {
+        var desired = _computeDesiredExtentM()
+        if (force || desired > _autoExtentM * 0.92 || desired < _autoExtentM * 0.62) {
+            _autoExtentM = desired
+        }
+    }
+
+    function _zoomBy(factor) {
+        var base = autoZoom ? displayExtentM : _manualExtentM
+        autoZoom = false
+        _manualExtentM = Math.max(_minManualExtentM, Math.min(_maxManualExtentM, base * factor))
+    }
+
+    function _resetAutoZoom() {
+        autoZoom = true
+        _updateAutoExtent(true)
+    }
+
+    function _formatMeters(m) {
+        return m < 1 ? (m.toFixed(1) + " m") : (String(m) + " m")
+    }
+
     function _cx(east) { return width * 0.5 + east * _pxPerMeter }
     function _cy(north) { return height * 0.5 - north * _pxPerMeter }
 
     // 选一个让相邻圈间距 ≥ 40px 的整齐步长。
     function _ringStepM() {
-        var steps = [1, 2, 5, 10, 20, 50, 100, 200, 500]
+        var steps = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500]
         for (var i = 0; i < steps.length; i++) {
             if (steps[i] * _pxPerMeter >= 40) {
                 return steps[i]
@@ -133,7 +172,9 @@ Item {
             ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(width, cy); ctx.stroke()
             ctx.globalAlpha = 0.5
             ctx.textAlign = "left"
-            ctx.fillText(step + " m", cx + step * root._pxPerMeter + 3, cy - fontPx * 0.7)
+            // 将比例尺刻度标在东北 45° 象限，避免与正东侧 1 号槽位/飞机标识重叠。
+            var ringLabelR = step * root._pxPerMeter
+            ctx.fillText(root._formatMeters(step), cx + ringLabelR * 0.707 + 3, cy - ringLabelR * 0.707 - 2)
             ctx.textAlign = "center"
             ctx.fillText(qsTr("N"), cx, fontPx * 0.8)
             ctx.globalAlpha = 1
@@ -157,6 +198,7 @@ Item {
             // 槽位
             ctx.textAlign = "center"
             for (var i = 1; i < root.slots.length; i++) {
+                if (root.slots[i].visible === false) continue
                 var sx = root._cx(root.slots[i].right)
                 var sy = root._cy(root.slots[i].forward)
                 ctx.beginPath()
@@ -221,15 +263,25 @@ Item {
         }
     }
 
-    onSlotsChanged: canvas.requestPaint()
-    onMembersChanged: canvas.requestPaint()
+    Component.onCompleted: _updateAutoExtent(true)
+    onSlotsChanged: { _updateAutoExtent(false); canvas.requestPaint() }
+    onMembersChanged: { _updateAutoExtent(false); canvas.requestPaint() }
     onSelectedSysidChanged: canvas.requestPaint()
+    onDisplayExtentMChanged: canvas.requestPaint()
     onWidthChanged: canvas.requestPaint()
     onHeightChanged: canvas.requestPaint()
 
-    // 点最近的飞机选中；点空白不做任何事。
+    // 点最近的飞机选中；支持滚轮缩放与双击回自动适配视野。
     MouseArea {
         anchors.fill: parent
+        onWheel: (wheel) => {
+            if (wheel.angleDelta.y === 0) {
+                return
+            }
+            root._zoomBy(wheel.angleDelta.y > 0 ? 0.8 : 1.25)
+            wheel.accepted = true
+        }
+        onDoubleClicked: root._resetAutoZoom()
         onClicked: (mouse) => {
             var best = -1
             var bestDist = ScreenTools.defaultFontPixelHeight * 1.8
@@ -243,6 +295,85 @@ Item {
             }
             if (best > 0) {
                 root.memberSelected(best)
+            }
+        }
+    }
+
+    // 右下角紧凑缩放栏（+ / - / 自动适配）
+    Row {
+        id: zoomControls
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: ScreenTools.defaultFontPixelHeight * 0.45
+        spacing: 4
+
+        readonly property real _btnHeight: ScreenTools.defaultFontPixelHeight * 1.45
+
+        Rectangle {
+            width: zoomControls._btnHeight
+            height: zoomControls._btnHeight
+            radius: ScreenTools.defaultBorderRadius * 0.7
+            color: qgcPal.windowShade
+            border.width: 1
+            border.color: qgcPal.buttonBorder
+            opacity: 0.9
+
+            QGCLabel {
+                anchors.centerIn: parent
+                text: "+"
+                font.bold: true
+                color: qgcPal.text
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root._zoomBy(0.8)
+            }
+        }
+
+        Rectangle {
+            width: zoomControls._btnHeight
+            height: zoomControls._btnHeight
+            radius: ScreenTools.defaultBorderRadius * 0.7
+            color: qgcPal.windowShade
+            border.width: 1
+            border.color: qgcPal.buttonBorder
+            opacity: 0.9
+
+            QGCLabel {
+                anchors.centerIn: parent
+                text: "−"
+                font.bold: true
+                color: qgcPal.text
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root._zoomBy(1.25)
+            }
+        }
+
+        Rectangle {
+            width: autoLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.2
+            height: zoomControls._btnHeight
+            radius: ScreenTools.defaultBorderRadius * 0.7
+            color: root.autoZoom ? qgcPal.primaryButton : qgcPal.windowShade
+            border.width: 1
+            border.color: root.autoZoom ? qgcPal.primaryButton : qgcPal.buttonBorder
+            opacity: 0.92
+
+            QGCLabel {
+                id: autoLabel
+                anchors.centerIn: parent
+                text: qsTr("Auto")
+                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                font.bold: root.autoZoom
+                color: root.autoZoom ? qgcPal.primaryButtonText : qgcPal.text
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root._resetAutoZoom()
             }
         }
     }

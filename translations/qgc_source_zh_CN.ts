@@ -13489,6 +13489,11 @@ Do you wish to proceed?</source>
       <source>In Formation</source>
       <translation>编队中</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/MultiVehicleList.qml" line="380"/>
+      <source>Disconnect</source>
+      <translation>断开连接</translation>
+    </message>
   </context>
   <context>
     <name>MultiVehicleManager</name>
@@ -22361,6 +22366,11 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <source>Waiting for vehicle positions</source>
       <translation>等待载具定位</translation>
     </message>
+    <message>
+      <location filename="../src/FlyView/FormationCanvas.qml" line="325"/>
+      <source>Auto</source>
+      <translation>自动</translation>
+    </message>
   </context>
   <context>
     <name>FormationPanel</name>
@@ -22553,6 +22563,16 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <location filename="../src/FlyView/FormationPanel.qml" line="632"/>
       <source>Leader focus</source>
       <translation>聚焦领航机</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="479"/>
+      <source>OFFLINE</source>
+      <translation>离线</translation>
+    </message>
+    <message>
+      <location filename="../src/FlyView/FormationPanel.qml" line="503"/>
+      <source>Disconnect</source>
+      <translation>断开</translation>
     </message>
   </context>
   <context>

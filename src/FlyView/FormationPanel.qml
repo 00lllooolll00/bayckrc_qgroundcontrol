@@ -34,16 +34,20 @@ Item {
     readonly property var _shapeNames: [qsTr("Line"), qsTr("V"), qsTr("Column"), qsTr("Grid")]
     readonly property var _phaseNames: [qsTr("Idle"), qsTr("Applying"), qsTr("Active"),
                                         qsTr("Stopping"), qsTr("Failed")]
-    readonly property bool _canApply: _controller.phase !== 1
+    readonly property bool _canApply: _controller.phase !== 1 && panel._onlineCount > 0
     readonly property var _memberSysids: {
         void panel._tick
         return _model.sysids
     }
+    readonly property var _onlineMemberSysids: {
+        void panel._tick
+        return _model.onlineSysids
+    }
     readonly property var _leaderOptions: {
         void panel._tick
         var out = ["Auto"]
-        for (var i = 0; i < panel._memberSysids.length; i++) {
-            out.push(String(panel._memberSysids[i]))
+        for (var i = 0; i < panel._onlineMemberSysids.length; i++) {
+            out.push(String(panel._onlineMemberSysids[i]))
         }
         return out
     }
@@ -53,7 +57,7 @@ Item {
         if (override === 0) {
             return 0
         }
-        var index = panel._memberSysids.indexOf(override)
+        var index = panel._onlineMemberSysids.indexOf(override)
         return index < 0 ? 0 : index + 1
     }
     readonly property int _leaderSysid: _model.leaderSysid
@@ -84,7 +88,7 @@ Item {
         var n = 0
         for (var i = 0; i < _vehicles.count; i++) {
             var v = _vehicles.get(i)
-            if (v && v.maplrsFirmware) {
+            if (v && v.maplrsFirmware && (!v.vehicleLinkManager || !v.vehicleLinkManager.communicationLost)) {
                 n++
             }
         }
@@ -100,11 +104,12 @@ Item {
         repeat: true
         onTriggered: {
             panel._tick++
-            // 成员首次出现、或当前选中项已不在列表时，选中第一个成员。
-            var ids = panel._memberSysids
-            if (ids.length > 0 && (panel._selectedMember <= 0
-                                   || ids.indexOf(panel._selectedMember) < 0)) {
-                panel._selectedMember = ids[0]
+            // 成员首次出现、或当前选中项已不在列表时，优先选中第一个在线成员。
+            var allIds = panel._memberSysids
+            var onlineIds = panel._onlineMemberSysids
+            if (allIds.length > 0 && (panel._selectedMember <= 0
+                                      || allIds.indexOf(panel._selectedMember) < 0)) {
+                panel._selectedMember = onlineIds.length > 0 ? onlineIds[0] : allIds[0]
             }
         }
     }
@@ -268,8 +273,8 @@ Item {
                             onActivated: (index) => {
                                 if (index === 0) {
                                     panel._model.leaderOverride = 0
-                                } else if (index - 1 < panel._memberSysids.length) {
-                                    panel._model.leaderOverride = panel._memberSysids[index - 1]
+                                } else if (index - 1 < panel._onlineMemberSysids.length) {
+                                    panel._model.leaderOverride = panel._onlineMemberSysids[index - 1]
                                 }
                             }
                         }
@@ -468,17 +473,19 @@ Item {
                                     radius: height / 2
                                     color: "transparent"
                                     border.width: 1
-                                    border.color: leaving ? qgcPal.warningText
+                                    border.color: !online ? qgcPal.colorRed
+                                                : leaving ? qgcPal.warningText
                                                 : leader ? qgcPal.primaryButton
                                                 : qgcPal.buttonBorder
 
                                     QGCLabel {
                                         id: roleLabel
                                         anchors.centerIn: parent
-                                        text: leaving ? qsTr("LEAVING") : role.toUpperCase()
+                                        text: !online ? qsTr("OFFLINE") : (leaving ? qsTr("LEAVING") : role.toUpperCase())
                                         font.bold: true
                                         font.pointSize: ScreenTools.defaultFontPointSize - 1
-                                        color: leaving ? qgcPal.warningText
+                                        color: !online ? qgcPal.colorRed
+                                             : leaving ? qgcPal.warningText
                                              : leader ? qgcPal.primaryButton
                                              : qgcPal.text
                                     }
@@ -493,9 +500,21 @@ Item {
                                 }
 
                                 QGCLabel {
-                                    text: online ? panel._memberPhaseLabel(phase) : qsTr("Offline")
+                                    visible: online
+                                    text: panel._memberPhaseLabel(phase)
                                     color: qgcPal.text
                                     opacity: 0.65
+                                }
+
+                                QGCButton {
+                                    visible: !online
+                                    text: qsTr("Disconnect")
+                                    onClicked: {
+                                        var v = panel._vehicleById(sysid)
+                                        if (v) {
+                                            v.closeVehicle()
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -586,7 +605,10 @@ Item {
                                 Layout.minimumWidth: panel._actionButtonWidth
                                 Layout.maximumWidth: panel._actionButtonWidth
                                 text: qsTr("Leader focus")
-                                enabled: panel._leaderSysid > 0 && panel._vehicleById(panel._leaderSysid) !== null
+                                enabled: {
+                                    var v = panel._leaderSysid > 0 ? panel._vehicleById(panel._leaderSysid) : null
+                                    return v !== null && (!v.vehicleLinkManager || !v.vehicleLinkManager.communicationLost)
+                                }
                                 onClicked: {
                                     var v = panel._vehicleById(panel._leaderSysid)
                                     if (v) {

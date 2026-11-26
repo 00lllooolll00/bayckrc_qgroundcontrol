@@ -372,6 +372,18 @@ Item {
                         }
                     }
                 }
+
+                QGCButton {
+                    visible:                    _isCommLost
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    width:                      vehicleList.width - _margin * 2
+                    text:                       qsTr("Disconnect")
+                    onClicked: {
+                        if (_vehicle) {
+                            _vehicle.closeVehicle()
+                        }
+                    }
+                }
             }
         }
     }

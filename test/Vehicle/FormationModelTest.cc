@@ -110,4 +110,89 @@ void FormationModelTest::_leaderSwitchNotifiesLeaderChanged()
     QVERIFY(leaderSpy.count() >= 1);
 }
 
+void FormationModelTest::_offlineVehicleExcludedFromFormation()
+{
+    MultiVehicleManager* manager = MultiVehicleManager::instance();
+    QVERIFY(_startSmartApVehicle());
+    QVERIFY(_startSmartApVehicle());
+    QTRY_COMPARE_WITH_TIMEOUT(manager->vehicles()->count(), 2, TestTimeout::mediumMs());
+
+    FormationModel model;
+    model.matchOnline(manager->vehicles());
+    QCOMPARE(model.rowCount(), 2);
+
+    const int id1 = model.data(model.index(0, 0), FormationModel::SysidRole).toInt();
+    const int id2 = model.data(model.index(1, 0), FormationModel::SysidRole).toInt();
+
+    model.updateStatus(id1, 0, 2, id1, 0x0C, 1);
+    model.updateStatus(id2, 1, 2, id1, 0x08, 1);
+    model.setLeader(id2);
+    QCOMPARE(model.leaderOverride(), id2);
+
+    model.markOffline(id2);
+    QVERIFY(!model.isOnline(id2));
+    QCOMPARE(model.data(model.index(1, 0), FormationModel::PositionRole).toInt(), -1);
+    QCOMPARE(model.formationMemberCount(), 1);
+    QCOMPARE(model.onlineSysids(), QVariantList{id1});
+    QCOMPARE(model.positions().count(), 1);
+    QCOMPARE(model.leaderOverride(), 0);
+    QVERIFY(model.validate());
+
+    model.setLeader(id2);
+    QVERIFY(!model.validate());
+    model.setLeader(0);
+    QVERIFY(model.validate());
+
+    model.clearOfflineFormationState();
+    QCOMPARE(model.data(model.index(1, 0), FormationModel::PositionRole).toInt(), -1);
+    QCOMPARE(model.formationMemberCount(), 1);
+
+    model.markOffline(id1);
+    QVERIFY(!model.validate());
+
+    Vehicle* vehicle2 = manager->getVehicleById(id2);
+    QVERIFY(vehicle2 != nullptr);
+    vehicle2->closeVehicle();
+    QTRY_COMPARE_WITH_TIMEOUT(manager->vehicles()->count(), 1, TestTimeout::mediumMs());
+
+    model.matchOnline(manager->vehicles());
+    QCOMPARE(model.rowCount(), 1);
+    QCOMPARE(model.sysids(), QVariantList{id1});
+}
+
+void FormationModelTest::_middleMemberOfflineHidesEmptySlot()
+{
+    MultiVehicleManager* manager = MultiVehicleManager::instance();
+    QVERIFY(_startSmartApVehicle());
+    QVERIFY(_startSmartApVehicle());
+    QVERIFY(_startSmartApVehicle());
+    QTRY_COMPARE_WITH_TIMEOUT(manager->vehicles()->count(), 3, TestTimeout::mediumMs());
+
+    FormationModel model;
+    model.matchOnline(manager->vehicles());
+    QCOMPARE(model.rowCount(), 3);
+
+    const int id1 = model.data(model.index(0, 0), FormationModel::SysidRole).toInt();
+    const int id2 = model.data(model.index(1, 0), FormationModel::SysidRole).toInt();
+    const int id3 = model.data(model.index(2, 0), FormationModel::SysidRole).toInt();
+
+    model.updateStatus(id1, 0, 2, id1, 0x0C, 1);
+    model.updateStatus(id2, 1, 2, id1, 0x08, 1);
+    model.updateStatus(id3, 2, 2, id1, 0x08, 1);
+    QCOMPARE(model.positions().count(), 3);
+    QVERIFY(model.positions().at(1).toMap().value(QStringLiteral("visible")).toBool());
+
+    // 中间槽位 1 掉线：立刻清槽位，并隐藏空出的 Slot 1，同时保留仍在飞行的 Slot 2 几何位置。
+    model.markOffline(id2);
+    QCOMPARE(model.data(model.index(1, 0), FormationModel::PositionRole).toInt(), -1);
+    const QVariantList afterMidOffline = model.positions();
+    QCOMPARE(afterMidOffline.count(), 3);
+    QVERIFY(!afterMidOffline.at(1).toMap().value(QStringLiteral("visible")).toBool());
+    QVERIFY(afterMidOffline.at(2).toMap().value(QStringLiteral("visible")).toBool());
+
+    // 末尾槽位 2 也掉线后，仅剩领机自己，槽位立即收缩回 1。
+    model.markOffline(id3);
+    QCOMPARE(model.positions().count(), 1);
+}
+
 UT_REGISTER_TEST(FormationModelTest, TestLabel::Integration, TestLabel::Vehicle)

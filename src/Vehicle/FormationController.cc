@@ -80,15 +80,18 @@ void FormationController::apply(QmlObjectListModel* vehicles)
     if (!vehicles) {
         return;
     }
+
+    _vehicles = vehicles;
+    _model->matchOnline(vehicles);
+    _model->clearOfflineFormationState();
     if (!_model->validate()) {
         _setError(_model->validationError());
         _setPhase(Failed);
         return;
     }
 
-    // Apply 是重新配置：清掉本地踢出覆盖，按当前成员表全体下发。
+    // Apply 是重新配置：清掉本地踢出覆盖，仅向当前在线成员下发。
     _model->clearLeaving();
-    _vehicles = vehicles;
     _formationId = FormationProtocol::nextFormationId(_formationId);
     QSettings().setValue(QStringLiteral("Formation/formationId"), _formationId);
     _model->setFormationId(_formationId);
@@ -99,12 +102,15 @@ void FormationController::apply(QmlObjectListModel* vehicles)
         if (sysid <= 0) {
             continue;
         }
+        if (!_model->data(_model->index(row, 0), FormationModel::OnlineRole).toBool()) {
+            continue;
+        }
         const int flags = _model->data(_model->index(row, 0), FormationModel::FlagsRole).toInt();
         if (flags & 0x01) {
             continue;
         }
         Vehicle* vehicle = _findVehicle(vehicles, sysid);
-        if (!vehicle) {
+        if (!_isVehicleOnline(vehicle)) {
             continue;
         }
         connect(vehicle, &Vehicle::textMessageReceived, this, &FormationController::_onVehicleText,
@@ -131,9 +137,11 @@ void FormationController::stop(QmlObjectListModel* vehicles, bool allMembers)
         return;
     }
 
-    // Stop 会收掉整队编队；本地 LEAVING 覆盖不再有意义。
-    _model->clearLeaving();
+    // Stop 会收掉整队编队；本地 LEAVING 覆盖与离线残留状态不再有意义。
     _vehicles = vehicles;
+    _model->matchOnline(vehicles);
+    _model->clearOfflineFormationState();
+    _model->clearLeaving();
     _pending = 0;
     for (int row = 0; row < _model->rowCount(); ++row) {
         const int sysid = _model->data(_model->index(row, 0), FormationModel::SysidRole).toInt();
@@ -141,7 +149,7 @@ void FormationController::stop(QmlObjectListModel* vehicles, bool allMembers)
             continue;
         }
         Vehicle* vehicle = _findVehicle(vehicles, sysid);
-        if (!vehicle) {
+        if (!_isVehicleOnline(vehicle)) {
             continue;
         }
         _sendStop(vehicle, allMembers);
@@ -165,7 +173,7 @@ void FormationController::kick(QmlObjectListModel* vehicles, int sysid)
         return;
     }
     Vehicle* vehicle = _findVehicle(vehicles, sysid);
-    if (!vehicle) {
+    if (!_isVehicleOnline(vehicle)) {
         _setError(QStringLiteral("成员不在线"));
         return;
     }
@@ -188,7 +196,7 @@ void FormationController::rejoin(QmlObjectListModel* vehicles, int sysid)
         return;
     }
     Vehicle* vehicle = _findVehicle(vehicles, sysid);
-    if (!vehicle) {
+    if (!_isVehicleOnline(vehicle)) {
         _setError(QStringLiteral("成员不在线"));
         return;
     }
@@ -205,7 +213,7 @@ void FormationController::gotoLeader(QmlObjectListModel* vehicles, double latitu
     }
     const int leaderSysid = _model->leaderSysid();
     Vehicle* leader = _findVehicle(vehicles, leaderSysid);
-    if (!leader) {
+    if (!_isVehicleOnline(leader)) {
         _setError(QStringLiteral("领航机不在线"));
         return;
     }
@@ -229,6 +237,12 @@ void FormationController::handleStatustext(const QString& text)
     const int leaderId = parts[3].toInt();
     const int flags = parts[4].toInt();
     const int formationId = parts[5].toInt();
+    if (_vehicles) {
+        Vehicle* vehicle = _findVehicle(_vehicles, node);
+        if (vehicle && !_isVehicleOnline(vehicle)) {
+            return;
+        }
+    }
     // 机上已在跑更新的编队（例如 QGC 重启后 id 落后）：采用更大的 id，避免按旧 id 下发被丢弃。
     if (formationId > 0 && formationId <= 0xFFFF) {
         const uint16_t incomingId = static_cast<uint16_t>(formationId);
@@ -326,6 +340,11 @@ void FormationController::_onVehicleText(int sysid, int componentid, int severit
 void FormationController::_onVehicleFirmwareTypeChanged()
 {
     _model->matchOnline(_vehicles);
+}
+
+bool FormationController::_isVehicleOnline(Vehicle* vehicle)
+{
+    return vehicle != nullptr && (!vehicle->vehicleLinkManager() || !vehicle->vehicleLinkManager()->communicationLost());
 }
 
 void FormationController::_setPhase(Phase phase)
