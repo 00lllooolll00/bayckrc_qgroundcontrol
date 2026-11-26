@@ -96,6 +96,28 @@
             "keywords": "goto,go to,guided"
         },
         {
+            "name": "keyboardNudgeStepMeters",
+            "shortDesc": "Distance moved per WASD or directional nudge step.",
+            "type": "double",
+            "units": "m",
+            "default": 5,
+            "min": 1,
+            "max": 100,
+            "label": "WASD Move Step Distance",
+            "keywords": "wasd,nudge,step,distance,move"
+        },
+        {
+            "name": "keyboardNudgeIntervalMs",
+            "shortDesc": "Minimum interval between consecutive WASD reposition commands to protect radio bandwidth.",
+            "type": "uint32",
+            "units": "ms",
+            "default": 500,
+            "min": 250,
+            "max": 2000,
+            "label": "WASD Min Send Interval",
+            "keywords": "wasd,nudge,interval,throttle"
+        },
+        {
             "name": "updateHomePosition",
             "shortDesc": "Automatically update the vehicle return-to-home position from the GCS GPS location.",
             "type": "bool",

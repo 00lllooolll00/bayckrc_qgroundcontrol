@@ -346,6 +346,14 @@ ApplicationWindow {
                 && flyView.guidedController.confirmDialog.visible)
     }
 
+    KeyboardNudgeOverlay {
+        id: keyboardNudgeOverlay
+        anchors.fill: parent
+        z: QGroundControl.zOrderTopMost - 1
+        targetWindow: mainWindow
+        shortcutEnabled: spaceArmDisarmOverlay.shortcutEnabled
+    }
+
     PlanView {
         id:             planView
         objectName:     "mainView_plan"

@@ -22,6 +22,8 @@ public:
     DEFINE_SETTINGFACT(maxGoToLocationDistance)
     DEFINE_SETTINGFACT(forwardFlightGoToLocationLoiterRad)
     DEFINE_SETTINGFACT(goToLocationRequiresConfirmInGuided)
+    DEFINE_SETTINGFACT(keyboardNudgeStepMeters)
+    DEFINE_SETTINGFACT(keyboardNudgeIntervalMs)
     DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
     DEFINE_SETTINGFACT(showSimpleCameraControl)
     DEFINE_SETTINGFACT(showObstacleDistanceOverlay)

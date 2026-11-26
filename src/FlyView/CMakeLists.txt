@@ -42,6 +42,8 @@ qt_add_qml_module(FlyViewModule
         FormationCanvas.qml
         FormationPanel.qml
         FormationToolStripAction.qml
+        GotoCoordinatePanel.qml
+        GotoCoordinateToolStripAction.qml
         GuidedActionConfirm.qml
         GuidedActionLand.qml
         GuidedActionPause.qml
@@ -50,6 +52,7 @@ qt_add_qml_module(FlyViewModule
         GuidedActionTakeoff.qml
         GuidedToolStripAction.qml
         GuidedValueSlider.qml
+        KeyboardNudgeOverlay.qml
         MultiRotorChecklist.qml
         MultiVehicleList.qml
         ObstacleDistanceOverlay.qml
@@ -81,6 +84,7 @@ qt_add_resources(FlyViewModule flyview_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
+        "${CMAKE_SOURCE_DIR}/resources/GotoCoordinate.svg"
         "${CMAKE_SOURCE_DIR}/resources/Gripper.svg"
         "${CMAKE_SOURCE_DIR}/resources/land.svg"
         "${CMAKE_SOURCE_DIR}/resources/NoVideoBackground.jpg"

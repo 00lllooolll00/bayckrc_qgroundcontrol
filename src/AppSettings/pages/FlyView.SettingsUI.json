@@ -58,6 +58,12 @@
                 },
                 {
                     "setting": "flyViewSettings.goToLocationRequiresConfirmInGuided"
+                },
+                {
+                    "setting": "flyViewSettings.keyboardNudgeStepMeters"
+                },
+                {
+                    "setting": "flyViewSettings.keyboardNudgeIntervalMs"
                 }
             ]
         },

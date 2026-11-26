@@ -7,6 +7,7 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QPermissions>
+#include <QtCore/QSettings>
 #include <QtPositioning/QNmeaPositionInfoSource>
 
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager")
@@ -35,6 +36,7 @@ void QGCPositionManager::init()
         _simulatedSource = new SimulatedPosition(this);
         _setPositionSource(QGCPositionSource::Simulated);
     } else {
+        _loadManualGcsPosition();
         _checkPermission();
     }
 }
@@ -126,7 +128,7 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     _geoPositionInfo = update;
     _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
-    QGeoCoordinate newGCSPosition(_gcsPosition);
+    QGeoCoordinate newGCSPosition(_lastGpsPosition);
 
     if (update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
         if ((qAbs(update.coordinate().latitude()) > 0.001) && (qAbs(update.coordinate().longitude()) > 0.001)) {
@@ -151,16 +153,19 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     }
 
     _gcsPositionAccuracy = sqrt(pow(_gcsPositionHorizontalAccuracy, 2) + pow(_gcsPositionVerticalAccuracy, 2));
+    _lastGpsPosition = newGCSPosition;
 
-    _setGCSPosition(newGCSPosition);
+    if (!_manualGcsPositionActive) {
+        _setGCSPosition(newGCSPosition);
 
-    if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
-        _gcsDirectionAccuracy = update.attribute(QGeoPositionInfo::DirectionAccuracy);
-        if (_gcsDirectionAccuracy <= kMinDirectionAccuracyDegrees) {
+        if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
+            _gcsDirectionAccuracy = update.attribute(QGeoPositionInfo::DirectionAccuracy);
+            if (_gcsDirectionAccuracy <= kMinDirectionAccuracyDegrees) {
+                _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
+            }
+        } else if (_usingPluginSource) {
             _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
         }
-    } else if (_usingPluginSource) {
-        _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
     }
 
     emit positionInfoUpdated(update);
@@ -177,6 +182,64 @@ void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
     if (newGCSHeading != _gcsHeading) {
         _gcsHeading = newGCSHeading;
         emit gcsHeadingChanged(_gcsHeading);
+    }
+}
+
+void QGCPositionManager::setManualGcsPosition(const QGeoCoordinate &coordinate)
+{
+    if (!coordinate.isValid()) {
+        return;
+    }
+
+    const QGeoCoordinate flatCoord(coordinate.latitude(), coordinate.longitude());
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("ManualGCSPosition"));
+    settings.setValue(QStringLiteral("active"), true);
+    settings.setValue(QStringLiteral("lat"), flatCoord.latitude());
+    settings.setValue(QStringLiteral("lon"), flatCoord.longitude());
+    settings.endGroup();
+
+    if (!_manualGcsPositionActive) {
+        _manualGcsPositionActive = true;
+        emit manualGcsPositionActiveChanged(true);
+    }
+    _setGCSHeading(qQNaN());
+    _setGCSPosition(flatCoord);
+}
+
+void QGCPositionManager::clearManualGcsPosition()
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("ManualGCSPosition"));
+    settings.setValue(QStringLiteral("active"), false);
+    settings.endGroup();
+
+    if (_manualGcsPositionActive) {
+        _manualGcsPositionActive = false;
+        emit manualGcsPositionActiveChanged(false);
+    }
+    _setGCSPosition(_lastGpsPosition);
+}
+
+void QGCPositionManager::_loadManualGcsPosition()
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("ManualGCSPosition"));
+    const bool active = settings.value(QStringLiteral("active"), false).toBool();
+    const double lat = settings.value(QStringLiteral("lat"), qQNaN()).toDouble();
+    const double lon = settings.value(QStringLiteral("lon"), qQNaN()).toDouble();
+    settings.endGroup();
+
+    if (!active) {
+        return;
+    }
+
+    const QGeoCoordinate saved(lat, lon);
+    if (saved.isValid()) {
+        _manualGcsPositionActive = true;
+        _setGCSHeading(qQNaN());
+        _setGCSPosition(saved);
+        emit manualGcsPositionActiveChanged(true);
     }
 }
 
@@ -200,7 +263,10 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
         _geoPositionInfo = QGeoPositionInfo();
         emit positionInfoUpdated(_geoPositionInfo);
 
-        _setGCSPosition(QGeoCoordinate());
+        _lastGpsPosition = QGeoCoordinate();
+        if (!_manualGcsPositionActive) {
+            _setGCSPosition(QGeoCoordinate());
+        }
         _gcsPositionTimestamp = QDateTime();
 
         _setGCSHeading(qQNaN());

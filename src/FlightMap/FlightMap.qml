@@ -247,23 +247,52 @@ Map {
 
     /// Ground Station location
     MapQuickItem {
-        anchorPoint.x:  sourceItem.width / 2
-        anchorPoint.y:  sourceItem.height / 2
+        anchorPoint.x:  gcsMarkerItem.width / 2
+        anchorPoint.y:  mapItemImage.height / 2
         visible:        gcsPosition.isValid && !planView
         coordinate:     gcsPosition
 
-        sourceItem: Image {
-            id:             mapItemImage
-            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull.svg" : "/res/QGCLogoArrow.svg"
-            mipmap:         true
-            antialiasing:   true
-            fillMode:       Image.PreserveAspectFit
-            height:         ScreenTools.defaultFontPixelHeight * (isNaN(gcsHeading) ? 1.75 : 2.5 )
-            sourceSize.height: height
-            transform: Rotation {
-                origin.x:       mapItemImage.width  / 2
-                origin.y:       mapItemImage.height / 2
-                angle:          isNaN(gcsHeading) ? 0 : gcsHeading
+        sourceItem: Item {
+            id:     gcsMarkerItem
+            width:  Math.max(mapItemImage.width, gcsMarkerBadge.width)
+            height: mapItemImage.height
+
+            Image {
+                id:                         mapItemImage
+                anchors.horizontalCenter:   parent.horizontalCenter
+                anchors.top:                parent.top
+                source:                     isNaN(gcsHeading) ? "/res/QGCLogoFull.svg" : "/res/QGCLogoArrow.svg"
+                mipmap:                     true
+                antialiasing:               true
+                fillMode:                   Image.PreserveAspectFit
+                height:                     ScreenTools.defaultFontPixelHeight * (isNaN(gcsHeading) ? 1.75 : 2.5 )
+                sourceSize.height:          height
+                transform: Rotation {
+                    origin.x:       mapItemImage.width  / 2
+                    origin.y:       mapItemImage.height / 2
+                    angle:          isNaN(gcsHeading) ? 0 : gcsHeading
+                }
+            }
+
+            Rectangle {
+                id:                         gcsMarkerBadge
+                anchors.top:                mapItemImage.bottom
+                anchors.topMargin:          2
+                anchors.horizontalCenter:   parent.horizontalCenter
+                width:                      gcsMarkerLabel.implicitWidth + 8
+                height:                     gcsMarkerLabel.implicitHeight + 2
+                radius:                     3
+                color:                      "#CC1E242C"
+                border.color:               QGroundControl.qgcPositionManger.manualGcsPositionActive ? "#4FC3F7" : "#80FFFFFF"
+                border.width:               1
+
+                QGCLabel {
+                    id:                 gcsMarkerLabel
+                    anchors.centerIn:   parent
+                    text:               QGroundControl.qgcPositionManger.manualGcsPositionActive ? qsTr("GCS 控制点") : qsTr("GCS")
+                    color:              "white"
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
             }
         }
     }

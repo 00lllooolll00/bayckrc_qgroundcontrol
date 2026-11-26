@@ -60,6 +60,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         RCToParamDialogController.h
         ScreenToolsController.cc
         ScreenToolsController.h
+        KeyboardNudgeController.cc
+        KeyboardNudgeController.h
         SpaceArmDisarmController.cc
         SpaceArmDisarmController.h
         TerrainProfile.cc

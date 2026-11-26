@@ -18,6 +18,7 @@ ToolStripActionList {
         GuidedActionPause { },
         FlyViewAdditionalActionsButton { },
         FlyViewGripperButton { },
-        FormationToolStripAction { }
+        FormationToolStripAction { },
+        GotoCoordinateToolStripAction { }
     ]
 }

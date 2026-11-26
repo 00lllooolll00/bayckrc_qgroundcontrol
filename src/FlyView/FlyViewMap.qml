@@ -746,6 +746,25 @@ FlightMap {
                         }
                     }
 
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("设为地面站控制点")
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            QGroundControl.qgcPositionManger.setManualGcsPosition(mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("清除地面站控制点")
+                        visible:            QGroundControl.qgcPositionManger.manualGcsPositionActive
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            QGroundControl.qgcPositionManger.clearManualGcsPosition()
+                        }
+                    }
+
                     ColumnLayout {
                         spacing: 0
                         QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)) }
@@ -757,11 +776,7 @@ FlightMap {
     }
 
     onMapClicked: (position) => {
-        if (!globals.guidedControllerFlyView.guidedUIVisible &&
-            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit ||
-             globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome ||
-             globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
-
+        if (!globals.guidedControllerFlyView.guidedUIVisible) {
             position = Qt.point(position.x, position.y)
             var clickCoord = _root.toCoordinate(position, false /* clipToViewPort */)
             // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow

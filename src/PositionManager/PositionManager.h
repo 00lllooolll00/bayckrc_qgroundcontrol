@@ -19,6 +19,7 @@ class QGCPositionManager : public QObject
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
     Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
+    Q_PROPERTY(bool           manualGcsPositionActive       READ manualGcsPositionActive        NOTIFY manualGcsPositionActiveChanged)
 
 public:
     explicit QGCPositionManager(QObject *parent = nullptr);
@@ -32,6 +33,7 @@ public:
     QGeoCoordinate gcsPosition() const { return _gcsPosition; }
     qreal gcsHeading() const { return _gcsHeading; }
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
+    bool manualGcsPositionActive() const { return _manualGcsPositionActive; }
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
@@ -49,11 +51,15 @@ public:
     /// position source (e.g. the integrated Android GPS).
     void resetNmeaSourceDevice();
 
+    Q_INVOKABLE void setManualGcsPosition(const QGeoCoordinate &coordinate);
+    Q_INVOKABLE void clearManualGcsPosition();
+
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
     void gcsHeadingChanged(qreal gcsHeading);
     void positionInfoUpdated(QGeoPositionInfo update);
     void gcsPositionHorizontalAccuracyChanged(qreal gcsPositionHorizontalAccuracy);
+    void manualGcsPositionActiveChanged(bool active);
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
@@ -74,14 +80,17 @@ private:
     void _checkPermission();
     void _setGCSHeading(qreal newGCSHeading);
     void _setGCSPosition(const QGeoCoordinate &newGCSPosition);
+    void _loadManualGcsPosition();
 
     bool _usingPluginSource = false;
+    bool _manualGcsPositionActive = false;
     int _updateInterval = 0;
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
     QGeoCoordinate _gcsPosition;
+    QGeoCoordinate _lastGpsPosition;
     QDateTime _gcsPositionTimestamp;
     qreal _gcsHeading = qQNaN();
     qreal _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
