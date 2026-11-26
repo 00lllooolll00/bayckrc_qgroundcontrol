@@ -40,13 +40,13 @@ Item {
         repeat: false
     }
 
-    // 右下角紧凑方向控制卡（默认折叠，不遮挡地图与仪表）
+    // 左下角紧凑方向控制卡（默认折叠，不遮挡地图与仪表）
     Rectangle {
         id: nudgePanel
         visible: _root.shortcutEnabled && _activeVehicle !== null
-        anchors.right: parent.right
+        anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 1.5
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 4.5
         width: panelCol.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.6
         height: panelCol.implicitHeight + ScreenTools.defaultFontPixelHeight * 1.0
@@ -66,7 +66,7 @@ Item {
                 spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
                 QGCLabel {
-                    text: qsTr("WSAD %1m").arg(_flyViewSettings.keyboardNudgeStepMeters.rawValue.toFixed(0))
+                    text: qsTr("WSAD %1cm").arg(_flyViewSettings.keyboardNudgeStepCm.rawValue)
                     font.pointSize: ScreenTools.smallFontPointSize
                     font.bold: true
                 }

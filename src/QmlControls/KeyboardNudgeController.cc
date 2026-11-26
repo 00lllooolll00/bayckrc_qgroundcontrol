@@ -20,8 +20,8 @@ namespace {
 constexpr int kMergeDebounceMs = 220;
 constexpr int kMinIntervalFloorMs = 250;
 constexpr int kChainWindowMs = 2500;
-constexpr double kMinStepMeters = 1.0;
-constexpr double kMaxStepMeters = 100.0;
+constexpr double kMinStepCm = 10.0;
+constexpr double kMaxStepCm = 10000.0;
 }  // namespace
 
 KeyboardNudgeController::KeyboardNudgeController(QObject* parent) : QObject(parent)
@@ -176,11 +176,11 @@ bool KeyboardNudgeController::_isTextOrProtectedInputFocused() const
 double KeyboardNudgeController::_stepMeters() const
 {
     FlyViewSettings* const settings = SettingsManager::instance()->flyViewSettings();
-    const double raw = settings ? settings->keyboardNudgeStepMeters()->rawValue().toDouble() : 5.0;
+    const double raw = settings ? settings->keyboardNudgeStepCm()->rawValue().toDouble() : 500.0;
     if (!qIsFinite(raw)) {
         return 5.0;
     }
-    return qBound(kMinStepMeters, raw, kMaxStepMeters);
+    return qBound(kMinStepCm, raw, kMaxStepCm) / 100.0;
 }
 
 int KeyboardNudgeController::_minIntervalMs() const
@@ -236,7 +236,7 @@ void KeyboardNudgeController::_flushNudge()
     emit pendingOffsetChanged();
 
     const double distanceM = std::hypot(forwardM, rightM);
-    if (distanceM < 0.1) {
+    if (distanceM < 0.01) {
         emit nudgeFeedback(tr("移动偏移已抵消"), QGeoCoordinate());
         return;
     }
@@ -275,10 +275,10 @@ void KeyboardNudgeController::_flushNudge()
         _lastSentCoord = target;
         _sendCooldown.restart();
         const QString frameLabel = _headingRelative ? tr("机头向") : tr("正北向");
-        const QString msg = tr("微调 #%1：偏 %2° 走 %3 m (%4)")
+        const QString msg = tr("微调 #%1：偏 %2° 走 %3 cm (%4)")
                                 .arg(activeVehicle->id())
                                 .arg(qRound(relAzimuthDeg))
-                                .arg(distanceM, 0, 'f', 1)
+                                .arg(qRound(distanceM * 100.0))
                                 .arg(frameLabel);
         qCInfo(KeyboardNudgeControllerLog) << msg << target;
         emit nudgeFeedback(msg, target);

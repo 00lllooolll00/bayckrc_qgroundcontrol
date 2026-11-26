@@ -7773,6 +7773,44 @@
       <translation>前往,前往位置,引导</translation>
     </message>
     <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeStepCm].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Distance moved per WASD or directional nudge step.</source>
+      <translation>每次按 WASD 或方向键微调移动的距离。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeStepCm].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>WASD Move Step Distance</source>
+      <translation>WASD 单步移动距离</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeStepCm].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>wasd,nudge,step,distance,move,cm</source>
+      <translation>wasd,微调,步长,距离,移动,厘米</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeIntervalMs].shortDesc</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Minimum interval between consecutive WASD reposition commands to protect radio bandwidth.</source>
+      <translation>连续发送 WASD 位置微调指令的最小时间间隔，用于保护无线电链路带宽。</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeIntervalMs].label</extracomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>WASD Min Send Interval</source>
+      <translation>WASD 最小发送间隔</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[keyboardNudgeIntervalMs].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
+      <source>wasd,nudge,interval,throttle</source>
+      <translation>wasd,微调,间隔,节流</translation>
+    </message>
+    <message>
       <extracomment>.QGC.MetaData.Facts[updateHomePosition].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Automatically update the vehicle return-to-home position from the GCS GPS location.</source>

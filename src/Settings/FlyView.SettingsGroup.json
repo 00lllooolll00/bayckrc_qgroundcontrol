@@ -96,15 +96,15 @@
             "keywords": "goto,go to,guided"
         },
         {
-            "name": "keyboardNudgeStepMeters",
+            "name": "keyboardNudgeStepCm",
             "shortDesc": "Distance moved per WASD or directional nudge step.",
-            "type": "double",
-            "units": "m",
-            "default": 5,
-            "min": 1,
-            "max": 100,
+            "type": "uint32",
+            "units": "cm",
+            "default": 500,
+            "min": 10,
+            "max": 10000,
             "label": "WASD Move Step Distance",
-            "keywords": "wasd,nudge,step,distance,move"
+            "keywords": "wasd,nudge,step,distance,move,cm"
         },
         {
             "name": "keyboardNudgeIntervalMs",
